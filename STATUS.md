@@ -1,13 +1,15 @@
 # 무한인천: 해무의 성가 — 작업 현황
 
 기록일: 2026-08-19  
-저장소: **public** — https://github.com/heoparang-ship-it/muhan-incheon-haemu
+저장소: **public** — https://github.com/heoparang-ship-it/muhan-incheon-haemu  
+출시 기준: [`docs/SHIP-CH1.md`](docs/SHIP-CH1.md)
 
 ---
 
 ## 한 줄
 
-플레이 파일·스크립트·백서·레퍼런스가 이 저장소에 있다.
+1·2차 시스템과 코만도스 프리렌더는 들어 있다.  
+1장 출시 가능 점수는 **78** — 한 판은 돌고, 제품 서명이 남았다.
 
 ---
 
@@ -18,4 +20,6 @@
 | 1차 | D1–D6 + D-fix | 있음 |
 | 2차 | D7–D12 | 있음 |
 | 그래픽 | 건물/프롭 마젠타 헤일로 | 제거됨 |
-| 3차 | D13–D15 | 없음 |
+| 3차 | D13–D15 | 없음 — **1장 출시 범위 밖** |
+
+`docs/WHITEPAPER.md`의 48/48 · 저장 없음 · B1–B3는 2026-08-18 모듈형 빌드 기록이다. 지금 코드와 다르다.
