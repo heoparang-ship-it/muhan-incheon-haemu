@@ -180,7 +180,12 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touc
 .rGrid div{padding:10px 6px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03)}
 .rGrid b{display:block;font-size:16px;color:var(--gold2);font-family:"Nanum Myeongjo",serif}
 .rGrid span{display:block;font-size:9.5px;color:var(--muted);margin-top:3px}
-.modalBtns{margin-top:20px;display:flex;gap:9px;justify-content:center}
+.modalBtns{margin-top:20px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
+.slots button{padding:10px 8px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.04);
+ color:var(--cream);font-size:11.5px;min-height:44px}
+.slots button:hover{border-color:var(--line);background:rgba(226,192,114,.10)}
+.slots button.on{border-color:var(--gold);color:var(--gold2);background:rgba(226,192,114,.14)}
 .modalBtns button{padding:10px 22px;border:1px solid var(--line);border-radius:10px;background:rgba(226,192,114,.12);
  color:var(--gold2);font-size:12.5px;transition:.16s}
 .modalBtns button:hover{background:rgba(226,192,114,.24)}
@@ -276,7 +281,7 @@ html.force-land #app{min-height:0!important;overflow:hidden}
  .action .ico{font-size:16px}
  .action span{font-size:9px}
  .action b{display:none}
- #planBox{margin:0;display:grid;grid-template-columns:1.3fr 1fr .8fr;gap:6px;padding:0}
+ #planBox{margin:0;display:grid;grid-template-columns:1fr .7fr .7fr .9fr .6fr;gap:6px;padding:0}
  .plan{min-height:44px;padding:8px 6px;border-radius:12px}
  .plan strong{font-size:13px}
  #toast{bottom:calc(172px + var(--safeB));max-width:92vw}
@@ -323,7 +328,7 @@ html.force-land #app{min-height:0!important;overflow:hidden}
  #actions{display:grid;grid-template-columns:repeat(5,1fr);flex:1.4;gap:4px;padding:0}
  .action{width:auto;min-height:40px;padding:4px 2px}
  .action b{display:none}
- #planBox{margin:0;display:grid;grid-template-columns:repeat(3,1fr);flex:.9;gap:4px;padding:0}
+ #planBox{margin:0;display:grid;grid-template-columns:repeat(5,1fr);flex:1.1;gap:4px;padding:0}
  .plan{min-height:40px;padding:4px 6px}
  #toast{bottom:calc(92px + var(--safeB))}
  #titleScreen .start{min-height:44px}
@@ -351,7 +356,7 @@ html.force-land .agentCard strong{font-size:10px;text-align:left}
 html.force-land #actions{display:grid;grid-template-columns:repeat(5,1fr);flex:1.4;gap:4px;padding:0}
 html.force-land .action{width:auto;min-height:40px;padding:4px 2px}
 html.force-land .action b{display:none}
-html.force-land #planBox{margin:0;display:grid;grid-template-columns:repeat(3,1fr);flex:.9;gap:4px;padding:0}
+html.force-land #planBox{margin:0;display:grid;grid-template-columns:repeat(5,1fr);flex:1.1;gap:4px;padding:0}
 html.force-land .plan{min-height:40px;padding:4px 6px}
 html.force-land #toast{bottom:calc(92px + var(--safeB))}
 html.force-land #titleScreen .card{padding:18px 24px;max-width:min(520px,86%)}
@@ -378,6 +383,18 @@ html.force-land .modalBtns button{min-height:44px;width:auto}
 #titleScreen .start.ghost{background:transparent;border-color:rgba(226,192,114,.45);color:#c9d6da}
 #titleScreen .start.ghost:hover{background:rgba(226,192,114,.12)}
 #titleScreen .hint{margin-top:10px;font-size:11px;color:#7f949b}
+.diffRow{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.diffRow button{min-width:72px;padding:8px 12px;border:1px solid var(--line2);border-radius:9px;
+ background:rgba(255,255,255,.04);color:#c9d6da;font-size:12px}
+.diffRow button.on{border-color:var(--gold);color:var(--gold2);background:rgba(226,192,114,.16)}
+.volRow{display:flex;align-items:center;gap:10px;justify-content:center;margin:14px 0 4px;color:var(--muted);font-size:11px}
+.volRow input[type=range]{width:min(220px,60vw);accent-color:#e3c072}
+#checkBanner{position:absolute;z-index:28;left:50%;top:calc(72px + var(--safeT));transform:translateX(-50%);
+ display:none;padding:8px 16px;border:1px solid var(--amber);border-radius:999px;
+ background:rgba(28,18,6,.92);color:var(--gold2);font-size:12px;letter-spacing:.02em;
+ box-shadow:0 8px 24px rgba(0,0,0,.45);pointer-events:none;white-space:nowrap}
+#checkBanner.show{display:block}
+.agentCard.squad{border-color:rgba(226,192,114,.55);box-shadow:0 0 0 1px rgba(226,192,114,.18)}
 #bootNote{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);z-index:90;padding:10px 16px;
  border:1px solid var(--line);border-radius:999px;background:rgba(6,16,22,.92);color:var(--gold2);font-size:13px;
  pointer-events:none}
@@ -501,12 +518,15 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
     </div>
     <div id="planBox">
       <button class="plan" id="planBtn"><strong>계책</strong><small>SPACE</small><em class="qc" id="queueCount"></em></button>
+      <button class="plan" id="wayBtn"><strong>경유</strong><small>SHIFT</small></button>
+      <button class="plan" id="squadBtn"><strong>부대</strong><small>CTRL</small></button>
       <button class="plan" id="execBtn"><strong>일제 실행</strong><small>ENTER</small></button>
-      <button class="plan" id="clearBtn"><strong>취소</strong><small>BACKSPACE</small></button>
+      <button class="plan" id="clearBtn"><strong>취소</strong><small>⌫</small></button>
     </div>
   </footer>
 
   <div id="toast"></div>
+  <div id="checkBanner"></div>
 
   <div id="tutorial">
     <button id="tutClose">×</button>
@@ -543,10 +563,18 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
     <div class="modal">
       <div class="seal">密</div>
       <h2>시간을 접는다</h2>
-      <p>밀명은 이 기기에만 남는다. 조수가 바뀌거나 증거를 얻으면 자동으로 적힌다.</p>
+      <p>밀명은 이 기기에만 남는다. F5 저장 · F8 불러오기. 조수·증거 때 자동으로 적힌다.</p>
+      <div class="slots" id="saveSlots">
+        <button type="button" data-slot="0">빠른 저장</button>
+        <button type="button" data-slot="1">밀명 둘</button>
+        <button type="button" data-slot="2">밀명 셋</button>
+      </div>
+      <div class="volRow"><span>소리</span><input id="volSlider" type="range" min="0" max="100" value="55"></div>
       <div class="modalBtns">
         <button id="resumeBtn">계속</button>
-        <button id="saveBtn">중간 저장</button>
+        <button id="saveBtn">지금 저장</button>
+        <button id="loadBtn">불러오기</button>
+        <button id="soundFxBtn">소리 파동</button>
         <button id="mutePauseBtn">소리 끄기</button>
         <button id="toTitleBtn">타이틀로</button>
       </div>
@@ -562,6 +590,11 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
       <h1>해무의 성가</h1>
       <div class="ch">1장 · 감나루 · 실시간 분대 잠입 전술</div>
       <p class="lead">조선 말기, 인천 해안에 가짜 선교단이 들어섰다. 밀물이 차기 전에 증거와 주민을 빼내라. 담장은 시야를 끊고, 갈대는 몸을 숨긴다. 갯벌에는 발자국이 남는다.</p>
+      <div class="diffRow" id="diffRow">
+        <button type="button" data-diff="easy">쉬움</button>
+        <button type="button" data-diff="normal" class="on">보통</button>
+        <button type="button" data-diff="hard">어려움</button>
+      </div>
       <div class="titleActs">
         <button type="button" class="start" id="startBtn">밀명 개시</button>
         <button type="button" class="start ghost" id="continueBtn" hidden>이어하기</button>
@@ -755,19 +788,23 @@ function camCenterOn(tx, ty, z) {
 
 /* ---------- 오디오 (외부 파일 없이 합성) ---------- */
 const audio = {
-  ctx: null, master: null, ambientOn: false, muted: false,
+  ctx: null, master: null, ambientOn: false, muted: false, vol: 0.55,
   ensure() {
     if (this.ctx) return this.ctx;
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AC();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.55;
+      this.master.gain.value = this.muted ? 0 : this.vol;
       this.master.connect(this.ctx.destination);
     } catch (e) { this.ctx = null; }
     return this.ctx;
   },
   resume() { try { this.ctx && this.ctx.state === 'suspended' && this.ctx.resume(); } catch (e) { } },
+  setVolume(v) {
+    this.vol = clamp(v, 0, 1);
+    if (this.master && !this.muted) this.master.gain.value = this.vol;
+  },
   tone(freq, dur, type, vol, when) {
     if (this.muted) return;
     const c = this.ensure(); if (!c) return;
@@ -830,8 +867,14 @@ const audio = {
   },
   setMuted(m) {
     this.muted = m;
-    if (this.master) this.master.gain.value = m ? 0 : 0.55;
-  }
+    if (this.master) this.master.gain.value = m ? 0 : this.vol;
+  },
+  door(open, tx, ty) {
+    if (open) { this.tone(310, 0.08, 'triangle', posVol(tx, ty, 0.035)); this.tone(190, 0.05, 'sine', posVol(tx, ty, 0.02), 0.05); }
+    else { this.tone(180, 0.09, 'sine', posVol(tx, ty, 0.03)); }
+  },
+  splash(tx, ty) { this.noiseBurst(0.12, posVol(tx, ty, 0.04), 1400); this.tone(220, 0.08, 'sine', posVol(tx, ty, 0.02)); },
+  alarmLayer() { this.sweep(420, 180, 0.7, 'sawtooth', 0.045); this.tone(880, 0.35, 'square', 0.025, 0.08); }
 };
 
 /* 위치 기반 볼륨 — 화면 밖 소리는 작게 */
@@ -1238,12 +1281,30 @@ function addCaveCeiling(m, tiles) {
 /* ---------- 소품 ---------- */
 function addProp(m, o) {
   const p = Object.assign({ solid: false, cover: 0 }, o);
-  const px = Math.round(p.tx), py = Math.round(p.ty);
+  let px = Math.round(p.tx), py = Math.round(p.ty);
   if (!inMap(px, py)) return null;
+  const blocked = (x, y) => {
+    if (!inMap(x, y)) return true;
+    const i = idx(x, y);
+    if (m.solid[i]) return true;
+    const rb = m.roof[i];
+    if (!p.indoor && rb >= 0 && m.buildings[rb] && m.buildings[rb].kind !== 'cave') return true;
+    return false;
+  };
+  if (blocked(px, py)) {
+    let found = null;
+    for (let r = 1; r <= 2 && !found; r++) {
+      for (let dy = -r; dy <= r && !found; dy++) for (let dx = -r; dx <= r && !found; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const nx = px + dx, ny = py + dy;
+        if (!blocked(nx, ny)) found = [nx, ny];
+      }
+    }
+    if (!found) return null;
+    px = found[0]; py = found[1];
+    p.tx = px; p.ty = py;
+  }
   p.i = idx(px, py);
-  if (m.solid[p.i]) return null;
-  const rb = m.roof[p.i];
-  if (rb >= 0 && m.buildings[rb] && m.buildings[rb].kind !== 'cave') return null;
   m.props.push(p);
   if (p.solid) m.solid[p.i] = 1;
   if (p.cover) m.cover[p.i] = Math.max(m.cover[p.i], p.cover);
@@ -1309,7 +1370,7 @@ function addProps(m) {
   addProp(m, { kind: 'crate', tx: 87, ty: 81, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 86, ty: 87, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 89, ty: 84, cover: 2, name: '밀수품 상자' });
-  addProp(m, { kind: 'crate', tx: 75, ty: 35, cover: 2, name: '밀수품 상자' });
+  addProp(m, { kind: 'crate', tx: 75, ty: 35, cover: 2, name: '밀수품 상자', indoor: true });
   for (const q of [[83, 85], [85, 87], [88, 86], [82, 84], [86, 80]])
     addProp(m, { kind: 'stalag', tx: q[0], ty: q[1], cover: 1, s: rr(0.7, 1.25), name: '종유석' });
 }
@@ -2644,6 +2705,19 @@ const AGENT_DEFS = {
   }
 };
 
+const VISION = { INNER_FOV: 0.45, INNER_RANGE: 0.6 };
+const WAKE_MS = 75000;
+const SAVE_SLOTS = 3;
+const DIFFICULTY = {
+  easy:   { id: 'easy',   name: '쉬움', vis: 0.85, sus: 0.80, wake: 100000, reinforce: 0 },
+  normal: { id: 'normal', name: '보통', vis: 1.00, sus: 1.00, wake: 75000,  reinforce: 1 },
+  hard:   { id: 'hard',   name: '어려움', vis: 1.15, sus: 1.25, wake: 55000,  reinforce: 2 }
+};
+const CHECK_LINES = ['오늘 찬송은 몇 절인가', '흰옷 매듭은 어느 쪽으로 매는가', '새벽 종은 몇 시에 울리는가'];
+let chosenDiff = 'normal';
+function diff() { return DIFFICULTY[(state && state.difficulty) || chosenDiff] || DIFFICULTY.normal; }
+function wakeMs() { return diff().wake; }
+
 const GUARD_TYPES = {
   acolyte: { name: '외곽 신도', range: 3.8, fov: 0.56, speed: 0.925, color: '#c9c3ae', coat: '#5c5648', alarm: 'report', seeThroughDisguise: 0.0, gun: false },
   steward: { name: '흰옷 집사', range: 4.3, fov: 0.59, speed: 1.0, color: '#e6e2d4', coat: '#8d8a7c', alarm: 'local', seeThroughDisguise: 0.55, gun: false, checks: true },
@@ -2667,7 +2741,7 @@ function baseUnit(o) {
     tx: 0, ty: 0, angle: 0.8, path: [], speed: 2.1, alive: true,
     crouch: false, carrying: null, carriedBy: null, unconscious: false,
     hidden: false, moveT: 0, bob: rnd() * TAU, wait: 0, action: null,
-    footT: 0, lastPrint: 0
+    footT: 0, lastPrint: 0, tied: false, wakeAt: 0, hidingAwake: false
   }, o);
 }
 
@@ -2783,7 +2857,7 @@ function moveUnit(u, dt) {
   const nd = map.doorAt.get(idx(t.tx, t.ty));
   if (nd && !nd.open && !nd.broken && !nd.locked) {
     nd.open = true;
-    if (u.kind === 'agent') { audio.tone(320, 0.07, 'sine', posVol(u.tx, u.ty, 0.03)); emitNoise(u.tx, u.ty, 4.5, '문 여는 소리', u); }
+    if (u.kind === 'agent') { audio.door(true, u.tx, u.ty); emitNoise(u.tx, u.ty, 4.5, '문 여는 소리', u); }
   }
   const step = sp * dt;
   if (d <= step) { u.tx = t.tx; u.ty = t.ty; u.path.shift(); }
@@ -2800,17 +2874,48 @@ function moveUnit(u, dt) {
     let vol = terr.noise * (u.crouch ? 0.32 : 1) * (u.carrying ? 1.25 : 1);
     if (u.kind === 'agent' && u.id === 'mujin') vol *= 1.3;
     if (dep > 0.03) vol *= 1.5;
-    if (vol > 0.5 && u.kind === 'agent') emitNoise(u.tx, u.ty, vol * 4.4, '발소리', u);
+    if (u.crouch) {
+      /* 웅크림은 발소리를 내지 않는다 */
+    } else if (vol > 0.5 && u.kind === 'agent') emitNoise(u.tx, u.ty, vol * 4.4, '발소리', u);
     if ((terr.print || dep > 0.02) && u.kind !== 'civil') addFootprint(u.tx, u.ty, u);
-    if (u.kind === 'agent' && state.selected === u.id && !u.crouch) {
-      audio.noiseBurst(0.06, posVol(u.tx, u.ty, 0.02 * terr.noise), dep > 0.03 ? 2600 : 900);
+    if (u.kind === 'agent') {
+      if (state.stats) state.stats.dist = (state.stats.dist || 0) + Math.max(step, d <= step ? d : step);
+      if (!u.crouch && state.selected === u.id) {
+        const pitch = dep > 0.03 ? 2400 : 400 + terr.noise * 700;
+        audio.noiseBurst(0.05, posVol(u.tx, u.ty, 0.018 * terr.noise), pitch);
+        if (dep > 0.05) audio.splash(u.tx, u.ty);
+      }
     }
   }
 }
 
+function footstepRadius(tx, ty, u) {
+  const i = tileAt(tx, ty);
+  const terr = TERRAIN[map.terr[i]] || TERRAIN[T.DIRT];
+  let vol = terr.noise * (u && u.crouch ? 0.32 : 1) * (u && u.carrying ? 1.25 : 1);
+  if (u && u.kind === 'agent' && u.id === 'mujin') vol *= 1.3;
+  if (waterDepth(i) > 0.03) vol *= 1.5;
+  return vol * 4.4;
+}
+
+function pulseSound(tx, ty, r, type) {
+  if (!state || state.showSoundFx === false) return;
+  let rad = r;
+  if (state.waveMaskT > 0) rad *= 0.34;
+  if (state.bellRinging > 0) rad *= 0.55;
+  state.noises.push({ tx, ty, r: rad, life: 0.9, max: 0.9, type: type || '발소리', preview: true });
+  if (state.noises.length > 40) state.noises.shift();
+}
+
 function setPath(u, tx, ty) {
+  if (u && u.kind === 'agent' && u.checkHold > 0) {
+    const g = guards.find(x => x.id === u.checkGuard);
+    failStewardCheck(g, u, '문답 중에 발을 옮겼다');
+    return false;
+  }
   const p = findPath(u.tx, u.ty, tx, ty, u);
   u.path = p;
+  if (p.length && u.kind === 'agent' && !u.crouch) pulseSound(u.tx, u.ty, footstepRadius(u.tx, u.ty, u), '발소리');
   return p.length > 0;
 }
 
@@ -2958,7 +3063,7 @@ function drawAgent(g, a) {
   const p = unitScreen(a);
   const dep = waterDepth(tileAt(a.tx, a.ty));
   const def = AGENT_DEFS[a.id];
-  const sel = state.selected === a.id;
+  const sel = !!(state.squad && state.squad.includes(a.id)) || state.selected === a.id;
   const hidden = concealment(a) > 0.7;
   g.save();
   g.translate(p.x, p.y);
@@ -3090,17 +3195,29 @@ function drawGuard(g, u) {
       if (susp > 0.35) { g.fillStyle = '#e8bd5b'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('?', 0, -48); }
     }
     if (state.showLabels) drawNameTag(g, t.name, alerted ? '#ff8f7a' : 'rgba(210,224,226,.75)', 12);
+  } else if (u.tied) {
+    g.strokeStyle = 'rgba(210,176,110,.9)'; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(-8, 2); g.lineTo(8, 6); g.moveTo(-7, 6); g.lineTo(8, 2); g.stroke();
   }
   g.restore();
 }
 
 function drawGuardOverlays(g, u, t) {
+  if (u.tied) {
+    g.strokeStyle = 'rgba(210,176,110,.9)'; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(-7, -6); g.lineTo(7, -2); g.moveTo(-6, -1); g.lineTo(6, 3); g.stroke();
+  }
   if (u.netted > 0) {
     g.strokeStyle = 'rgba(190,182,148,.8)'; g.lineWidth = 1;
     for (let k = -2; k <= 2; k++) { g.beginPath(); g.moveTo(k * 3.4, -30); g.lineTo(k * 3.4 + 1.4, 0); g.stroke(); }
   }
   if (u.ai === 'alert') {
     g.fillStyle = '#ff6a55'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.fillText('!', 0, -44);
+  } else if (u.checkTarget) {
+    g.fillStyle = 'rgba(6,14,18,.86)';
+    g.beginPath(); g.roundRect(-28, -58, 56, 16, 5); g.fill();
+    g.fillStyle = '#f2dca6'; g.font = '10px "Nanum Myeongjo",serif'; g.textAlign = 'center';
+    g.fillText('문답', 0, -46);
   } else if (u.suspicion > 0.06) {
     g.fillStyle = 'rgba(4,10,12,.75)'; g.fillRect(-10, -44, 20, 3.4);
     g.fillStyle = u.suspicion > 0.66 ? '#f2704f' : '#e8bd5b';
@@ -3191,15 +3308,17 @@ function lampExposure(tx, ty) {
 }
 
 /* 해무에 따른 시야 거리 감소 */
-function fogRange(base) { return base * (1 - state.fog * 0.34); }
+function fogRange(base) { return base * (1 - state.fog * 0.34) * diff().vis; }
 
 /* ---------- 소음 ---------- */
 function emitNoise(tx, ty, radius, type, source) {
   let r = radius;
   if (state.waveMaskT > 0) r *= 0.34;              // 용의 숨구멍 보상
   if (state.bellRinging > 0) r *= 0.55;            // 종소리가 가린다
-  state.noises.push({ tx, ty, r, life: 0.9, max: 0.9, type });
-  if (state.noises.length > 40) state.noises.shift();
+  if (state.showSoundFx !== false) {
+    state.noises.push({ tx, ty, r, life: 0.9, max: 0.9, type });
+    if (state.noises.length > 40) state.noises.shift();
+  }
   for (const g of guards) {
     if (g.unconscious || g.ai === 'alert') continue;
     const d = Math.hypot(g.tx - tx, g.ty - ty);
@@ -3238,7 +3357,7 @@ function guardSees(g, a, dt) {
   if (off > fov) return 0;
   if (!hasSight(g.tx, g.ty, a.tx, a.ty)) return 0;
 
-  const inner = off < fov * 0.45 && d < range * 0.6;   // 안쪽 시야 = 즉시 식별
+  const inner = off < fov * VISION.INNER_FOV && d < range * VISION.INNER_RANGE;   // 안쪽 시야 = 즉시 식별
   let vis = (1 - concealment(a)) * lampExposure(a.tx, a.ty);
   if (a.crouch) vis *= 0.62;
   if (a.moveT <= 0 && !inner) vis *= 0.45;             // 정지해 있으면 바깥 시야로는 잘 못 잡는다
@@ -3251,18 +3370,17 @@ function guardSees(g, a, dt) {
       const pierce = t.seeThroughDisguise * (a.disguiseTier >= 2 ? 0.35 : a.disguiseTier === 1 ? 0.7 : 1);
       vis *= clamp(0.06 + pierce * 0.9, 0.06, 1);
       if (t.checks && d < 3.2 && off < fov * 0.4) {
-        // 흰옷 집사의 변장 문답
-        if (a.disguiseTier < 2 && g.talkT <= 0) {
-          g.talkT = 1.6;
-          if (rnd() < 0.55 - a.disguiseTier * 0.3) { breakDisguise(a, g); return 1.2; }
-          else toast('집사의 교리 문답을 넘겼다', 'good');
+        if (a.disguiseTier >= 2) {
+          /* 문답 2단계면 집사도 그냥 보낸다 */
+        } else if (!g.checkTarget && (g.checkCd || 0) <= state.now) {
+          startStewardCheck(g, a);
         }
       }
     } else {
       vis *= 1.15;   // 제한 구역에서 봉사자 복장은 오히려 수상하다
     }
   }
-  const rate = (g.ai === 'alert' ? 2.6 : inner ? 1.55 : 0.72) * vis;
+  const rate = (g.ai === 'alert' ? 2.6 : inner ? 1.55 : 0.72) * vis * diff().sus;
   return rate;
 }
 
@@ -3274,6 +3392,64 @@ function isRestricted(tx, ty) {
     if (id === 'office' || id === 'store' || id === 'cell' || id === 'tideRoom' || id === 'smugStore') return true;
   }
   return map.zone[i] === Z.CAVE;
+}
+
+function startStewardCheck(g, a) {
+  if (!g || !a || a.checkHold > 0) return;
+  const line = CHECK_LINES[(Math.random() * CHECK_LINES.length) | 0];
+  g.checkTarget = a.id;
+  g.talkT = 3;
+  g.checkLine = line;
+  a.checkHold = 3;
+  a.checkFrom = { tx: a.tx, ty: a.ty };
+  a.checkGuard = g.id;
+  a.path = [];
+  toast('집사: 「' + line + '」 — 움직이지 마라', 'warn');
+  audio.tone(440, 0.1, 'triangle', 0.04);
+  const ban = $('#checkBanner');
+  if (ban) { ban.textContent = '교리 문답 — ' + line; ban.classList.add('show'); }
+}
+
+function failStewardCheck(g, a, why) {
+  const guard = g || guards.find(x => x.id === (a && a.checkGuard));
+  const agent = a || (guard && agents.find(x => x.id === guard.checkTarget));
+  if (guard) { guard.checkTarget = null; guard.talkT = 0; guard.checkCd = state.now + 8000; }
+  if (agent) { agent.checkHold = 0; agent.checkGuard = null; }
+  const ban = $('#checkBanner'); if (ban) ban.classList.remove('show');
+  if (agent) breakDisguise(agent, guard);
+  if (guard) { guard.suspicion = 1.2; raiseAlarm(guard, agent ? agent.tx : guard.tx, agent ? agent.ty : guard.ty); }
+  noteDetection();
+  toast(why || '문답에 실패했다', 'bad');
+}
+
+function passStewardCheck(g, a) {
+  g.checkTarget = null; g.talkT = 0.4; g.checkCd = state.now + 14000;
+  a.checkHold = 0; a.checkGuard = null;
+  const ban = $('#checkBanner'); if (ban) ban.classList.remove('show');
+  toast('집사의 교리 문답을 넘겼다', 'good');
+  audio.tone(620, 0.1, 'triangle', 0.04);
+}
+
+function updateChecks(dt) {
+  for (const a of agents) {
+    if (!(a.checkHold > 0)) continue;
+    a.checkHold -= dt;
+    const g = guards.find(x => x.id === a.checkGuard);
+    if (!g || g.unconscious) { a.checkHold = 0; a.checkGuard = null; const ban = $('#checkBanner'); if (ban) ban.classList.remove('show'); continue; }
+    if (a.checkFrom && Math.hypot(a.tx - a.checkFrom.tx, a.ty - a.checkFrom.ty) > 0.55) {
+      failStewardCheck(g, a, '도망치는 순간 변장이 들통났다');
+      continue;
+    }
+    if (a.checkHold <= 0) {
+      if (rnd() < 0.55 - (a.disguiseTier || 0) * 0.3) failStewardCheck(g, a, '문답을 그르쳤다');
+      else passStewardCheck(g, a);
+    }
+  }
+}
+
+function noteDetection() {
+  if (!state.stats) state.stats = { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
+  state.stats.detections = (state.stats.detections || 0) + 1;
 }
 
 function breakDisguise(a, g) {
@@ -3320,6 +3496,8 @@ function globalAlarm(tx, ty, msg) {
     state.alarmLevel = 2; state.alarmT = 60; state.everAlarmed = true;
     toast(msg || '전면 경보 — 감나루 전체가 깨어났다', 'bad');
     ringBell(2.4);
+    audio.alarmLayer();
+    spawnReinforcements(tx, ty);
   } else state.alarmT = Math.max(state.alarmT, 45);
   for (const o of guards) {
     if (o.unconscious) continue;
@@ -3327,6 +3505,112 @@ function globalAlarm(tx, ty, msg) {
     o.lastSeen = { tx, ty };
     o.path = findPath(o.tx, o.ty, tx, ty, o);
   }
+}
+
+function spawnReinforcements(tx, ty) {
+  const cap = diff().reinforce;
+  state.reinforceCount = state.reinforceCount || 0;
+  if (state.reinforceCount >= cap) return;
+  state.reinforceCount++;
+  state.reinforcements = true;
+  const types = ['soldier', 'soldier', 'sailor'];
+  if (state.evidence && state.evidence.smugLedger) types.push('priest');
+  const spots = [[73, 73], [75, 74], [72, 76], [76, 72]];
+  types.forEach((type, k) => {
+    const raw = spots[k] || spots[0];
+    const p = nearestOpen(raw[0], raw[1], null, 8) || raw;
+    const t = GUARD_TYPES[type];
+    const g = baseUnit({
+      kind: 'guard', id: 'r' + k, type, tx: p[0], ty: p[1],
+      patrol: [[p[0], p[1]], [Math.round(tx), Math.round(ty)]],
+      pi: 0, speed: t.speed, ai: 'alert', suspicion: 1.2, alertLevel: 2,
+      target: null, lastSeen: { tx, ty }, searchT: 0, netted: 0,
+      home: [p[0], p[1]], lured: null, talkT: 0,
+      zone: map.zone[idx(p[0], p[1])], reinforce: true
+    });
+    g.path = findPath(g.tx, g.ty, tx, ty, g);
+    guards.push(g);
+  });
+  units = [].concat(agents, guards, civilians);
+  toast('해상 성소에서 증원이 달려온다 (' + types.length + '명)', 'bad');
+}
+
+function beginSearch(g, seconds) {
+  g.ai = 'search';
+  g.searchT = seconds == null ? 6 : seconds;
+  const c = g.lastSeen || { tx: g.tx, ty: g.ty };
+  const mates = guards.filter(o => !o.unconscious && (o.ai === 'search' || o === g));
+  const i = Math.max(0, mates.indexOf(g));
+  const n = Math.max(1, mates.length);
+  const ang = (i / n) * TAU;
+  const rad = 4 + (i % 3);
+  const dest = nearestOpen(c.tx + Math.cos(ang) * rad, c.ty + Math.sin(ang) * rad, g, 8);
+  if (dest) g.path = findPath(g.tx, g.ty, dest[0], dest[1], g);
+  g.searchHeading = ang;
+}
+
+function updateWakes() {
+  for (const g of guards) {
+    if (g.boss || g.tied) continue;
+    if (!g.unconscious) continue;
+    if (!g.wakeAt) g.wakeAt = state.now + wakeMs();
+    if (state.now < g.wakeAt) continue;
+    g.unconscious = false;
+    g.wakeAt = 0;
+    g.suspicion = 1.2;
+    g.path = [];
+    if (g.hidden) {
+      g.hidingAwake = true;
+      g.ai = 'down';
+      continue;
+    }
+    g.ai = 'report';
+    const boss = guards.filter(o => !o.unconscious && o !== g && GUARD_TYPES[o.type] && GUARD_TYPES[o.type].alarm !== 'report')
+      .sort((p, q) => dist2(p.tx, p.ty, g.tx, g.ty) - dist2(q.tx, q.ty, g.tx, g.ty))[0];
+    if (boss) { g.reportTo = boss; g.path = findPath(g.tx, g.ty, boss.tx, boss.ty, g); }
+    else raiseAlarm(g, g.tx, g.ty, 'local');
+    toast(GUARD_TYPES[g.type].name + '이(가) 깨어났다', 'warn');
+  }
+}
+
+function updateLamps() {
+  if (!map || !map.lamps) return;
+  for (const l of map.lamps) {
+    if (l.on) { l.offAt = 0; l.relighter = null; continue; }
+    if (!l.offAt) l.offAt = state.now;
+    if (l.relighter) {
+      const g = guards.find(x => x.id === l.relighter);
+      if (!g || g.unconscious || g.ai === 'lured' || g.ai === 'alert' || g.ai === 'report') {
+        l.relighter = null;
+        if (g && g.ai === 'relight') { g.ai = 'return'; g.relightLamp = null; }
+      }
+      continue;
+    }
+    if (state.now - l.offAt < 12000) continue;
+    const cand = guards.filter(g =>
+      !g.unconscious && g.type === 'acolyte' && (g.ai === 'patrol' || g.ai === 'return') && !g.lured
+    ).sort((a, b) => dist2(a.tx, a.ty, l.tx, l.ty) - dist2(b.tx, b.ty, l.tx, l.ty))[0];
+    if (!cand) continue;
+    l.relighter = cand.id;
+    cand.ai = 'relight';
+    cand.relightLamp = l;
+    cand.path = findPath(cand.tx, cand.ty, l.tx, l.ty, cand);
+  }
+}
+
+function tieGuard(a, g) {
+  if (!a || !g || g.tied) return false;
+  startAction(a, 2.5, () => {
+    if (!g || Math.hypot(g.tx - a.tx, g.ty - a.ty) > 2.2) { toast('경비가 너무 멀어 묶지 못했다', 'warn'); return; }
+    g.tied = true;
+    g.unconscious = true;
+    g.wakeAt = 1e15;
+    g.path = [];
+    g.ai = 'down';
+    toast('새끼줄로 묶었다 — 깨어나지 않는다', 'good');
+    audio.tone(210, 0.12, 'sine', 0.04);
+  }, '새끼줄로 묶는 중');
+  return true;
 }
 
 function ringBell(dur) {
@@ -3338,6 +3622,7 @@ function ringBell(dur) {
 
 /* ---------- 지각 갱신 ---------- */
 function updatePerception(dt) {
+  updateWakes();
   for (const a of agents) a.exposure = Math.max(0, a.exposure - dt * 0.5);
 
   for (const g of guards) {
@@ -3354,7 +3639,10 @@ function updatePerception(dt) {
       g.lastSeen = { tx: bestA.tx, ty: bestA.ty };
       bestA.exposure = Math.max(bestA.exposure, clamp(g.suspicion, 0, 1));
       if (g.suspicion >= 1) {
-        if (g.ai !== 'alert' && g.ai !== 'report') raiseAlarm(g, bestA.tx, bestA.ty);
+        if (g.ai !== 'alert' && g.ai !== 'report') {
+          noteDetection();
+          raiseAlarm(g, bestA.tx, bestA.ty);
+        }
         if (GUARD_TYPES[g.type].alarm !== 'report') { g.ai = 'alert'; }
       } else if (g.suspicion > 0.42 && (g.ai === 'patrol' || g.ai === 'return')) {
         g.ai = 'investigate'; g.target = { tx: bestA.tx, ty: bestA.ty };
@@ -3382,7 +3670,7 @@ function updatePerception(dt) {
         state.alarmLevel = Math.max(0, state.alarmLevel - 1);
         state.alarmT = state.alarmLevel > 0 ? 25 : 0;
         toast(state.alarmLevel ? '전면 경보가 국지 경보로 내려갔다' : '경계가 풀렸다', 'good');
-        for (const g of guards) if (!g.unconscious && g.ai === 'alert') { g.ai = 'search'; g.searchT = 6; }
+        for (const g of guards) if (!g.unconscious && g.ai === 'alert') beginSearch(g, 6);
       }
     }
   }
@@ -3433,12 +3721,16 @@ function checkTraces(g) {
       return;
     }
   }
-  // 드러난 시신·기절자
+  // 드러난 시신·기절자·숨은 채 깨어난 자
   for (const o of guards) {
-    if (!o.unconscious || o.hidden || o.found) continue;
+    if (o.tied || o.found) continue;
+    if (!o.unconscious && !o.hidingAwake) continue;
     const dd = Math.hypot(o.tx - g.tx, o.ty - g.ty);
-    if (dd < 6 && hasSight(g.tx, g.ty, o.tx, o.ty, 1.6, 0.2)) {
+    const lim = o.hidden ? 3.6 : 6;
+    if (dd < lim && hasSight(g.tx, g.ty, o.tx, o.ty, 1.6, 0.2)) {
       o.found = true;
+      o.hidden = false;
+      o.hidingAwake = false;
       toast('쓰러진 경비가 발견됐다', 'bad');
       raiseAlarm(g, o.tx, o.ty, GUARD_TYPES[g.type].alarm === 'report' ? 'local' : null);
       return;
@@ -3466,16 +3758,23 @@ function updateGuards(dt) {
         break;
       }
       case 'lured': {
-        if (!g.path.length) { g.ai = 'search'; g.searchT = 3.2; g.lured = null; }
+        if (!g.path.length) { beginSearch(g, 3.2); g.lured = null; }
         break;
       }
       case 'investigate': {
-        if (!g.path.length) { g.ai = 'search'; g.searchT = 5.0; g.wait = 0.3; }
+        if (!g.path.length) { beginSearch(g, 5.0); g.wait = 0.3; }
         break;
       }
       case 'search': {
         g.searchT -= dt;
-        g.angle += dt * 1.15;
+        if (!g.path.length && g.searchT > 0) {
+          const c = g.lastSeen || { tx: g.tx, ty: g.ty };
+          g.searchHeading = (g.searchHeading || 0) + 0.9;
+          const rad = 4 + ((g.searchHeading * 3) % 3);
+          const dest = nearestOpen(c.tx + Math.cos(g.searchHeading) * rad, c.ty + Math.sin(g.searchHeading) * rad, g, 8);
+          if (dest) g.path = findPath(g.tx, g.ty, dest[0], dest[1], g);
+          else g.angle += dt * 1.15;
+        } else if (!g.path.length) g.angle += dt * 1.15;
         if (g.searchT <= 0) {
           if (state.alarmLevel > 0) { g.ai = 'alert'; }
           else {
@@ -3489,9 +3788,26 @@ function updateGuards(dt) {
         if (!g.path.length) g.ai = 'patrol';
         break;
       }
+      case 'relight': {
+        const lamp = g.relightLamp;
+        if (!lamp || lamp.on) { g.ai = 'return'; g.relightLamp = null; break; }
+        if (g.ai === 'lured' || g.ai === 'alert') { lamp.relighter = null; g.relightLamp = null; break; }
+        if (!g.path.length) {
+          if (Math.hypot(g.tx - lamp.tx, g.ty - lamp.ty) < 1.6) {
+            lamp.on = true; lamp.offAt = 0; lamp.relighter = null; g.relightLamp = null;
+            g.ai = 'return';
+            toast('신도가 등불을 다시 켰다', 'warn');
+            audio.tone(520, 0.1, 'sine', posVol(lamp.tx, lamp.ty, 0.04));
+          } else {
+            g.path = findPath(g.tx, g.ty, lamp.tx, lamp.ty, g);
+            if (!g.path.length) { g.ai = 'return'; lamp.relighter = null; g.relightLamp = null; }
+          }
+        }
+        break;
+      }
       case 'report': {
         const b = g.reportTo;
-        if (!b || b.unconscious) { g.ai = 'search'; g.searchT = 4; break; }
+        if (!b || b.unconscious) { beginSearch(g, 4); break; }
         if (Math.hypot(b.tx - g.tx, b.ty - g.ty) < 2.2) {
           localAlarm(b, g.lastSeen ? g.lastSeen.tx : g.tx, g.lastSeen ? g.lastSeen.ty : g.ty);
           g.ai = 'alert';
@@ -3503,14 +3819,15 @@ function updateGuards(dt) {
           if (g.lastSeen) {
             const p = findPath(g.tx, g.ty, g.lastSeen.tx, g.lastSeen.ty, g);
             if (p.length) g.path = p;
-            else { g.ai = 'search'; g.searchT = 7; }
+            else { beginSearch(g, 7); }
             g.lastSeen = null;
-          } else { g.ai = 'search'; g.searchT = 7; }
+          } else { beginSearch(g, 7); }
         }
         break;
       }
     }
     moveUnit(g, dt);
+    (g.visited || (g.visited = new Set())).add(idx(Math.round(g.tx), Math.round(g.ty)));
 
     /* 붙잡힘 판정 */
     if (g.ai === 'alert') {
@@ -3614,7 +3931,10 @@ function newState() {
     prisonersFreed: 0, prisonersRescued: 0, patientsHealed: 0,
     ended: false, grade: null, hintIdx: 0, tutorialStep: 0,
     islandGuardsRemoved: false, secretPathOpen: false, boatRepaired: false,
-    sluiceOpen: false, escaped: false, cameraLock: false
+    sluiceOpen: false, escaped: false, cameraLock: false,
+    reinforcements: false, reinforceCount: 0, waypointMode: false, showSoundFx: true,
+    boxMode: false, squad: ['haeju'], difficulty: chosenDiff,
+    stats: { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] }
   };
 }
 
@@ -3743,10 +4063,13 @@ function interact(a, fromQueue) {
     return;
   }
   if (n.type === 'body') {
-    if (a.id !== 'mujin') { return hideBody(a, o); }
-    o.carriedBy = a; a.carrying = o; o.hidden = false;
-    toast('경비를 업었다 — 갈대나 어두운 곳에 내려놓아라', 'good');
-    return;
+    if (a.id === 'mujin') {
+      if (!o.tied) return tieGuard(a, o);
+      o.carriedBy = a; a.carrying = o; o.hidden = false;
+      toast('경비를 업었다 — 갈대나 어두운 곳에 내려놓아라', 'good');
+      return;
+    }
+    return hideBody(a, o);
   }
   if (n.type === 'heal') {
     if (a.id !== 'haeju') { toast('치료는 해주만 할 수 있다', 'warn'); return; }
@@ -3907,10 +4230,10 @@ function interact(a, fromQueue) {
 
 function doorAction(a, d) {
   if (d.broken) { toast('이미 부서진 문이다', 'warn'); return; }
-  if (d.open) { d.open = false; d.noticed = false; toast(d.label + '을 닫았다'); audio.tone(200, 0.07, 'sine', 0.035); return; }
-  if (!d.locked) { d.open = true; toast(d.label + '을 열었다'); audio.tone(320, 0.08, 'sine', 0.035); return; }
+  if (d.open) { d.open = false; d.noticed = false; toast(d.label + '을 닫았다'); audio.door(false, a.tx, a.ty); return; }
+  if (!d.locked) { d.open = true; toast(d.label + '을 열었다'); audio.door(true, a.tx, a.ty); return; }
   if (a.id === 'haeju' && a.disguise > state.now) {
-    d.open = true; toast(d.label + ' — 봉사자 행세로 통과했다', 'good'); audio.tone(360, 0.09, 'triangle', 0.04); return;
+    d.open = true; toast(d.label + ' — 봉사자 행세로 통과했다', 'good'); audio.door(true, a.tx, a.ty); return;
   }
   if (a.id === 'mujin') {
     startAction(a, 1.2, () => {
@@ -3919,6 +4242,7 @@ function doorAction(a, d) {
       witnessViolence(a.tx, a.ty, 6);
       toast('문을 부쉈다 — 큰 소음', 'warn');
       audio.noiseBurst(0.22, 0.08, 700);
+      audio.tone(90, 0.18, 'sawtooth', 0.05);
     }, '문을 뜯는 중');
     return;
   }
@@ -3948,6 +4272,10 @@ function awardEvidence(id) {
   const e = EVIDENCE.find(x => x.id === id);
   if (!e || state.evidence[id]) return;
   state.evidence[id] = true;
+  if (state.stats) {
+    state.stats.evTimes = state.stats.evTimes || [];
+    state.stats.evTimes.push({ id, t: MISSION_SECONDS - state.timeLeft });
+  }
   toast('증거 확보: ' + e.name + ' (' + Object.keys(state.evidence).length + '/9)', 'good');
   audio.tone(760, 0.14, 'triangle', 0.05);
   updateHUD();
@@ -4014,7 +4342,9 @@ function useAbility(a, fromQueue) {
     const fromGuard = Math.atan2(a.ty - g.ty, a.tx - g.tx);
     if (angleDiff(fromGuard, g.angle) < 1.75 && g.ai !== 'lured') { toast('정면이다 — 뒤쪽에서 접근해야 한다', 'warn'); return; }
     g.unconscious = true; g.path = []; g.ai = 'down'; g.suspicion = 0;
+    g.tied = false; g.wakeAt = state.now + wakeMs(); g.hidingAwake = false;
     a.coolUntil = state.now + cool;
+    if (state.stats) state.stats.knockouts = (state.stats.knockouts || 0) + 1;
     emitNoise(a.tx, a.ty, 3.4, '제압', a);
     witnessViolence(a.tx, a.ty, 6.5);
     toast('무음 제압', 'good');
@@ -4105,6 +4435,7 @@ function doLure(a, tx, ty) {
   }
   state.noises.push({ tx, ty, r: 12, life: 1.1, max: 1.1, type: '방울' });
   toast(n ? n + '명이 방울 소리를 따라간다' : '아무도 듣지 못했다', n ? 'good' : 'warn');
+  if (n && state.stats) state.stats.lures = (state.stats.lures || 0) + 1;
 }
 
 function doSend(a, g, tx, ty) {
@@ -4113,6 +4444,7 @@ function doSend(a, g, tx, ty) {
   const p = findPath(g.tx, g.ty, tx, ty, g);
   if (!p.length) { toast('그곳으로 보낼 수 없다', 'warn'); return; }
   g.ai = 'lured'; g.lured = { tx, ty }; g.path = p; g.talkT = 0.8;
+  if (state.stats) state.stats.lures = (state.stats.lures || 0) + 1;
   toast('"저쪽에 손이 필요합니다" — 경비를 보냈다', 'good');
 }
 
@@ -4424,7 +4756,11 @@ function missionComplete() {
   const r = gradeMission();
   state.grade = r;
   recordBest(r);
-  try { localStorage.removeItem(SAVE_KEY); } catch (err) { /* ignore */ }
+  try {
+    lsDel(SAVE_KEY);
+    lsDel(slotKey(0)); lsDel(slotKey(1)); lsDel(slotKey(2)); lsDel(slotKey('auto'));
+    lsDel('haemu-save-v1');
+  } catch (err) { /* ignore */ }
   refreshTitleMeta();
   showResult(true, r);
 }
@@ -4466,17 +4802,29 @@ function renderAgentCards() {
          <div class="acBar"><i data-bar="${a.id}"></i></div>
        </div>
        <em class="acKey">${d.key}</em>`;
-    b.onclick = () => selectAgent(a.id);
+    b.onclick = (ev) => selectAgent(a.id, !!(ev.shiftKey || ev.ctrlKey || ev.metaKey || state.boxMode));
     box.appendChild(b);
   }
   selectAgent(state.selected);
 }
 
-function selectAgent(id) {
+function selectAgent(id, add) {
   const a = agents.find(x => x.id === id);
   if (!a || !a.alive) { const n = aliveAgents()[0]; if (!n) return; id = n.id; }
   state.selected = id;
-  $$('.agentCard').forEach(e => e.classList.toggle('selected', e.dataset.id === id));
+  if (!state.squad) state.squad = [id];
+  if (add) {
+    if (state.squad.includes(id)) {
+      if (state.squad.length > 1) state.squad = state.squad.filter(x => x !== id);
+    } else state.squad.push(id);
+  } else {
+    state.squad = [id];
+  }
+  $$('.agentCard').forEach(e => {
+    const on = state.squad.includes(e.dataset.id);
+    e.classList.toggle('selected', e.dataset.id === state.selected);
+    e.classList.toggle('squad', on && e.dataset.id !== state.selected);
+  });
   const d = AGENT_DEFS[id];
   $('#infoPortrait').src = PORTRAITS[id];
   $('#infoName').textContent = d.name;
@@ -4488,6 +4836,25 @@ function selectAgent(id) {
   $('#secondLabel').textContent = SECOND_LABEL[id];
   $('#secondIcon').textContent = SECOND_ICON[id];
   updateHUD();
+}
+
+function selectedSquad() {
+  const ids = (state.squad && state.squad.length) ? state.squad : [state.selected];
+  return agents.filter(a => a.alive && ids.includes(a.id));
+}
+
+function moveSquad(tx, ty) {
+  const squad = selectedSquad();
+  if (!squad.length) return false;
+  if (squad.length === 1) return setPath(squad[0], tx, ty);
+  const offs = [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1]];
+  let ok = false;
+  squad.forEach((a, i) => {
+    const o = offs[i] || [i % 3, (i / 3) | 0];
+    const dest = nearestOpen(tx + o[0], ty + o[1], a, 5);
+    if (dest && setPath(a, dest[0], dest[1])) ok = true;
+  });
+  return ok;
 }
 
 const SECOND_LABEL = { haeju: '대화 유인', mujin: '밧줄 걸기', dochi: '어망 함정', wolsim: '향 연기' };
@@ -4547,6 +4914,10 @@ function updateHUD() {
     else $('#disguiseTier').textContent = '';
   }
   $('#planBtn').classList.toggle('active', state.planning);
+  const way = $('#wayBtn');
+  if (way) way.classList.toggle('active', !!state.waypointMode);
+  const sq = $('#squadBtn');
+  if (sq) sq.classList.toggle('active', !!state.boxMode);
   $('#execBtn').disabled = !state.queued;
   $('#clearBtn').disabled = !state.queued;
   $('#queueCount').textContent = state.queued ? state.queued : '';
@@ -4690,6 +5061,10 @@ function showResult(win, r) {
       <div><b>${state.noKill ? '전원' : '손실'}</b><span>대원 생존</span></div>
       <div><b>${state.everAlarmed ? '있음' : '없음'}</b><span>경보</span></div>
       <div><b>${state.civilianDeaths}</b><span>희생자</span></div>
+      <div><b>${(state.stats && state.stats.knockouts) || 0}</b><span>제압</span></div>
+      <div><b>${(state.stats && state.stats.detections) || 0}</b><span>발각</span></div>
+      <div><b>${(state.stats && state.stats.lures) || 0}</b><span>유인</span></div>
+      <div><b>${Math.round(((state.stats && state.stats.dist) || 0))}</b><span>이동 칸</span></div>
     </div>`;
   }
   $('#resultText').innerHTML = detail + '<p>' + r.body + '</p>';
@@ -4705,7 +5080,7 @@ const HELP_HTML = `
     <li><b>길게 누르기 / 두 번 탭</b> 상호작용</li>
     <li><b>끌기 · 두 손가락</b> 화면 이동 · 확대</li>
     <li><b>계책</b> 시간 정지 · <b>일제 실행</b> 예약 명령을 한꺼번에</li>
-    <li>키보드: 1~4 대원 · C 웅크리기 · Q/X 기술 · E 조사 · Space 계책</li>
+    <li>키보드: 1~4 대원 · C 웅크리기 · Q/X 기술 · E 조사 · Space 계책 · <b>Shift+클릭</b> 경유 · <b>Ctrl+끌기</b> 부대 선택 · <b>F5</b> 저장 · <b>F8</b> 불러오기</li>
   </ul>
 </div>
 <div class="hcol">
@@ -4716,7 +5091,10 @@ const HELP_HTML = `
     <li>등불 아래는 잘 보인다. 등불은 끌 수 있지만 경비가 알아챈다.</li>
     <li>지형마다 발소리가 다르다. 나무 바닥은 크고, 갯벌과 갈대는 작다.</li>
     <li>갯벌에는 <b>발자국</b>이 남는다. 물이 들어오면 지워진다.</li>
-    <li>열린 문·꺼진 등불·사라진 경비는 모두 흔적이다. 쓰러뜨린 경비는 숨겨라.</li>
+    <li>기절한 경비는 잠시 뒤 깨어 보고하러 달린다. 무진이 새끼줄로 묶거나 갈대에 숨겨라.</li>
+    <li>집사가 변장한 해주를 세우면 3초 문답. 움직이면 즉시 들킨다. 문답 2단계는 그냥 통과.</li>
+    <li>끈 등불은 12초 뒤 신도가 다시 켠다. 신도를 유인하면 어둠이 유지된다.</li>
+    <li>시야 안쪽(진한 부채)은 즉시 들키고, 바깥(연한 부채)은 웅크리면 지나갈 수 있다.</li>
     <li>의심은 관심 → 확인 → 추적 → 국지 경보 → 전면 경보로 오른다.</li>
     <li>신도는 스스로 경보를 못 울리고 상급자에게 달려간다. 사제는 종으로 전면 경보를 울린다.</li>
   </ul>
@@ -4794,12 +5172,13 @@ function applyPhoneChrome() {
 }
 
 /* ---------- 시야 원뿔 ---------- */
-function guardCone(g) {
+function guardCone(g, rangeScale, fovScale) {
   const t = GUARD_TYPES[g.type];
-  const range = fogRange(g.ai === 'alert' ? t.range * 1.25 : t.range);
-  const fov = g.ai === 'alert' ? t.fov * 1.3 : (g.talkT > 0 ? t.fov * 0.55 : t.fov);
-  if (g.coneT > state.now && g.cone && Math.abs(g.coneAngle - g.angle) < 0.05) return g.cone;
-  g.coneT = state.now + 110; g.coneAngle = g.angle;
+  const range = fogRange(g.ai === 'alert' ? t.range * 1.25 : t.range) * (rangeScale || 1);
+  const fov = (g.ai === 'alert' ? t.fov * 1.3 : (g.talkT > 0 ? t.fov * 0.55 : t.fov)) * (fovScale || 1);
+  const cacheKey = (rangeScale || 1) + ':' + (fovScale || 1);
+  if (g.coneT > state.now && g.coneKey === cacheKey && g.cone && Math.abs(g.coneAngle - g.angle) < 0.05) return g.cone;
+  g.coneT = state.now + 110; g.coneAngle = g.angle; g.coneKey = cacheKey;
   const pts = [];
   const N = 22;
   for (let k = 0; k <= N; k++) {
@@ -4824,27 +5203,35 @@ function guardCone(g) {
   return pts;
 }
 
+function fillCone(g2, g, pts, fill, stroke) {
+  const gz = groundZ(g.tx, g.ty);
+  g2.beginPath();
+  const o = { x: isoX(g.tx + .5, g.ty + .5), y: isoY(g.tx + .5, g.ty + .5, gz) };
+  g2.moveTo(o.x, o.y);
+  for (const p of pts) {
+    const z = groundZ(p[0], p[1]);
+    g2.lineTo(isoX(p[0] + .5, p[1] + .5), isoY(p[0] + .5, p[1] + .5, z));
+  }
+  g2.closePath();
+  g2.fillStyle = fill; g2.fill();
+  g2.strokeStyle = stroke; g2.lineWidth = 1.0; g2.stroke();
+}
+
 function drawVisionCones(g2) {
   const b = visibleTileBounds();
   for (const g of guards) {
     if (g.unconscious || g.hidden || g.netted > 0) continue;
     if (g.tx < b.xMin - 14 || g.tx > b.xMax + 14 || g.ty < b.yMin - 14 || g.ty > b.yMax + 14) continue;
-    const pts = guardCone(g);
-    const gz = groundZ(g.tx, g.ty);
-    g2.save();
-    g2.beginPath();
-    const o = { x: isoX(g.tx + .5, g.ty + .5), y: isoY(g.tx + .5, g.ty + .5, gz) };
-    g2.moveTo(o.x, o.y);
-    for (const p of pts) {
-      const z = groundZ(p[0], p[1]);
-      g2.lineTo(isoX(p[0] + .5, p[1] + .5), isoY(p[0] + .5, p[1] + .5, z));
-    }
-    g2.closePath();
     const hot = g.ai === 'alert', warm = g.suspicion > 0.35;
-    g2.fillStyle = hot ? 'rgba(220,70,48,.10)' : warm ? 'rgba(214,168,72,.08)' : 'rgba(214,176,92,.045)';
-    g2.fill();
-    g2.strokeStyle = hot ? 'rgba(255,120,88,.28)' : warm ? 'rgba(232,196,110,.16)' : 'rgba(232,196,120,.10)';
-    g2.lineWidth = 1.0; g2.stroke();
+    const outer = guardCone(g, 1, 1);
+    g2.save();
+    fillCone(g2, g, outer,
+      hot ? 'rgba(220,70,48,.055)' : warm ? 'rgba(214,168,72,.045)' : 'rgba(214,176,92,.028)',
+      hot ? 'rgba(255,120,88,.16)' : warm ? 'rgba(232,196,110,.10)' : 'rgba(232,196,120,.07)');
+    const inner = guardCone(g, VISION.INNER_RANGE, VISION.INNER_FOV);
+    fillCone(g2, g, inner,
+      hot ? 'rgba(220,70,48,.13)' : warm ? 'rgba(214,168,72,.10)' : 'rgba(214,176,92,.06)',
+      hot ? 'rgba(255,120,88,.32)' : warm ? 'rgba(232,196,110,.20)' : 'rgba(232,196,120,.12)');
     g2.restore();
   }
 }
@@ -4917,15 +5304,50 @@ function drawDecals(g2) {
 }
 
 /* ---------- 이동 경로 ---------- */
+const hoverPath = { pts: [], hot: [], t: 0, tx: 0, ty: 0 };
+
+function pathTileHot(tx, ty) {
+  for (const g of guards) {
+    if (g.unconscious || g.hidden || g.netted > 0) continue;
+    const t = GUARD_TYPES[g.type];
+    const range = fogRange(g.ai === 'alert' ? t.range * 1.25 : t.range);
+    const d = Math.hypot(g.tx - tx, g.ty - ty);
+    if (d > range) continue;
+    const fov = g.ai === 'alert' ? t.fov * 1.3 : t.fov;
+    if (angleDiff(Math.atan2(ty - g.ty, tx - g.tx), g.angle) > fov) continue;
+    if (hasSight(g.tx, g.ty, tx, ty)) return true;
+  }
+  return false;
+}
+
+function updateHoverPath(px, py) {
+  if (!state || !state.running) return;
+  const now = performance.now();
+  if (now - hoverPath.t < 60) return;
+  hoverPath.t = now;
+  const a = selectedAgent();
+  if (!a || !a.alive) { hoverPath.pts = []; return; }
+  const p = screenToTile(px, py);
+  const tx = p.tx, ty = p.ty;
+  if (Math.abs(tx - hoverPath.tx) < 0.35 && Math.abs(ty - hoverPath.ty) < 0.35 && hoverPath.pts.length) return;
+  hoverPath.tx = tx; hoverPath.ty = ty;
+  const pts = findPath(a.tx, a.ty, tx, ty, a);
+  hoverPath.pts = pts;
+  hoverPath.hot = pts.map(q => pathTileHot(q.tx, q.ty));
+}
+
 function drawPaths(g2) {
   for (const a of agents) {
     if (!a.alive) continue;
     const pts = [];
     if (a.path.length) { pts.push({ tx: a.tx, ty: a.ty }, ...a.path); }
-    if (pts.length < 2 && !a.queue.length) continue;
+    if (a.queue) {
+      for (const c of a.queue) if (c.type === 'move') pts.push({ tx: c.tx, ty: c.ty });
+    }
+    if (pts.length < 2) continue;
     const sel = state.selected === a.id;
     g2.save();
-    g2.strokeStyle = a.queue.length ? 'rgba(232,196,98,.75)' : (sel ? 'rgba(120,200,238,.72)' : 'rgba(120,200,238,.28)');
+    g2.strokeStyle = a.queue && a.queue.length ? 'rgba(232,196,98,.75)' : (sel ? 'rgba(120,200,238,.72)' : 'rgba(120,200,238,.28)');
     g2.lineWidth = sel ? 2.2 : 1.5;
     g2.setLineDash([5, 7]); g2.lineDashOffset = -(state.now / 42) % 12;
     g2.beginPath();
@@ -4935,6 +5357,30 @@ function drawPaths(g2) {
       k ? g2.lineTo(x, y) : g2.moveTo(x, y);
     });
     g2.stroke(); g2.restore();
+  }
+  if (hoverPath.pts && hoverPath.pts.length) {
+    const a = selectedAgent();
+    const start = a ? [{ tx: a.tx, ty: a.ty }] : [];
+    const pts = start.concat(hoverPath.pts);
+    g2.save();
+    g2.strokeStyle = 'rgba(200,214,220,.42)';
+    g2.lineWidth = 1.6;
+    g2.setLineDash([4, 8]); g2.lineDashOffset = -(state.now / 50) % 12;
+    g2.beginPath();
+    pts.forEach((p, k) => {
+      const z = groundZ(p.tx, p.ty);
+      const x = isoX(p.tx + .5, p.ty + .5), y = isoY(p.tx + .5, p.ty + .5, z);
+      k ? g2.lineTo(x, y) : g2.moveTo(x, y);
+    });
+    g2.stroke();
+    hoverPath.pts.forEach((p, i) => {
+      if (!hoverPath.hot[i]) return;
+      const z = groundZ(p.tx, p.ty);
+      const x = isoX(p.tx + .5, p.ty + .5), y = isoY(p.tx + .5, p.ty + .5, z);
+      g2.fillStyle = 'rgba(232,86,64,.72)';
+      g2.beginPath(); g2.ellipse(x, y, 4.2, 2.2, 0, 0, TAU); g2.fill();
+    });
+    g2.restore();
   }
 }
 
@@ -5144,6 +5590,7 @@ function render() {
   pstep('fog', () => drawFog(g2));
   pstep('vig', () => drawVignette(g2));
   pstep('grade', () => drawGrade(g2));
+  pstep('selbox', () => drawSelectBox(g2));
   if (state.debug) drawDebugOverlay(g2);
 }
 
@@ -5178,6 +5625,7 @@ function update(dt) {
   updateActions(dt);
   for (const a of agents) {
     if (!a.alive) continue;
+    if (a.checkHold > 0) { a.path = []; continue; }
     if (a.action) continue;
     if (a.moveT > 0) a.moveT -= dt;
     moveUnit(a, dt);
@@ -5189,6 +5637,8 @@ function update(dt) {
   updateGuards(dt);
   updateCivilians(dt);
   updatePerception(dt);
+  updateChecks(dt);
+  updateLamps();
   if (cam.shake > 0) cam.shake = Math.max(0, cam.shake - dt * 2.4);
 }
 
@@ -5254,15 +5704,24 @@ function onCanvasDown(e) {
   ptr.down = true; ptr.moved = false;
   ptr.sx = ptr.lx = p.x; ptr.sy = ptr.ly = p.y;
   ptr.t0 = performance.now(); ptr.button = e.button;
+  ptr.box = null;
+  const boxOn = !!(e.ctrlKey || e.metaKey || state.boxMode);
+  if (boxOn && e.button !== 2) ptr.box = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
   canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
   if (e.button === 2) return;
   clearTimeout(ptr.longT);
-  ptr.longT = setTimeout(() => { if (ptr.down && !ptr.moved) { doInteractAt(ptr.sx, ptr.sy); ptr.moved = true; } }, 480);
+  if (!ptr.box) ptr.longT = setTimeout(() => { if (ptr.down && !ptr.moved) { doInteractAt(ptr.sx, ptr.sy); ptr.moved = true; } }, 480);
 }
 
 function onCanvasMove(e) {
-  if (!ptr.down) return;
   const p = ptrXY(e);
+  if (!ptr.down) { updateHoverPath(p.x, p.y); return; }
+  if (ptr.box) {
+    ptr.box.x1 = p.x; ptr.box.y1 = p.y;
+    if (Math.hypot(p.x - ptr.sx, p.y - ptr.sy) > 6) ptr.moved = true;
+    ptr.lx = p.x; ptr.ly = p.y;
+    return;
+  }
   const dx = p.x - ptr.lx, dy = p.y - ptr.ly;
   if (Math.hypot(p.x - ptr.sx, p.y - ptr.sy) > (isPhone() ? 14 : 9)) {
     ptr.moved = true; clearTimeout(ptr.longT);
@@ -5281,6 +5740,10 @@ function onCanvasUp(e) {
   if (!ptr.down) return;
   ptr.down = false;
   const p = ptrXY(e);
+  if (ptr.box) {
+    const box = ptr.box; ptr.box = null;
+    if (ptr.moved) { selectAgentsInBox(box); return; }
+  }
   if (ptr.moved) return;
   if (ptr.button === 2 || e.button === 2) { doInteractAt(p.x, p.y); return; }
   if (isPhone()) {
@@ -5301,7 +5764,45 @@ function onCanvasUp(e) {
 }
 function onCanvasCancel() {
   clearTimeout(ptr.longT); clearTimeout(ptr.clickT);
-  ptr.down = false; ptr.moved = false;
+  ptr.down = false; ptr.moved = false; ptr.box = null;
+}
+
+function selectAgentsInBox(box) {
+  const x0 = Math.min(box.x0, box.x1), x1 = Math.max(box.x0, box.x1);
+  const y0 = Math.min(box.y0, box.y1), y1 = Math.max(box.y0, box.y1);
+  if (x1 - x0 < 8 || y1 - y0 < 8) return;
+  const hit = [];
+  for (const a of agents) {
+    if (!a.alive) continue;
+    const p = unitScreen(a);
+    const s = toScreen(p.x, p.y);
+    if (s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1) hit.push(a.id);
+  }
+  if (!hit.length) { toast('그 칸에 대원이 없다', 'warn'); return; }
+  state.squad = hit;
+  state.selected = hit[0];
+  selectAgent(hit[0], false);
+  state.squad = hit;
+  $$('.agentCard').forEach(e => {
+    e.classList.toggle('selected', e.dataset.id === state.selected);
+    e.classList.toggle('squad', state.squad.includes(e.dataset.id) && e.dataset.id !== state.selected);
+  });
+  toast(hit.length + '명 선택', 'plan');
+}
+
+function drawSelectBox(g2) {
+  if (!ptr.box) return;
+  const b = ptr.box;
+  const x = Math.min(b.x0, b.x1), y = Math.min(b.y0, b.y1);
+  const w = Math.abs(b.x1 - b.x0), h = Math.abs(b.y1 - b.y0);
+  g2.save();
+  g2.strokeStyle = 'rgba(226,192,114,.85)';
+  g2.fillStyle = 'rgba(226,192,114,.12)';
+  g2.lineWidth = 1.4;
+  g2.setLineDash([5, 4]);
+  g2.fillRect(x, y, w, h);
+  g2.strokeRect(x, y, w, h);
+  g2.restore();
 }
 
 function doClickAt(px, py) {
@@ -5318,7 +5819,7 @@ function doClickAt(px, py) {
   /* 대원 클릭 = 선택 */
   let hit = null, hd = 1.5;
   for (const a of agents) { if (!a.alive) continue; const d = Math.hypot(a.tx - tx, a.ty - ty); if (d < hd) { hd = d; hit = a; } }
-  if (hit) { selectAgent(hit.id); return; }
+  if (hit) { selectAgent(hit.id, !!(window.__haemuShift || window.__haemuCtrl || state.boxMode)); return; }
   /* 경비 클릭 = 정보 */
   for (const g of guards) {
     if (g.hidden) continue;
@@ -5332,16 +5833,23 @@ function doClickAt(px, py) {
   const a = selectedAgent();
   if (!a || !a.alive) return;
   if (!inMap(Math.round(tx), Math.round(ty))) return;
-  if (state.planning) {
+  const shift = !!(window.__haemuShift) || !!(state.waypointMode);
+  const squad = selectedSquad();
+  if (state.planning || shift) {
     const path = findPath(a.tx, a.ty, tx, ty, a);
     if (!path.length) { toast('그곳으로 가는 길이 없습니다', 'warn'); return; }
-    queueCmd(a, { type: 'move', tx, ty }, '이동 예약');
+    if (squad.length > 1 && !state.planning) {
+      squad.forEach(u => queueCmd(u, { type: 'move', tx, ty }, '경유 예약'));
+    } else {
+      queueCmd(a, { type: 'move', tx, ty }, shift && !state.planning ? '경유 예약' : '이동 예약');
+    }
     state.markers.push({ tx, ty, life: 1.0, max: 1.0, color: '#e8c462' });
     a.planPath = path;
     return;
   }
   a.action = null;
-  if (setPath(a, tx, ty)) state.markers.push({ tx, ty, life: 0.8, max: 0.8, color: '#7cc8ec' });
+  const moved = squad.length > 1 ? moveSquad(tx, ty) : setPath(a, tx, ty);
+  if (moved) state.markers.push({ tx, ty, life: 0.8, max: 0.8, color: '#7cc8ec' });
   else toast('그곳으로 가는 길이 없습니다', 'warn');
 }
 
@@ -5405,6 +5913,8 @@ function onKeyDown(e) {
     return;
   }
   if (uiBlocked()) {
+    if (e.key === 'F5') { e.preventDefault(); writeSave(false, 0); return; }
+    if (e.key === 'F8') { e.preventDefault(); quickLoad(0); return; }
     if (e.key === 'Enter') {
       const ts = $('#titleScreen');
       if (ts && !ts.classList.contains('hide')) {
@@ -5416,11 +5926,15 @@ function onKeyDown(e) {
     return;
   }
   keys.add(e.code);
+  if (e.key === 'Shift') window.__haemuShift = true;
+  if (e.key === 'Control' || e.key === 'Meta') window.__haemuCtrl = true;
   const k = e.key.toLowerCase();
   if (e.code === 'Space') { e.preventDefault(); togglePlan(); return; }
   if (e.key === 'Enter') { executePlan(); return; }
   if (e.key === 'Backspace') { e.preventDefault(); clearPlan(); return; }
   if (e.key === 'Tab') { e.preventDefault(); cycleAgent(); return; }
+  if (e.key === 'F5') { e.preventDefault(); writeSave(false, 0); return; }
+  if (e.key === 'F8') { e.preventDefault(); quickLoad(0); return; }
   if (k === 'q') useAbility();
   else if (k === 'x') useSecond();
   else if (k === 'e') interact();
@@ -5433,7 +5947,27 @@ function onKeyDown(e) {
   else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
   else if (e.key === 'F9') { state.debug = !state.debug; }
 }
-function onKeyUp(e) { keys.delete(e.code); }
+function onKeyUp(e) {
+  keys.delete(e.code);
+  if (e.key === 'Shift') window.__haemuShift = false;
+  if (e.key === 'Control' || e.key === 'Meta') window.__haemuCtrl = false;
+}
+
+function quickLoad(slot) {
+  const s = readSave(slot == null ? 'latest' : slot);
+  if (!s) { toast('불러올 밀명이 없다', 'warn'); return false; }
+  const ts = $('#titleScreen');
+  if (ts && !ts.classList.contains('hide')) {
+    continueMission();
+    return true;
+  }
+  setMenuPause(false);
+  rebuildWorld();
+  applySave(s);
+  beginMission({ quiet: true });
+  toast('밀명을 되돌렸다 — 남은 시간 ' + fmtTime(s.timeLeft), 'plan');
+  return true;
+}
 
 function cycleAgent() {
   const alive = aliveAgents();
@@ -5447,10 +5981,28 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
-const SAVE_KEY = 'haemu-save-v1';
+const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 3;
 let lastSaveAt = 0;
+const memStore = {};
+
+function lsGet(k) {
+  try { const v = localStorage.getItem(k); if (v != null) return v; } catch (err) { /* ignore */ }
+  return memStore[k] || null;
+}
+function lsSet(k, v) {
+  try { localStorage.setItem(k, v); return true; }
+  catch (err) { memStore[k] = v; return false; }
+}
+function lsDel(k) {
+  try { localStorage.removeItem(k); } catch (err) { /* ignore */ }
+  delete memStore[k];
+}
+function slotKey(slot) {
+  if (slot === 'auto' || slot == null) return SAVE_KEY + ':auto';
+  return SAVE_KEY + ':' + slot;
+}
 
 function uiBlocked() {
   const ts = $('#titleScreen');
@@ -5501,15 +6053,28 @@ function snapshotSave() {
     hasHairpin: !!state.hasHairpin,
     hasSail: !!state.hasSail,
     selected: state.selected,
+    squad: (state.squad || [state.selected]).slice(),
+    difficulty: state.difficulty || 'normal',
+    stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
+    showSoundFx: state.showSoundFx !== false,
+    reinforcements: !!state.reinforcements,
+    reinforceCount: state.reinforceCount || 0,
+    ropes: Array.from(state.ropes || []),
+    nets: (state.nets || []).map(n => ({ tx: n.tx, ty: n.ty, life: n.life, armed: n.armed })),
     agents: agents.map(a => ({
       id: a.id, tx: a.tx, ty: a.ty, angle: a.angle, alive: a.alive,
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
-      disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious
+      disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
+      carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
+      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
       unconscious: !!g.unconscious, hidden: !!g.hidden, ai: g.ai,
-      suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught
+      suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
+      tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
+      reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
+      patrol: g.patrol, pi: g.pi || 0
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -5517,19 +6082,23 @@ function snapshotSave() {
       dead: !!c.dead, panic: c.panic || 0
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
-    doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken })),
+    doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
+    lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
     vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
   };
 }
 
-function writeSave(silent) {
+function writeSave(silent, slot) {
   if (!state || state.ended) return false;
+  const key = slotKey(slot == null ? 0 : slot);
   try {
-    const prev = localStorage.getItem(SAVE_KEY);
-    if (prev) localStorage.setItem(SAVE_KEY + ':bak', prev);
-    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshotSave()));
+    const json = JSON.stringify(snapshotSave());
+    const prev = lsGet(key);
+    if (prev) lsSet(key + ':bak', prev);
+    const ok = lsSet(key, json);
+    lsSet(SAVE_KEY + ':last', String(slot == null ? 0 : slot));
     lastSaveAt = Date.now();
-    if (!silent) toast('중간 저장했다', 'plan');
+    if (!silent) toast(ok ? (slot === 'auto' ? '자동 저장' : '밀명을 적었다 (F5)') : '이 기기에만 잠시 남겼다', 'plan');
     refreshTitleMeta();
     return true;
   } catch (err) {
@@ -5538,14 +6107,32 @@ function writeSave(silent) {
   }
 }
 
-function readSave() {
+function parseSaveRaw(raw) {
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
     const s = JSON.parse(raw);
-    if (!s || s.version !== SAVE_VERSION) return null;
+    if (!s || s.version < 1 || s.version > SAVE_VERSION) return null;
     return s;
   } catch (err) { return null; }
+}
+function readSave(slot) {
+  if (slot != null && slot !== 'latest') return parseSaveRaw(lsGet(slotKey(slot)));
+  const last = lsGet(SAVE_KEY + ':last');
+  const order = [];
+  if (last != null) order.push(last);
+  order.push('auto', 0, 1, 2);
+  /* 예전 한 칸 저장 */
+  const legacy = parseSaveRaw(lsGet('haemu-save-v1'));
+  let best = null;
+  const seen = new Set();
+  for (const sl of order) {
+    if (seen.has(String(sl))) continue;
+    seen.add(String(sl));
+    const s = parseSaveRaw(lsGet(slotKey(sl)));
+    if (s && (!best || (s.savedAt || 0) > (best.savedAt || 0))) best = s;
+  }
+  if (legacy && (!best || (legacy.savedAt || 0) > (best.savedAt || 0))) best = legacy;
+  return best;
 }
 
 function readBest() {
@@ -5598,6 +6185,14 @@ function applySave(s) {
   state.running = true;
   state.planning = false;
   state.menuPause = false;
+  state.reinforcements = !!s.reinforcements;
+  state.reinforceCount = s.reinforceCount || (s.reinforcements ? 1 : 0);
+  state.difficulty = s.difficulty || state.difficulty || chosenDiff;
+  state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
+  state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
+  state.showSoundFx = s.showSoundFx !== false;
+  for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
+  state.queued = 0;
   if (s.secretPathOpen) {
     state.secretPathOpen = false;
     if (typeof openSecretPath === 'function') openSecretPath();
@@ -5615,13 +6210,31 @@ function applySave(s) {
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle; u.alive = rec.alive;
     u.crouch = rec.crouch; u.exposure = rec.exposure; u.disguise = rec.disguise;
     u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
+    u.queue = []; u.action = null;
+    u.coolUntil = rec.coolUntil || 0;
+    u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
+    u.carrying = null;
   }
   const gg = byId(guards);
   for (const rec of s.guards || []) {
-    const u = gg.get(rec.id); if (!u) continue;
+    let u = gg.get(rec.id);
+    if (!u) {
+      const t = GUARD_TYPES[rec.type] || GUARD_TYPES.soldier;
+      u = baseUnit({
+        kind: 'guard', id: rec.id, type: rec.type, tx: rec.tx, ty: rec.ty,
+        patrol: rec.patrol || [[rec.tx, rec.ty]], pi: rec.pi || 0,
+        speed: t.speed, ai: rec.ai || 'patrol', suspicion: rec.suspicion || 0,
+        netted: 0, home: [rec.tx, rec.ty], lured: null, talkT: 0,
+        reinforce: !!rec.reinforce
+      });
+      guards.push(u);
+      gg.set(rec.id, u);
+    }
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle;
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
+    u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
+    u.lastSeen = rec.lastSeen || null;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
   const cc = byId(civilians);
@@ -5639,8 +6252,22 @@ function applySave(s) {
   for (const rec of s.doors || []) di.set(rec.i, rec);
   for (const d of map.doors) {
     const rec = di.get(d.i);
-    if (rec) { d.open = rec.open; d.broken = rec.broken; }
+    if (rec) { d.open = rec.open; d.broken = rec.broken; if (rec.locked != null) d.locked = rec.locked; }
   }
+  for (const rec of s.lamps || []) {
+    const l = map.lamps.find(x => x.tx === rec.tx && x.ty === rec.ty);
+    if (l) { l.on = rec.on; l.noticed = false; }
+  }
+  state.ropes = new Set(s.ropes || []);
+  for (const i of state.ropes) { if (i >= 0 && i < map.solid.length) map.solid[i] = 0; }
+  state.nets = (s.nets || []).map(n => Object.assign({ max: 120, armed: true }, n));
+  const gBy = byId(guards);
+  for (const rec of s.agents || []) {
+    if (!rec.carrying) continue;
+    const u = ag.get(rec.id), body = gBy.get(rec.carrying);
+    if (u && body) { u.carrying = body; body.carriedBy = u; }
+  }
+  if (typeof chunkCache !== 'undefined') { chunkCache.clear(); chunkLRU.length = 0; }
   if (s.valeSpawned) {
     if (!vale) spawnVale();
     if (vale && s.vale) {
@@ -5665,7 +6292,7 @@ function autosave(reason) {
   if (ts && !ts.classList.contains('hide')) return;
   const now = Date.now();
   if (reason !== 'force' && now - lastSaveAt < 4000) return;
-  writeSave(true);
+  writeSave(true, 'auto');
 }
 
 function refreshTitleMeta() {
@@ -5697,7 +6324,7 @@ function setMenuPause(on) {
 
 function goTitle() {
   setMenuPause(false);
-  if (state && !state.ended) writeSave(true);
+  if (state && !state.ended) writeSave(true, 'auto');
   const ts = $('#titleScreen');
   if (ts) ts.classList.remove('hide');
   if (state) { state.paused = true; state.running = true; }
@@ -5828,6 +6455,18 @@ function boot() {
   $('#interactBtn').onclick = () => interact();
   $('#waitBtn').onclick = () => { const a = selectedAgent(); if (!a) return; if (state.planning) queueCmd(a, { type: 'wait', time: 1.5 }, '1.5초 대기 예약'); else { a.wait = 1.5; toast('잠시 멈춘다'); } };
   $('#planBtn').onclick = () => togglePlan();
+  const wayBtn = $('#wayBtn');
+  if (wayBtn) wayBtn.onclick = () => {
+    state.waypointMode = !state.waypointMode;
+    updateHUD();
+    toast(state.waypointMode ? '경유 — 땅을 누르면 경로가 쌓인다' : '경유 해제', 'plan');
+  };
+  const squadBtn = $('#squadBtn');
+  if (squadBtn) squadBtn.onclick = () => {
+    state.boxMode = !state.boxMode;
+    updateHUD();
+    toast(state.boxMode ? '부대 — 끌어 여러 명을 고른다' : '부대 해제', 'plan');
+  };
   $('#execBtn').onclick = () => executePlan();
   $('#clearBtn').onclick = () => clearPlan();
   const toggleObj = () => {
@@ -5891,6 +6530,33 @@ function boot() {
     mutePause.textContent = audio.muted ? '소리 켜기' : '소리 끄기';
     toast(audio.muted ? '음소거' : '소리 켜짐');
   };
+  const vol = $('#volSlider');
+  if (vol) {
+    vol.value = String(Math.round((audio.vol || 0.55) * 100));
+    vol.oninput = () => {
+      audio.setVolume((+vol.value) / 100);
+      if (audio.muted && +vol.value > 0) {
+        audio.setMuted(false);
+        $('#muteBtn').textContent = '🔊';
+      }
+    };
+  }
+  $$('#diffRow button').forEach(btn => {
+    btn.onclick = (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      chosenDiff = btn.getAttribute('data-diff') || 'normal';
+      try { localStorage.setItem('haemu-diff', chosenDiff); } catch (err) { /* ignore */ }
+      $$('#diffRow button').forEach(b => b.classList.toggle('on', b === btn));
+    };
+  });
+  try {
+    const savedD = localStorage.getItem('haemu-diff');
+    if (savedD && DIFFICULTY[savedD]) {
+      chosenDiff = savedD;
+      $$('#diffRow button').forEach(b => b.classList.toggle('on', b.getAttribute('data-diff') === chosenDiff));
+    }
+  } catch (err) { /* ignore */ }
+
   const tut = $('#tutorial'); if (tut) $('#tutClose').onclick = () => tut.remove();
 
   const pauseBtn = $('#pauseBtn');
@@ -5898,7 +6564,22 @@ function boot() {
   const resumeBtn = $('#resumeBtn');
   if (resumeBtn) resumeBtn.onclick = () => setMenuPause(false);
   const saveBtn = $('#saveBtn');
-  if (saveBtn) saveBtn.onclick = () => writeSave(false);
+  if (saveBtn) saveBtn.onclick = () => writeSave(false, 0);
+  const loadBtn = $('#loadBtn');
+  if (loadBtn) loadBtn.onclick = () => { setMenuPause(false); quickLoad('latest'); };
+  const soundFxBtn = $('#soundFxBtn');
+  if (soundFxBtn) soundFxBtn.onclick = () => {
+    state.showSoundFx = state.showSoundFx === false;
+    soundFxBtn.textContent = state.showSoundFx === false ? '파동 켜기' : '소리 파동';
+    toast(state.showSoundFx === false ? '소리 파동을 숨겼다' : '소리 파동을 보여 준다', 'plan');
+  };
+  $$('#saveSlots button').forEach(btn => {
+    btn.onclick = () => {
+      const sl = btn.getAttribute('data-slot');
+      writeSave(false, sl);
+      $$('#saveSlots button').forEach(b => b.classList.toggle('on', b === btn));
+    };
+  });
   const toTitleBtn = $('#toTitleBtn');
   if (toTitleBtn) toTitleBtn.onclick = () => goTitle();
 
@@ -5938,7 +6619,11 @@ function boot() {
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, MAP_W, MAP_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
-    beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY
+    beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
 }
 
