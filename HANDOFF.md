@@ -4,8 +4,10 @@
 
 플레이 파일: [`game/index.html`](game/index.html)  
 에셋: [`game/assets/`](game/assets/)  
+스크립트: [`scripts/`](scripts/)  
 현황: [`STATUS.md`](STATUS.md)  
-설계: [`docs/DESIGN.md`](docs/DESIGN.md)
+설계: [`docs/DESIGN.md`](docs/DESIGN.md)  
+백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
 
 Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이다. 저장소 `game/index.html`과 맞춰 둔다.
 
@@ -62,9 +64,11 @@ Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이
 - HANDOFF.md
 - STATUS.md
 - docs/DESIGN.md
+- docs/WHITEPAPER.md  (1·2차는 이미 반영. 3차만 남음)
 - game/index.html  (실제 게임. 단일 IIFE + Canvas)
 - game/asset-data.js
 - game/assets/
+- scripts/
 
 제약:
 - 맵 96×96 / 조수 공식 / 대원 역할 유지
