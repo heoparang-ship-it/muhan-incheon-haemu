@@ -7,8 +7,9 @@
 에셋: [`game/assets/`](game/assets/)  
 스크립트: [`scripts/`](scripts/)  
 현황: [`STATUS.md`](STATUS.md)  
+1장 출시 기준: [`docs/SHIP-CH1.md`](docs/SHIP-CH1.md)  
 설계: [`docs/DESIGN.md`](docs/DESIGN.md)  
-백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
+백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md) — 2026-08-18 기록. 1·2차는 반영됨.
 
 ---
 
@@ -43,10 +44,11 @@
 
 ## 아직 남은 것
 
-1. 걷기 4×4 시트 (지금은 4방향 대기 + 걷기 바운스)
-2. 담장(`kind==='wall'`)은 아직 코드 드로우
-3. 백서 3차: D13 2장 프레임, D14 리플레이 고스트, D15 접근성
-4. 실제 샘플 효과음 없음 (신스만)
+출시 순서는 [`docs/SHIP-CH1.md`](docs/SHIP-CH1.md). 백서 3차(D13–D15)는 1장 출시 밖.
+
+1. **1파** 대원·경비 걷기 4×4 시트 (지금은 4방향 대기 + 걷기 바운스)
+2. **2파** 크리티컬 패스 한 판 검증 + 모바일 첫 줄 힌트
+3. **3파** 담장 스프라이트, 샘플 효과음 — 출시를 막지 않음
 
 ---
 
@@ -57,10 +59,11 @@
 원본은 https://github.com/heoparang-ship-it/muhan-incheon-haemu (public).
 
 읽을 것:
+- docs/SHIP-CH1.md   (1장 출시 기준. 파도 순서)
 - HANDOFF.md
 - STATUS.md
 - docs/DESIGN.md
-- docs/WHITEPAPER.md  (1·2차는 이미 반영. 3차만 남음)
+- docs/WHITEPAPER.md  (2026-08-18 기록. 1·2차는 이미 반영. 3차는 1장 출시 밖)
 - game/index.html  (실제 게임. 단일 IIFE + Canvas)
 - game/asset-data.js
 - game/assets/
@@ -75,5 +78,6 @@
 현재 엔진은 예전 모듈형 HAEMU.html(a_core…j_assets)이 아니다.
 단일 파일 game/index.html 이다. 백서 1·2차는 이미 반영됨. 처음부터 다시 짜지 마라.
 
-다음 작업은 남은 것부터. 맵·조수·역할을 리팩터하지 마라.
+다음 작업은 SHIP-CH1 파도 하나만. 맵·조수·역할을 리팩터하지 마라.
+D13·D14·D15를 1장 출시 티켓으로 열지 마라.
 ```
