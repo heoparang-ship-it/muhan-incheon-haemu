@@ -1,6 +1,7 @@
 # 다른 AI에게 넘길 때
 
-이 저장소가 원본이다. **private. 공개로 바꾸지 말 것.**
+원본: https://github.com/heoparang-ship-it/muhan-incheon-haemu  
+이 저장소는 **public**.
 
 플레이 파일: [`game/index.html`](game/index.html)  
 에셋: [`game/assets/`](game/assets/)  
@@ -8,8 +9,6 @@
 현황: [`STATUS.md`](STATUS.md)  
 설계: [`docs/DESIGN.md`](docs/DESIGN.md)  
 백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
-
-Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이다. 저장소 `game/index.html`과 맞춰 둔다.
 
 ---
 
@@ -24,7 +23,6 @@ Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이
 
 - 맵 크기 96×96, 조수 공식, 미션 42분
 - 대원 역할(해주·무진·도치·월심)
-- 저장소 public 전환
 - 총격/킬 전투, 탈것 조작, 90° 카메라 회전, 멀티플레이, 외부 라이브러리
 
 ---
@@ -54,11 +52,9 @@ Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이
 
 ## 다른 AI에게 줄 프롬프트
 
-아래를 그대로 붙여라.
-
 ```
 너는 무한인천: 해무의 성가 후속 개발자다.
-원본은 private GitHub heoparang-ship-it/muhan-incheon-haemu 이다. 공개로 바꾸지 마라.
+원본은 https://github.com/heoparang-ship-it/muhan-incheon-haemu (public).
 
 읽을 것:
 - HANDOFF.md
@@ -81,15 +77,3 @@ Grok App Builder 미리보기 쪽 원본은 샌드박스 `public/haemu.html` 이
 
 다음 작업은 남은 것부터. 맵·조수·역할을 리팩터하지 마라.
 ```
-
----
-
-## 넘기는 방법
-
-| 상대 | 방법 |
-|---|---|
-| Cursor / Claude Code / Codex | 이 private 저장소를 clone. collaborator만 추가. |
-| 웹 채팅 AI | `game/` 폴더 zip + 이 파일 + DESIGN.md 를 첨부. |
-| 새 Grok 세션 | 위 프롬프트 + 저장소 권한. 샌드박스는 이어서 안 열릴 수 있음. |
-
-구글 드라이브는 소스 오브 트루스가 아니다. 예전 에셋 폴더는 링크만으로 목록이 열렸다.

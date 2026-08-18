@@ -1,7 +1,8 @@
 # 무한인천: 해무의 성가
 
-조선 말기 인천 해안. 가짜 선교단에 잠입하는 실시간 분대 잠입 전술.  
-**이 저장소는 private. 외부 공개 아님.**
+조선 말기 인천 해안. 가짜 선교단에 잠입하는 실시간 분대 잠입 전술.
+
+https://github.com/heoparang-ship-it/muhan-incheon-haemu
 
 ## 바로 보기
 
@@ -11,7 +12,6 @@
 - 설계: [`docs/DESIGN.md`](docs/DESIGN.md)
 - 백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
 - 다음 작업: [`docs/NEXT.md`](docs/NEXT.md)
-- 공개 범위: [`PRIVACY.md`](PRIVACY.md)
 
 ## 구조
 

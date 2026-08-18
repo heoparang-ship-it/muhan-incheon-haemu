@@ -1,6 +1,6 @@
 # 여기서부터 진행
 
-이 저장소가 원본이다. 이후 작업은 여기 `main`에 커밋한다.  
+원본: https://github.com/heoparang-ship-it/muhan-incheon-haemu  
 인수인계는 [`../HANDOFF.md`](../HANDOFF.md).
 
 ## 지금 상태 (2026-08-19)
@@ -20,4 +20,3 @@
 
 - 맵 크기·조수 공식
 - 대원 역할 재배치
-- 저장소 public 전환

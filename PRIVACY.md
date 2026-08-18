@@ -1,27 +1,5 @@
 # 공개 범위
 
-이 저장소는 **private**로 만들었다. GitHub 검색·프로필 목록에 안 나온다.  
-기본 열람자는 소유자 `heoparang-ship-it` 한 명이다.
+이 저장소는 **public**이다. 링크만 있으면 누구나 볼 수 있다.
 
-## 되는 것
-
-- 로그인된 본인만 웹에서 열람
-- 본인 토큰/`gh`로 clone·push
-- collaborator를 직접 추가하기 전까지 타인 접근 불가
-
-## 안 되는 것 / 착각하기 쉬운 것
-
-- **공개 URL로 아무나 보는 구조가 아니다.** 다만 아래는 별개다.
-- 나중에 Settings → Danger zone에서 Public으로 바꾸면 즉시 공개된다.
-- collaborator, GitHub 조직, 유출된 토큰이 있으면 그 경로로 보인다.
-- GitHub 운영·법적 요청 경로까지 “절대 0”은 아니다. 일반 외부 공유는 아니다.
-
-## 이 저장소 밖
-
-| 위치 | 외부 공유 |
-|---|---|
-| 이 GitHub 저장소 | 아니오 (private) |
-| 구글 드라이브 `무한인천-에셋` | **링크만으로 폴더 목록이 열렸다.** 저장소와 별개. 지금 링크로는 외부 접근 가능 |
-| Grok 대화 | GitHub private가 아님. 채팅 로그는 xAI 쪽에 남을 수 있음 |
-
-에셋·소스를 숨기려면 드라이브 공유를 먼저 잠글 것.
+https://github.com/heoparang-ship-it/muhan-incheon-haemu
