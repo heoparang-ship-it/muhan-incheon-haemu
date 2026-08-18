@@ -6,17 +6,17 @@
 ## 바로 보기
 
 - 게임: [`game/index.html`](game/index.html)
+- **다른 AI 인수인계: [`HANDOFF.md`](HANDOFF.md)**
 - 현황: [`STATUS.md`](STATUS.md)
 - 설계: [`docs/DESIGN.md`](docs/DESIGN.md)
 - 제목: [`docs/TITLE.md`](docs/TITLE.md)
-- 에셋 슬롯: [`assets/README.md`](assets/README.md)
 - 다음 작업: [`docs/NEXT.md`](docs/NEXT.md)
 - 공개 범위: [`PRIVACY.md`](PRIVACY.md)
 
-## 한 줄 상태 (2026-08-18, 아트 패스)
+## 한 줄 상태 (2026-08-19)
 
-1장 시스템 + 지형 텍스처 + 유닛/소품 스프라이트 + 타이틀 + 중간 저장.  
-미리보기에서 밀명을 시작할 수 있다. 건물 스프라이트와 걷기 시트는 남음.
+1·2차 시스템 + 코만도스 프리렌더 아트 + 건물 마젠타 제거.  
+미리보기에서 밀명을 시작할 수 있다. 걷기 4×4 시트와 3차가 남음.
 
 ## 실행
 
