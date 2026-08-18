@@ -1,7 +1,7 @@
 # 에셋 슬롯
 
 게임은 `ASSET_DATA`가 있으면 그림을 쓰고, 없으면 코드로 그린다.  
-지금 스냅샷은 `ASSET_DATA = null`.
+지금 플레이 묶음은 `game/asset-data.js`에 슬롯이 들어 있다. 유닛은 idle 4방향만, walk 시트는 아직 없다.
 
 드라이브 폴더 [무한인천-에셋](https://drive.google.com/drive/folders/1q6VNkSSV1IjQa0sqZsPXrXd7ia-A__xH)와 같은 구조다. 2026-08-18 기준 드라이브 안은 비어 있었다.
 

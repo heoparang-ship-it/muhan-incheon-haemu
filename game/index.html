@@ -1951,6 +1951,14 @@ function drawTerrain(g) {
 
 /* ---------- 벽 타일 ---------- */
 function drawWallTile(g, x, y, z0, h, tone, kind) {
+  if (kind === 'wall' && typeof ART !== 'undefined' && ART.has('bld_wall')) {
+    const sx = isoX(x + 0.5, y + 0.5), sy = isoY(x + 0.5, y + 0.5, z0);
+    g.save();
+    g.translate(sx, sy);
+    const ok = drawSprite(g, 'bld_wall', 'idle', 0, 0, undefined, 0.78);
+    g.restore();
+    if (ok) return;
+  }
   const zt = z0 + h;
   const A = { x: isoX(x, y), y: isoY(x, y, zt) };
   const B = { x: isoX(x + 1, y), y: isoY(x + 1, y, zt) };
@@ -2638,18 +2646,27 @@ function drawUnitSprite(g, id, u, alpha) {
   const rec = ART.img[id];
   if (!rec) return false;
   const walking = u.moveT > 0;
-  const key = walking && rec.sheets.walk ? 'walk' : (rec.sheets.idle ? 'idle' : Object.keys(rec.sheets)[0]);
+  const hasWalk = !!(rec.sheets && rec.sheets.walk);
+  const key = walking && hasWalk ? 'walk' : (rec.sheets.idle ? 'idle' : Object.keys(rec.sheets)[0]);
   const clip = rec.meta.clips.find(c => c.key === key) || rec.meta.clips[0];
   const frames = clip ? clip.frames : 1;
-  const f = Math.floor((walking ? u.bob * 0.62 : state.t * 2.2 + u.bob * 0.1) % frames);
+  const f = Math.floor((walking ? u.bob * 0.72 : state.t * 2.2 + u.bob * 0.1) % frames);
   const d = dirIndex(u.angle, rec.meta.dirs);
-  const sc = walking ? 1.18 : 1.15;
-  if (walking) {
+  const sc = 1.15;
+  g.save();
+  g.fillStyle = 'rgba(0,0,0,.38)';
+  g.beginPath();
+  g.ellipse(0, 2, 10.5, 4.6, 0, 0, TAU);
+  g.fill();
+  g.restore();
+  let lifted = false;
+  if (walking && !hasWalk) {
     g.save();
     g.translate(0, Math.sin(u.bob * 2.4) * 1.4);
+    lifted = true;
   }
   const ok = drawSprite(g, id, key, d, f, alpha, sc);
-  if (walking) g.restore();
+  if (lifted) g.restore();
   return ok;
 }
 
