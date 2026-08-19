@@ -251,13 +251,15 @@ def update_asset_data():
         },
     })
     mujin = data["assets"].get("agent_mujin")
-    if mujin and mujin.get("cellW", 56) < 40:
-        mujin["cellW"] = 56
-        mujin["cellH"] = 76
-        mujin["anchorX"] = 28
-        mujin["anchorY"] = 72
-        idle = mujin.get("sheets", {}).get("idle", "assets/chars/agent_mujin.png")
-        mujin.setdefault("sheets", {})["idle"] = re.sub(r"\?v=\d+", f"?{CACHE_V}", idle)
+    if mujin:
+        mp = CHARS / "agent_mujin.png"
+        if mp.exists() and Image.open(mp).size[0] >= 56:
+            mujin["cellW"] = CELL_W
+            mujin["cellH"] = CELL_H
+            mujin["anchorX"] = CELL_W // 2
+            mujin["anchorY"] = CELL_H - 6
+            mujin["dirs"] = DIRS
+            mujin.setdefault("sheets", {})["idle"] = f"assets/chars/agent_mujin.png?{CACHE_V}"
     ASSET_JS.write_text(
         "const ASSET_DATA = " + json.dumps(data, ensure_ascii=False) + ";\n",
         encoding="utf-8",
