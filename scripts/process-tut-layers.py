@@ -167,13 +167,13 @@ def main() -> None:
         raw = Image.open(SRC / f"obj_{name}.png")
         keyed = chroma_clean(raw)
         trimmed = trim_alpha(keyed)
-        scaled = scale_to_height(trimmed, h * 2)
+        scaled = scale_to_height(trimmed, h * 3)
         dest = OUT_OBJ / f"{name}.png"
         scaled.save(dest, "PNG", optimize=True)
         scaled.save(OUT_ART / f"obj_{name}_keyed.png", "PNG", optimize=True)
         meta["objects"][name] = {
             "w": scaled.width, "h": scaled.height,
-            "dw": int(round(scaled.width / 2)), "dh": h,
+            "dw": int(round(scaled.width / 3)), "dh": h,
             "ox": 0.50, "oy": 0.90,
         }
 

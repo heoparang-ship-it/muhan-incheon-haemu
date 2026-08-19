@@ -26,7 +26,7 @@
 - 총격/킬 전투, 탈것 조작, 90° 카메라 회전, 멀티플레이, 외부 라이브러리
 
 튜토리얼은 별장. 이야기는 **감나루 하선**(구호선→선창, 해주·무진, 상륙첩). 12분, 조수 없음. 1장을 줄인 것이 아니다.  
-튜토리얼 바닥은 `tut01_ground.png`와 줌 장 `tut01_ground_z0.png`(당김) / `z2`(멀리). 천막·상자·가마니·수레·그물은 `game/assets/maps/obj/`에서 따로 올린다. 길은 아직 옛 칸. 스토리는 [`docs/TUTORIAL.md`](docs/TUTORIAL.md).
+튜토리얼 바닥은 `tut01_ground.png`와 줌 장 `z0`(4배)·`z1`(2배)·`z2`(½). 천막·상자·가마니·수레·그물은 `game/assets/maps/obj/`에서 따로 올린다. 길은 아직 옛 칸. 스토리는 [`docs/TUTORIAL.md`](docs/TUTORIAL.md).
 
 ---
 

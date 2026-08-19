@@ -663,7 +663,7 @@ const CHAPTERS = {
   tut01: {
     id: 'tut01', name: '하선', brand: '튜토리얼 · 감나루 하선',
     title: '밀명 · 감나루 하선', time: 12 * 60, mapW: 32, mapH: 32,
-    zoom: 1, zoomPhone: 0.72, maxZoom: 2.05, minZoom: 0.38
+    zoom: 1, zoomPhone: 0.72, maxZoom: 3.35, minZoom: 0.38
   },
   ch1: {
     id: 'ch1', name: '1장', brand: '1장 · 감나루 · 실시간 분대 잠입 전술',
@@ -2818,8 +2818,9 @@ const TUT_PAINT_W = 1065, TUT_PAINT_H = 737;
 const TUT_PERSON_PX = 60, TUT_PERSON_CELL = 76;
 const TUT_VISUAL = { img: null, ok: false };
 const TUT_MIP = {
-  z0: { img: null, ok: false },   // 2× 이어붙인 촘촘한 장 — 당길 때
-  z2: { img: null, ok: false }    // ½ — 멀리 볼 때
+  z0: { img: null, ok: false },   // 4× 이어붙인 장 — 많이 당길 때
+  z1: { img: null, ok: false },   // 2×
+  z2: { img: null, ok: false }    // ½ — 멀리
 };
 const TUT_SHEETS = {
   tent: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 229, dh: 188 },
@@ -2843,16 +2844,20 @@ function loadTutImage(rec, src) {
 function loadTutVisual() {
   if (TUT_VISUAL.img) return;
   loadTutImage(TUT_VISUAL, 'assets/maps/tut01_ground.png');
-  loadTutImage(TUT_MIP.z0, 'assets/maps/tut01_ground_z0.png');
+  loadTutImage(TUT_MIP.z0, 'assets/maps/tut01_ground_z0.jpg');
+  loadTutImage(TUT_MIP.z1, 'assets/maps/tut01_ground_z1.png');
   loadTutImage(TUT_MIP.z2, 'assets/maps/tut01_ground_z2.png');
   for (const id of Object.keys(TUT_SHEETS))
     loadTutImage(TUT_SHEETS[id], 'assets/maps/obj/' + id + '.png');
 }
 function tutPaintImage() {
   const z = cam.zoom;
-  if (z >= 1.12 && TUT_MIP.z0.ok && TUT_MIP.z0.img && TUT_MIP.z0.img.naturalWidth) return TUT_MIP.z0.img;
-  if (z <= 0.62 && TUT_MIP.z2.ok && TUT_MIP.z2.img && TUT_MIP.z2.img.naturalWidth) return TUT_MIP.z2.img;
-  if (TUT_VISUAL.ok && TUT_VISUAL.img && TUT_VISUAL.img.naturalWidth) return TUT_VISUAL.img;
+  const ok = (rec) => rec && rec.ok && rec.img && rec.img.naturalWidth;
+  if (z >= 2.05 && ok(TUT_MIP.z0)) return TUT_MIP.z0.img;
+  if (z >= 1.12 && ok(TUT_MIP.z1)) return TUT_MIP.z1.img;
+  if (z <= 0.62 && ok(TUT_MIP.z2)) return TUT_MIP.z2.img;
+  if (ok(TUT_VISUAL)) return TUT_VISUAL.img;
+  if (ok(TUT_MIP.z1)) return TUT_MIP.z1.img;
   return null;
 }
 function drawTutVisual(g) {
