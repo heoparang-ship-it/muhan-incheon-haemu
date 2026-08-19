@@ -11,6 +11,7 @@ https://github.com/heoparang-ship-it/muhan-incheon-haemu
 - 현황: [`STATUS.md`](STATUS.md)
 - 설계: [`docs/DESIGN.md`](docs/DESIGN.md)
 - 백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
+- 1장 출시 기준: [`docs/SHIP-CH1.md`](docs/SHIP-CH1.md)
 - 다음 작업: [`docs/NEXT.md`](docs/NEXT.md)
 
 ## 구조
@@ -30,7 +31,7 @@ assets/refs/          초상 레퍼런스
 ## 한 줄 상태 (2026-08-19)
 
 1·2차 시스템 + 코만도스 프리렌더 + 마젠타 제거.  
-걷기 4×4 시트와 백서 3차가 남음.
+출시 가능 84. 걷기 4×4 시트 연결. 다음은 한 판 검증.
 
 ## 실행
 
