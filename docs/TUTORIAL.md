@@ -249,10 +249,10 @@
 
 넣은 파일:
 
-- `game/assets/maps/tut01_visual.png` — 튜토리얼 바닥에 까는 본 그림
-- `game/assets/maps/tut01_visual_fullframe.png` — 가장자리까지 채운 다른 시도
-- `game/assets/maps/tut01_gangplank.png` — 널빤지 클로즈업
-- `game/assets/maps/tut01_tent.png` — 천막 클로즈업
+- `game/assets/maps/tut01_visual.png` — 바닥에 까는 본 그림. 옛 선창 사진의 **흙 광장·가마니 더미·돛배**를 참고해 다시 그림. 사람 없음.
+- `game/assets/maps/tut01_ref_wharf.png` — 위와 같은 흙 선창
+- `game/assets/maps/tut01_ref_pier.png` — 긴 나무 부두 사진 참고
+- `game/assets/maps/tut01_ref_townedge.png` — 언덕에서 내려다본 포구 마을 (1장 참고용, 튜토리얼엔 안 씀)
 
 아직 모자란 것 (코만도스와 100%가 안 되는 이유):
 
