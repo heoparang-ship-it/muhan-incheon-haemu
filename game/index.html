@@ -663,7 +663,7 @@ const CHAPTERS = {
   tut01: {
     id: 'tut01', name: '하선', brand: '튜토리얼 · 감나루 하선',
     title: '밀명 · 감나루 하선', time: 12 * 60, mapW: 32, mapH: 32,
-    zoom: 0.78, zoomPhone: 0.64
+    zoom: 1, zoomPhone: 0.72   // TU01 줌0과 같게 1월드픽셀=1화면픽셀(PC)
   },
   ch1: {
     id: 'ch1', name: '1장', brand: '1장 · 감나루 · 실시간 분대 잠입 전술',
@@ -761,6 +761,14 @@ const cam = {
 };
 
 function camComputeBounds() {
+  if (isTut()) {
+    const b = tutPaintBox();
+    cam.bounds.minX = b.x;
+    cam.bounds.maxX = b.x + b.w;
+    cam.bounds.minY = b.y;
+    cam.bounds.maxY = b.y + b.h;
+    return;
+  }
   // 맵 다이아몬드의 화면 범위
   const xs = [isoX(0, 0), isoX(MAP_W, 0), isoX(0, MAP_H), isoX(MAP_W, MAP_H)];
   const ys = [isoY(0, 0, 3.5), isoY(MAP_W, 0, 0), isoY(0, MAP_H, 0), isoY(MAP_W, MAP_H, 0)];
@@ -2801,8 +2809,15 @@ const ART = {
   hasTex(t) { return !!this.tex[t]; }
 };
 
-/* 튜토리얼 바닥 그림 — 칸을 조립하지 않고 한 장을 깐다. 길·가림은 아직 그림과 안 맞음 */
+/* 튜토리얼 바닥 — 코만도스 TU01 줌0과 같은 1065×737 */
+const TUT_PAINT_W = 1065, TUT_PAINT_H = 737;
+const TUT_PERSON_PX = 60, TUT_PERSON_CELL = 76;
 const TUT_VISUAL = { img: null, ok: false };
+function tutPaintBox() {
+  const cx = 0;
+  const cy = isoY(MAP_W * 0.5, MAP_H * 0.5, 0);
+  return { x: cx - TUT_PAINT_W / 2, y: cy - TUT_PAINT_H / 2, w: TUT_PAINT_W, h: TUT_PAINT_H };
+}
 function loadTutVisual() {
   if (TUT_VISUAL.img) return;
   const im = new Image();
@@ -2813,15 +2828,11 @@ function loadTutVisual() {
 }
 function drawTutVisual(g) {
   if (!TUT_VISUAL.ok || !TUT_VISUAL.img || !TUT_VISUAL.img.naturalWidth) return false;
-  const padX = 140, padY = 90;
-  const minX = isoX(0, MAP_H) - padX;
-  const maxX = isoX(MAP_W, 0) + padX;
-  const minY = isoY(0, 0, 2) - padY * 2;
-  const maxY = isoY(MAP_W, MAP_H, 0) + padY;
+  const b = tutPaintBox();
   g.save();
   g.imageSmoothingEnabled = true;
   if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
-  g.drawImage(TUT_VISUAL.img, minX, minY, maxX - minX, maxY - minY);
+  g.drawImage(TUT_VISUAL.img, b.x, b.y, b.w, b.h);
   g.restore();
   return true;
 }
@@ -2977,7 +2988,9 @@ function drawUnitSprite(g, id, u, alpha) {
   const frames = clip ? clip.frames : 1;
   const f = Math.floor((walking ? u.bob * 0.62 : state.t * 2.2 + u.bob * 0.1) % frames);
   const d = dirIndex(u.angle, rec.meta.dirs);
-  const sc = walking ? 1.18 : 1.15;
+  const sc = isTut()
+    ? (TUT_PERSON_PX / TUT_PERSON_CELL) * (walking ? 1.04 : 1)
+    : (walking ? 1.18 : 1.15);
   if (walking) {
     g.save();
     g.translate(0, Math.sin(u.bob * 2.4) * 1.4);
