@@ -197,15 +197,16 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touc
 .hcol li{font-size:11px;line-height:1.8;color:#b5c7cc}
 .hcol b{color:var(--gold2);font-weight:600}
 
-/* ---------- 튜토리얼 ---------- */
-#tutorial{position:absolute;z-index:26;right:var(--safeR);bottom:calc(240px + var(--safeB));width:266px;
- padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:rgba(6,16,22,.94);
- backdrop-filter:blur(12px);box-shadow:0 16px 40px rgba(0,0,0,.45)}
-#tutorial>b{display:block;font-size:11.5px;color:var(--gold);margin-bottom:7px}
-#tutorial li b{color:var(--gold2);font-weight:600}
-#tutorial ol{margin:0;padding-left:16px}
-#tutorial li{font-size:10.5px;line-height:1.7;color:#b7c8cd}
-#tutClose{position:absolute;top:6px;right:8px;color:var(--muted);font-size:15px;line-height:1}
+/* ---------- 튜토리얼 수첩 (코만도스 노트) ---------- */
+#tutorial{position:absolute;z-index:26;right:var(--safeR);bottom:calc(240px + var(--safeB));width:280px;
+ padding:14px 14px 12px;border:1px solid #8a6a3a;border-radius:4px 12px 4px 12px;
+ background:linear-gradient(180deg,#efe2c0,#e4d2a4 70%,#d7c08a);color:#3a2a14;
+ box-shadow:0 16px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,240,200,.35)}
+#tutorial>b{display:block;font-family:"Nanum Myeongjo",Georgia,serif;font-size:14px;color:#5a3a16;margin-bottom:6px}
+#tutorial .tutNow{font-size:12.5px;line-height:1.55;color:#2c2112;font-weight:600}
+#tutorial .tutHint{display:block;margin-top:5px;font-size:11px;color:#5c4a2c}
+#tutorial .tutStep{margin-top:8px;font-size:10px;letter-spacing:.08em;color:#7a6238}
+#tutClose{position:absolute;top:6px;right:8px;color:#7a6238;font-size:15px;line-height:1}
 
 /* ---------- 세로면 게임을 가로로 눕힌다. 돌리라는 말은 하지 않는다 ---------- */
 html.force-land,html.force-land body{width:100%;height:100%;overflow:hidden}
@@ -530,14 +531,10 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
 
   <div id="tutorial">
     <button id="tutClose">×</button>
-    <b id="tutTitle">하선의 첫 동선</b>
-    <ol id="tutSteps">
-      <li>해주는 변장·자물쇠, 무진은 배후 제압·숨김. <b>둘만</b> 보낸다.</li>
-      <li>줄이 비면 쉬는 짐꾼을 <b>뒤에서 제압</b>하고 묶는다.</li>
-      <li>몸을 <b>가마니</b> 뒤에 숨기고, 향주머니를 찾아 <b>던져 유인</b>한다.</li>
-      <li>해주가 <b>널빤지 밑</b>으로 기면 위에서는 보이지 않는다.</li>
-      <li>상자에서 사공 칼을 얻어 <b>그물 울타리</b>를 끊는다. 천막에서 상륙첩.</li>
-    </ol>
+    <b id="tutTitle">하선 수첩</b>
+    <div class="tutNow" id="tutNow">줄이 비면 쉬는 짐꾼을 뒤에서 제압하고 묶는다.</div>
+    <span class="tutHint" id="tutHint">무진 · 배후 제압</span>
+    <div class="tutStep" id="tutStepNo">1 / 10</div>
   </div>
 
   <div class="overlay" id="result">
@@ -636,7 +633,7 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
   }, { capture: true, passive: false });
   </script>
 </div>
-<script src="asset-data.js"></script>
+<script src="asset-data.js?v=11"></script>
 <script>
 (function(){
 const PORTRAITS = {
@@ -663,7 +660,7 @@ const CHAPTERS = {
   tut01: {
     id: 'tut01', name: '하선', brand: '튜토리얼 · 감나루 하선',
     title: '밀명 · 감나루 하선', time: 12 * 60, mapW: 32, mapH: 32,
-    zoom: 1, zoomPhone: 0.72, maxZoom: 3.35, minZoom: 0.38
+    zoom: 2.4, zoomPhone: 0.72, maxZoom: 3.35, minZoom: 0.38
   },
   ch1: {
     id: 'ch1', name: '1장', brand: '1장 · 감나루 · 실시간 분대 잠입 전술',
@@ -1508,20 +1505,27 @@ function buildTutMap() {
     m.terr[i] = T.WOOD; m.elev[i] = 0.98; m.solid[i] = 0; m.zone[i] = Z.BEACH;
   });
 
-  /* 떨어진 소품 — 배는 바닥에 남기고, 천막·상자·가마니·수레·그물만 올린다. */
-  addProp(m, { kind: 'tent', sheet: 'tent', tx: 19, ty: 12, solid: true, cover: 2, name: '맞이 천막', s: 1 });
-  stampAround(m, 19, 12, [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1]], true, 2);
+  /* 떨어진 소품 — 배는 가림 종이, 짐은 MA2처럼 따로. 좌표는 그림 스팟. */
+  const S = TUT_SPOTS;
+  addProp(m, { kind: 'ship', sheet: 'ship', tx: S.ship[0], ty: S.ship[1], solid: false, cover: 1, name: '구호선', s: 1, occlude: true });
+  addProp(m, { kind: 'tent', sheet: 'tent', tx: S.tent[0], ty: S.tent[1], solid: true, cover: 2, name: '맞이 천막', s: 1, occlude: true });
+  stampAround(m, S.tent[0], S.tent[1], [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1]], true, 2);
 
-  addProp(m, { kind: 'crates', sheet: 'crates', tx: 17, ty: 17, solid: true, cover: 2, name: '구호 상자', s: 1 });
-  stampAround(m, 17, 17, [[1, 0], [0, 1]], true, 2);
+  addProp(m, { kind: 'crates', sheet: 'crates', tx: S.crates[0], ty: S.crates[1], solid: true, cover: 2, name: '구호 상자', s: 1, occlude: true });
+  stampAround(m, S.crates[0], S.crates[1], [[1, 0], [0, 1]], true, 2);
 
-  addProp(m, { kind: 'sacks', sheet: 'sacks', tx: 20, ty: 22, solid: true, cover: 3, name: '가마니', s: 1 });
-  stampAround(m, 20, 22, [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1], [-1, -1], [1, 1]], false, 3);
+  addProp(m, { kind: 'sacks', sheet: 'sacks', tx: S.sacks[0], ty: S.sacks[1], solid: true, cover: 3, name: '가마니', s: 1, occlude: true });
+  stampAround(m, S.sacks[0], S.sacks[1], [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1], [-1, -1], [1, 1]], false, 3);
 
-  addProp(m, { kind: 'cart', sheet: 'cart', tx: 21, ty: 17, solid: true, cover: 2, name: '짐수레', s: 1 });
+  addProp(m, { kind: 'cart', sheet: 'cart', tx: S.cart[0], ty: S.cart[1], solid: true, cover: 2, name: '짐수레', s: 1, occlude: true });
 
-  addProp(m, { kind: 'nets', sheet: 'nets', tx: 18, ty: 22, solid: true, cover: 1, name: '그물 울타리', s: 1 });
-  stampAround(m, 18, 22, [[-1, 0], [1, 0]], true, 1);
+  addProp(m, { kind: 'nets', sheet: 'nets', tx: S.nets[0], ty: S.nets[1], solid: true, cover: 1, name: '그물 울타리', s: 1 });
+  stampAround(m, S.nets[0], S.nets[1], [[-1, 0], [1, 0]], true, 1);
+
+  /* 널빤지를 그림 폭에 맞게 더 연다 */
+  paintPath(m, [[11, 16], [12, 16], [13, 17], [14, 17], [15, 18]], 1.35, (i) => {
+    m.terr[i] = T.WOOD; m.elev[i] = 0.98; m.solid[i] = 0; m.zone[i] = Z.BEACH;
+  });
 
   return finishMap(m);
 }
@@ -2353,18 +2357,23 @@ function drawTeleWires(g) {
   g.restore();
 }
 
-function drawTutSheet(g, p) {
+function drawTutSheet(g, p, crownOnly) {
   const rec = TUT_SHEETS[p.sheet];
   if (!rec || !rec.ok || !rec.img || !rec.img.naturalWidth) return false;
   const z = groundZ(p.tx, p.ty);
   const sx = isoX(p.tx + .5, p.ty + .5), sy = isoY(p.tx + .5, p.ty + .5, z);
   const sc = p.s || 1;
   const w = (rec.dw || rec.img.naturalWidth) * sc, h = (rec.dh || rec.img.naturalHeight) * sc;
+  const dx = sx - w * rec.ox, dy = sy - h * rec.oy;
   g.save();
   g.imageSmoothingEnabled = true;
   if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
   if (p.cut) g.globalAlpha = 0.28;
-  g.drawImage(rec.img, sx - w * rec.ox, sy - h * rec.oy, w, h);
+  if (crownOnly) {
+    const cut = h * (rec.occlude || 0.55);
+    g.beginPath(); g.rect(dx, dy, w, cut); g.clip();
+  }
+  g.drawImage(rec.img, dx, dy, w, h);
   g.restore();
   return true;
 }
@@ -2823,12 +2832,20 @@ const TUT_MIP = {
   z2: { img: null, ok: false }    // ½ — 멀리
 };
 const TUT_SHEETS = {
-  tent: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 229, dh: 188 },
-  crates: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 86, dh: 96 },
-  sacks: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 74, dh: 100 },
-  cart: { img: null, ok: false, ox: 0.50, oy: 0.88, dw: 100, dh: 86 },
-  nets: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 111, dh: 100 }
+  tent: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 240, dh: 197, occlude: 0.58 },
+  crates: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 90, dh: 101, occlude: 0.48 },
+  sacks: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 78, dh: 105, occlude: 0.62 },
+  cart: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 106, dh: 90, occlude: 0.42 },
+  nets: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 117, dh: 105, occlude: 0.55 },
+  ship: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 157, dh: 258, occlude: 0.72 }
 };
+const TUT_SPOTS = {
+  tent: [18.66, 11.55], crates: [16.79, 17.18], sacks: [20.23, 21.87],
+  cart: [21.16, 16.55], nets: [18.04, 22.18], start: [22.88, 24.84],
+  plank: [11.32, 15.77], porter: [15.23, 18.12], passCrate: [19.6, 13.12],
+  ship: [8.4, 14.2]
+};
+function personScale() { return isTut() ? (TUT_PERSON_PX / 31) : 1; }
 function tutPaintBox() {
   const cx = 0;
   const cy = isoY(MAP_W * 0.5, MAP_H * 0.5, 0);
@@ -2848,7 +2865,61 @@ function loadTutVisual() {
   loadTutImage(TUT_MIP.z1, 'assets/maps/tut01_ground_z1.png');
   loadTutImage(TUT_MIP.z2, 'assets/maps/tut01_ground_z2.png');
   for (const id of Object.keys(TUT_SHEETS))
-    loadTutImage(TUT_SHEETS[id], 'assets/maps/obj/' + id + '.png');
+    loadTutImage(TUT_SHEETS[id], 'assets/maps/obj/' + id + '.png?v=11');
+}
+function currentTutStep() {
+  if (!state) return 0;
+  const order = ['koSmoke', 'hideBody', 'lootPack', 'lureNext', 'koLure', 'pole', 'cutters', 'cutWire', 'clear', 'crates'];
+  for (let i = 0; i < order.length; i++) if (!state.objectives[order[i]]) return i;
+  return order.length;
+}
+function tutCanProceed(stepId) {
+  if (!isTut() || !state) return true;
+  const order = ['koSmoke', 'hideBody', 'lootPack', 'lureNext', 'koLure', 'pole', 'cutters', 'cutWire', 'clear', 'crates'];
+  const idx = order.indexOf(stepId);
+  if (idx < 0) return true;
+  for (let i = 0; i < idx; i++) {
+    if (!state.objectives[order[i]]) return false;
+  }
+  return true;
+}
+function tutGetBlockMsg(stepId) {
+  const order = ['koSmoke', 'hideBody', 'lootPack', 'lureNext', 'koLure', 'pole', 'cutters', 'cutWire', 'clear', 'crates'];
+  const idx = order.indexOf(stepId);
+  const msgs = [
+    '',
+    '쉬는 짐꾼을 먼저 제압하고 묶어야 한다',
+    '숨긴 몸을 먼저 뒤져야 한다',
+    '향주머니를 얻은 후 던져야 한다',
+    '먼저 향을 던져 신도를 유인하세요',
+    '두 번째 신도를 먼저 제압하세요',
+    '널빤지 밑으로 기어야 상자를 볼 수 있다',
+    '사공 칼이 없다. 상자를 먼저 열어라',
+    '그물을 먼저 끊어야 한다',
+    '모든 신도를 먼저 제압하세요'
+  ];
+  return msgs[idx] || '다음 단계를 완료하세요';
+}
+function updateTutNotebook() {
+  if (!isTut()) return;
+  const box = $('#tutorial'); if (!box) return;
+  const i = Math.min(currentTutStep(), OBJECTIVES.length - 1);
+  const o = OBJECTIVES[i]; if (!o) return;
+  const now = $('#tutNow'), hint = $('#tutHint'), no = $('#tutStepNo');
+  if (now) now.textContent = o.text;
+  if (hint) hint.textContent = o.hint;
+  if (no) no.textContent = (Math.min(currentTutStep(), OBJECTIVES.length - 1) + 1) + ' / ' + OBJECTIVES.length;
+  const curStep = currentTutStep();
+  for (let j = 0; j < OBJECTIVES.length; j++) {
+    const g = document.querySelector('[data-goal="' + OBJECTIVES[j].id + '"]');
+    if (!g) continue;
+    const isCompleted = !!state.objectives[OBJECTIVES[j].id];
+    const isCurrent = (j === curStep);
+    g.style.opacity = (isCompleted || isCurrent) ? '1' : '0.35';
+    g.style.pointerEvents = (isCompleted || isCurrent) ? 'auto' : 'none';
+    g.classList.toggle('tutLocked', !isCompleted && !isCurrent);
+  }
+  box.style.display = state && state.ended ? 'none' : '';
 }
 function tutPaintImage() {
   const z = cam.zoom;
@@ -3024,7 +3095,7 @@ function drawUnitSprite(g, id, u, alpha) {
   const f = Math.floor((walking ? u.bob * 0.62 : state.t * 2.2 + u.bob * 0.1) % frames);
   const d = dirIndex(u.angle, rec.meta.dirs);
   const sc = isTut()
-    ? (TUT_PERSON_PX / TUT_PERSON_CELL) * (walking ? 1.04 : 1)
+    ? (TUT_PERSON_PX / (rec.meta.cellH || TUT_PERSON_CELL))
     : (walking ? 1.18 : 1.15);
   if (walking) {
     g.save();
@@ -3217,7 +3288,7 @@ function spawnAll() {
 }
 
 function spawnTut() {
-  const starts = [[23, 25], [24, 25]];
+  const starts = [TUT_SPOTS.start, [TUT_SPOTS.start[0] + 1.1, TUT_SPOTS.start[1]]];
   ['haeju', 'mujin'].forEach((id, k) => {
     const p = nearestOpen(starts[k][0], starts[k][1], null) || starts[k];
     agents.push(baseUnit({
@@ -3229,11 +3300,11 @@ function spawnTut() {
   });
 
   const G = [
-    ['acolyte', [[15, 18]], 'smoke', { loot: 'matches', angle: 0.7 }],
+    ['acolyte', [TUT_SPOTS.porter], 'smoke', { loot: 'matches', angle: 0.7 }],
     ['soldier', [[20, 16], [18, 14], [22, 16]], 'walker', {}],
-    ['acolyte', [[18, 21], [17, 21], [18, 21]], 'wireWork', {}],
-    ['soldier', [[21, 13], [22, 14], [21, 13]], 'inner1', {}],
-    ['steward', [[21, 12], [22, 13], [21, 12]], 'inner2', { checks: true }]
+    ['acolyte', [TUT_SPOTS.nets, [TUT_SPOTS.nets[0] - 1, TUT_SPOTS.nets[1]]], 'wireWork', {}],
+    ['soldier', [[TUT_SPOTS.tent[0] + 2, TUT_SPOTS.tent[1] + 1], [TUT_SPOTS.tent[0] + 3, TUT_SPOTS.tent[1] + 2]], 'inner1', {}],
+    ['steward', [TUT_SPOTS.tent, [TUT_SPOTS.tent[0] + 1, TUT_SPOTS.tent[1] + 1]], 'inner2', { checks: true }]
   ];
   G.forEach((row, k) => {
     const [type, patrol, role, extra] = row;
@@ -3533,7 +3604,7 @@ function drawAgent(g, a) {
   const disg = a.disguise > state.now;
   drawFigure(g, a, {
     color: def.color, coat: disg ? '#c9c6b8' : def.coat, robe: disg ? '#e4e1d5' : def.robe,
-    hat: disg ? 'straw' : hat, gear, scale: 1
+    hat: disg ? 'straw' : hat, gear, scale: personScale()
   });
   g.globalAlpha = 1;
   if (dep > 0.06) { g.restore(); g.strokeStyle = 'rgba(160,214,224,.45)'; g.lineWidth = 1.4; g.beginPath(); g.ellipse(0, -clamp((dep - 0.06) * 26, 0, 22), 10, 4, 0, 0, TAU); g.stroke(); }
@@ -3605,7 +3676,7 @@ function drawGuard(g, u) {
     color: alerted ? '#ff7a63' : t.color,
     coat: alerted ? '#7d211a' : t.coat,
     robe: alerted ? '#943025' : t.coat,
-    hat, gear, scale: 1
+    hat, gear, scale: personScale()
   });
   if (dep > 0.06 && !u.unconscious) g.restore();
 
@@ -4489,10 +4560,10 @@ function buildInteractables() {
 function buildTutInteractables() {
   const L = [];
   const add = o => { L.push(o); };
-  add({ kind: 'plank', id: 'plank', name: '널빤지 밑', tx: 11, ty: 16, glyph: '板', time: 1.2 });
-  add({ kind: 'ironbox', id: 'ironbox', name: '쇠테 상자', tx: 17, ty: 17, glyph: '匣', time: 2.0, locked: true });
-  add({ kind: 'crate', id: 'crate0', name: '구호 상자', tx: 20, ty: 13, glyph: '箱', time: 1.2 });
-  add({ kind: 'wire', id: 'nets0', name: '그물 울타리', tx: 18, ty: 22, glyph: '網', time: 1.4 });
+  add({ kind: 'plank', id: 'plank', name: '널빤지 밑', tx: TUT_SPOTS.plank[0], ty: TUT_SPOTS.plank[1], glyph: '板', time: 1.2 });
+  add({ kind: 'ironbox', id: 'ironbox', name: '쇠테 상자', tx: TUT_SPOTS.crates[0], ty: TUT_SPOTS.crates[1], glyph: '匣', time: 2.0, locked: true });
+  add({ kind: 'crate', id: 'crate0', name: '구호 상자', tx: TUT_SPOTS.passCrate[0], ty: TUT_SPOTS.passCrate[1], glyph: '箱', time: 1.2 });
+  add({ kind: 'wire', id: 'nets0', name: '그물 울타리', tx: TUT_SPOTS.nets[0], ty: TUT_SPOTS.nets[1], glyph: '網', time: 1.4 });
   interactables = L;
 }
 
@@ -4576,6 +4647,16 @@ function interact(a, fromQueue) {
     return;
   }
   if (n.type === 'body') {
+    if (isTut() && o.loot && !o.looted) {
+      if (!tutCanProceed('lootPack')) {
+        toast(tutGetBlockMsg('lootPack'), 'warn');
+        return;
+      }
+      if (!o.tied) {
+        toast('먼저 신도를 제압하세요', 'warn');
+        return;
+      }
+    }
     if (o.loot && !o.looted) {
       startAction(a, 1.2, () => {
         o.looted = true;
@@ -4592,6 +4673,10 @@ function interact(a, fromQueue) {
       if (!o.tied) return tieGuard(a, o);
       o.carriedBy = a; a.carrying = o; o.hidden = false;
       toast('경비를 업었다 — 갈대나 어두운 곳에 내려놓아라', 'good');
+      return;
+    }
+    if (isTut() && !tutCanProceed('hideBody')) {
+      toast(tutGetBlockMsg('hideBody'), 'warn');
       return;
     }
     return hideBody(a, o);
@@ -4768,6 +4853,10 @@ function interact(a, fromQueue) {
     }
     case 'crate': {
       if (o.done) { toast('이미 빈 상자다', 'warn'); return; }
+      if (isTut() && !tutCanProceed('crates')) {
+        toast(tutGetBlockMsg('crates'), 'warn');
+        return;
+      }
       startAction(a, o.time, () => {
         o.done = true;
         state.inv.pass = true;
@@ -4803,6 +4892,10 @@ function doorAction(a, d) {
 }
 
 function hideBody(a, g) {
+  if (isTut() && !g.tied && !tutCanProceed('hideBody')) {
+    toast('먼저 신도를 제압하고 묶어야 한다', 'warn');
+    return;
+  }
   const i = tileAt(a.tx, a.ty);
   if (map.cover[i] >= 2 || waterDepth(i) > 0.15 || map.terr[i] === T.CAVE || map.terr[i] === T.REED) {
     g.hidden = true; g.found = false;
@@ -4852,6 +4945,10 @@ function climbPole(a, o) {
 
 function openIronBox(a, o) {
   if (o.done) { toast('이미 빈 상자다', 'warn'); return; }
+  if (isTut() && !tutCanProceed('cutters')) {
+    toast(tutGetBlockMsg('cutters'), 'warn');
+    return;
+  }
   const pick = a.id === 'haeju';
   const smash = a.id === 'mujin';
   if (!pick && !smash) { toast('해주는 열쇠로, 무진은 힘으로 연다', 'warn'); return; }
@@ -4871,6 +4968,10 @@ function openIronBox(a, o) {
 
 function cutWire(a, o) {
   if (o.done || o.cut) { toast('이미 잘린 울타리다', 'warn'); return; }
+  if (isTut() && !tutCanProceed('cutWire')) {
+    toast(tutGetBlockMsg('cutWire'), 'warn');
+    return;
+  }
   if (!state.inv.cutters) { toast(isTut() ? '사공 칼이 없다. 상자를 먼저 열어라' : '쇠가위가 없다. 철제 상자를 먼저 열어라', 'warn'); return; }
   startAction(a, 1.4, () => {
     o.done = true; o.cut = true;
@@ -4932,11 +5033,20 @@ function updateTutProgress() {
     }
   }
   maybeFinishTut();
+  updateTutNotebook();
 }
 
 function doThrowMatches(a, tx, ty) {
   if (!state.inv.matches) { toast(isTut() ? '향주머니가 없다' : '성냥갑이 없다', 'warn'); return; }
   if (Math.hypot(tx - a.tx, ty - a.ty) > 8) { toast('그렇게 멀리는 못 던진다', 'warn'); return; }
+  if (isTut() && !tutCanProceed('lureNext')) {
+    toast(tutGetBlockMsg('lureNext'), 'warn');
+    return;
+  }
+  if (isTut() && state.objectives.koLure) {
+    toast('이미 신도를 제압했습니다', 'warn');
+    return;
+  }
   state.targetMode = null;
   state.inv.matches = false;
   completeObjective('lureNext');
@@ -5702,6 +5812,7 @@ function updateHUD() {
   $('#clearBtn').disabled = !state.queued;
   $('#queueCount').textContent = state.queued ? state.queued : '';
 
+  if (isTut()) updateTutNotebook();
   for (const o of OBJECTIVES) {
     const el = document.querySelector('[data-goal="' + o.id + '"]');
     if (!el) continue;
@@ -6287,10 +6398,12 @@ function drawSorted(g2) {
     }
   }
 
-  /* 소품 */
+  /* 소품 — 발은 사람과 같이 정렬, 윗부분은 가림 종이로 한 번 더 */
   for (const p of map.props) {
     if (!inView(p.tx, p.ty)) continue;
-    items.push({ d: p.tx + p.ty, z: 1, f: () => drawProp(g2, p) });
+    items.push({ d: p.tx + p.ty, z: 0.9, f: () => drawProp(g2, p) });
+    if (p.occlude || (p.sheet && TUT_SHEETS[p.sheet] && TUT_SHEETS[p.sheet].occlude))
+      items.push({ d: p.tx + p.ty + 0.02, z: 1.25, f: () => drawTutSheet(g2, p, true) });
   }
   if (map.poles && map.poles.length > 1) {
     items.push({ d: 30, z: 1.8, f: () => drawTeleWires(g2) });
@@ -6312,7 +6425,7 @@ function drawSorted(g2) {
   /* 유닛 */
   for (const c of civilians) { if (c.dead || !inView(c.tx, c.ty)) continue; items.push({ d: c.tx + c.ty, z: 1, f: () => drawCivil(g2, c) }); }
   for (const g of guards) { if (g.hidden || !inView(g.tx, g.ty)) continue; items.push({ d: g.tx + g.ty, z: g.unconscious ? 0.5 : 1, f: () => (g.boss ? drawVale(g2, g) : drawGuard(g2, g)) }); }
-  for (const a of agents) { if (!a.alive || !inView(a.tx, a.ty)) continue; items.push({ d: a.tx + a.ty, z: 1.5, f: () => drawAgent(g2, a) }); }
+  for (const a of agents) { if (!a.alive || !inView(a.tx, a.ty)) continue; items.push({ d: a.tx + a.ty, z: 1, f: () => drawAgent(g2, a) }); }
 
   items.sort((p, q) => (p.d - q.d) || (p.z - q.z));
   for (const it of items) it.f();

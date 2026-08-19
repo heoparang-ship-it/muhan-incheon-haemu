@@ -1,0 +1,215 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>haemu harbor baker</title>
+<style>html,body{margin:0;background:#1a1814;color:#c8c0b4;font:12px/1.4 sans-serif}#c{display:block}</style>
+</head><body>
+<canvas id="c"></canvas>
+<script type="importmap">{"imports":{"three":"./three/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+
+const TW = 64, TH = 32;
+const ELEV = Math.asin(0.5);
+const PX = (TW / 2) / Math.cos(Math.PI / 4);
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.72;
+
+function mudMat(hex, rough = 0.92, metal = 0.02) {
+  return new THREE.MeshStandardMaterial({
+    color: hex, roughness: rough, metalness: metal,
+    envMapIntensity: 0.15
+  });
+}
+
+function harborLights(scene) {
+  scene.add(new THREE.AmbientLight(0x8a8478, 0.95));
+  const sky = new THREE.HemisphereLight(0x9aa0a0, 0x4a4036, 0.55);
+  scene.add(sky);
+  const key = new THREE.DirectionalLight(0xc4b8a6, 0.45);
+  key.position.set(-2.2, 8.0, -1.4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x6e6558, 0.22);
+  fill.position.set(3.0, 1.4, 2.6);
+  scene.add(fill);
+}
+
+function makeCam(dir, spanX, spanY, focusY) {
+  const az = Math.PI / 4 + dir * (Math.PI / 4);
+  const d = 40;
+  const cam = new THREE.OrthographicCamera(-spanX / 2, spanX / 2, spanY / 2, -spanY / 2, 0.01, 200);
+  cam.position.set(
+    Math.cos(ELEV) * Math.cos(az) * d,
+    Math.sin(ELEV) * d,
+    Math.cos(ELEV) * Math.sin(az) * d
+  );
+  cam.lookAt(0, focusY, 0);
+  cam.updateProjectionMatrix();
+  cam.updateMatrixWorld(true);
+  return cam;
+}
+
+function addBox(parent, w, h, d, x, y, z, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  parent.add(m);
+  return m;
+}
+function addCyl(parent, rt, rb, h, x, y, z, mat, seg = 10) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+  m.position.set(x, y, z);
+  parent.add(m);
+  return m;
+}
+
+function person(kind) {
+  const g = new THREE.Group();
+  const cloth = kind === 'haeju' ? 0x3a4450 : kind === 'mujin' ? 0x2c2e30 : kind === 'steward' ? 0x8a867c : 0x7a756c;
+  const clothM = mudMat(cloth, 0.94);
+  const skinM = mudMat(0x8a7358, 0.7);
+  const woodM = mudMat(0x3a3228, 0.88);
+  const darkM = mudMat(0x1a1816, 0.85);
+  addCyl(g, 0.13, 0.20, 0.95, 0, 0.72, 0, clothM, 12);
+  const L = addCyl(g, 0.045, 0.05, 0.42, -0.07, 0.21, 0.02, darkM, 8);
+  const R = addCyl(g, 0.045, 0.05, 0.42, 0.07, 0.21, 0.02, darkM, 8);
+  g.userData.legs = [L, R];
+  addCyl(g, 0.09, 0.09, 0.16, 0, 1.28, 0, skinM, 10);
+  if (kind === 'haeju') {
+    addCyl(g, 0.22, 0.22, 0.025, 0, 1.40, 0, darkM, 16);
+    addCyl(g, 0.08, 0.09, 0.10, 0, 1.46, 0, darkM, 10);
+    addBox(g, 0.16, 0.14, 0.06, 0.16, 0.78, 0.08, woodM);
+  } else if (kind === 'mujin') {
+    addBox(g, 0.20, 0.04, 0.04, 0, 1.36, 0, darkM);
+    addBox(g, 0.04, 0.55, 0.04, 0.18, 0.85, 0.05, woodM);
+  } else {
+    addCyl(g, 0.12, 0.10, 0.08, 0, 1.40, 0, mudMat(0x6a6560), 10);
+  }
+  return g;
+}
+
+function tent() {
+  const g = new THREE.Group();
+  const sail = mudMat(0x6e6758, 0.96);
+  const pole = mudMat(0x3a3228, 0.9);
+  const geo = new THREE.BufferGeometry();
+  const h = 1.15, w = 1.7, d = 1.2;
+  const v = new Float32Array([
+    -w/2, 0, -d/2,  w/2, 0, -d/2,  0, h, -d/2,
+    -w/2, 0,  d/2,  w/2, 0,  d/2,  0, h,  d/2,
+    -w/2, 0, -d/2, -w/2, 0, d/2,  0, h, -d/2,  0, h, d/2,
+     w/2, 0, -d/2,  w/2, 0, d/2,  0, h, -d/2,  0, h, d/2
+  ]);
+  geo.setAttribute('position', new THREE.BufferAttribute(v, 3));
+  geo.setIndex([0,1,2, 3,5,4, 6,8,7, 8,9,7, 10,11,12, 12,11,13]);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, sail);
+  mesh.position.y = 0.02;
+  g.add(mesh);
+  [[-0.82,0.55,-0.58],[0.82,0.55,-0.58],[-0.82,0.55,0.58],[0.82,0.55,0.58]].forEach(p => {
+    const c = addCyl(g, 0.03, 0.03, 1.15, p[0], p[1], p[2], pole, 6);
+    c.rotation.z = p[0] < 0 ? 0.35 : -0.35;
+  });
+  return g;
+}
+
+function crates() {
+  const g = new THREE.Group();
+  const w = mudMat(0x5a4a36, 0.9);
+  addBox(g, 0.55, 0.38, 0.42, -0.12, 0.19, 0.05, w);
+  addBox(g, 0.42, 0.32, 0.36, 0.22, 0.16, -0.12, w);
+  addBox(g, 0.36, 0.28, 0.30, 0.02, 0.48, 0.02, w);
+  return g;
+}
+
+function sacks() {
+  const g = new THREE.Group();
+  const b = mudMat(0x6a5d45, 0.97);
+  [[0,0.22,0,0.28,0.44],[0.22,0.18,0.1,0.24,0.36],[-0.2,0.16,-0.08,0.22,0.32],[0.04,0.42,0.04,0.2,0.28]].forEach(p => {
+    addCyl(g, p[3]*0.7, p[3], p[4], p[0], p[1], p[2], b, 8);
+  });
+  return g;
+}
+
+function cart() {
+  const g = new THREE.Group();
+  const w = mudMat(0x4a3c2c, 0.88);
+  addBox(g, 0.85, 0.12, 0.48, 0, 0.28, 0, w);
+  addCyl(g, 0.14, 0.14, 0.06, -0.28, 0.14, 0.26, w, 10).rotation.x = Math.PI/2;
+  addCyl(g, 0.14, 0.14, 0.06, 0.28, 0.14, 0.26, w, 10).rotation.x = Math.PI/2;
+  addCyl(g, 0.14, 0.14, 0.06, -0.28, 0.14, -0.26, w, 10).rotation.x = Math.PI/2;
+  addCyl(g, 0.14, 0.14, 0.06, 0.28, 0.14, -0.26, w, 10).rotation.x = Math.PI/2;
+  addBox(g, 0.08, 0.08, 0.7, -0.48, 0.34, 0, w);
+  return g;
+}
+
+function poseWalk(root, f, frames) {
+  const t = (f / frames) * Math.PI * 2;
+  const legs = root.userData.legs;
+  if (!legs) return;
+  legs[0].rotation.x = Math.sin(t) * 0.45;
+  legs[1].rotation.x = Math.sin(t + Math.PI) * 0.45;
+  root.position.y = Math.abs(Math.sin(t)) * 0.02;
+}
+
+function bakeMesh(id, mesh, dirs, frames, isPerson) {
+  const scene = new THREE.Scene();
+  harborLights(scene);
+  scene.add(mesh);
+  const box = new THREE.Box3().setFromObject(mesh);
+  const size = new THREE.Vector3(); box.getSize(size);
+  const diag = Math.hypot(size.x, size.z);
+  const spanX = diag * 1.25 + 0.35;
+  const spanY = (size.y * Math.cos(ELEV) + diag * 0.5 * Math.sin(ELEV)) * 1.25 + 0.35;
+  const cellW = Math.ceil(spanX * PX / 2) * 2;
+  const cellH = Math.ceil(spanY * PX / 2) * 2;
+  const focusY = size.y * 0.45;
+  const probe = makeCam(0, spanX, spanY, focusY);
+  const o = new THREE.Vector3(0, 0, 0).project(probe);
+  const anchorX = Math.round((o.x * 0.5 + 0.5) * cellW);
+  const anchorY = Math.round((-o.y * 0.5 + 0.5) * cellH);
+  renderer.setSize(cellW, cellH, false);
+  const clips = isPerson
+    ? [{ key: 'idle', frames: 1 }, { key: 'walk', frames }]
+    : [{ key: 'idle', frames: 1 }];
+  const sheets = {};
+  for (const c of clips) {
+    const sheet = document.createElement('canvas');
+    sheet.width = cellW * c.frames;
+    sheet.height = cellH * dirs;
+    const sg = sheet.getContext('2d');
+    for (let d = 0; d < dirs; d++) {
+      const cam = makeCam(d, spanX, spanY, focusY);
+      for (let f = 0; f < c.frames; f++) {
+        if (c.key === 'walk') poseWalk(mesh, f, c.frames);
+        else poseWalk(mesh, 0, 1);
+        renderer.render(scene, cam);
+        sg.drawImage(canvas, f * cellW, d * cellH);
+      }
+    }
+    poseWalk(mesh, 0, 1);
+    sheets[c.key] = sheet.toDataURL('image/png');
+  }
+  scene.remove(mesh);
+  return { id, cellW, cellH, anchorX, anchorY, dirs, clips: clips.map(c => ({ key: c.key, frames: c.frames })), sheets };
+}
+
+async function bakeAll() {
+  const assets = {};
+  assets.agent_haeju = bakeMesh('agent_haeju', person('haeju'), 4, 4, true);
+  assets.agent_mujin = bakeMesh('agent_mujin', person('mujin'), 4, 4, true);
+  assets.guard_acolyte = bakeMesh('guard_acolyte', person('acolyte'), 4, 4, true);
+  assets.guard_steward = bakeMesh('guard_steward', person('steward'), 4, 4, true);
+  assets.tent = bakeMesh('tent', tent(), 1, 1, false);
+  assets.crates = bakeMesh('crates', crates(), 1, 1, false);
+  assets.sacks = bakeMesh('sacks', sacks(), 1, 1, false);
+  assets.cart = bakeMesh('cart', cart(), 1, 1, false);
+  return { assets };
+}
+
+window.bakeAll = bakeAll;
+window.BAKER_READY = true;
+</script>
+</body></html>
