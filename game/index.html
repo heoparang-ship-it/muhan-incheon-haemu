@@ -2563,21 +2563,21 @@ function drawPropShape(g, p) {
     case 'booth': {
       shadow(16, 7);
       g.fillStyle = '#3a2c1e';
-      g.beginPath(); g.moveTo(-16, 2); g.lineTo(-13, -52); g.lineTo(13, -52); g.lineTo(16, 2); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(-14, 2); g.lineTo(-12, -40); g.lineTo(12, -40); g.lineTo(14, 2); g.closePath(); g.fill();
       g.fillStyle = '#4a3824';
-      g.beginPath(); g.moveTo(-16, 2); g.lineTo(-13, -52); g.lineTo(-4, -52); g.lineTo(-6, 2); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(-14, 2); g.lineTo(-12, -40); g.lineTo(-3, -40); g.lineTo(-5, 2); g.closePath(); g.fill();
       g.fillStyle = '#6b3a32';
-      g.fillRect(-14, -18, 28, 8);
+      g.fillRect(-12, -16, 24, 7);
       g.fillStyle = 'rgba(230,210,180,.22)';
-      g.fillRect(-14, -10, 28, 8);
+      g.fillRect(-12, -9, 24, 7);
       g.fillStyle = '#1a140e';
-      g.fillRect(-6, -28, 10, 22);
+      g.fillRect(-5, -22, 9, 18);
       g.fillStyle = '#4d5a48';
-      g.beginPath(); g.moveTo(-18, -50); g.lineTo(0, -68); g.lineTo(18, -50); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(-16, -38); g.lineTo(0, -54); g.lineTo(16, -38); g.closePath(); g.fill();
       g.fillStyle = '#3d4a3c';
-      g.beginPath(); g.moveTo(-18, -50); g.lineTo(0, -68); g.lineTo(0, -54); g.lineTo(-12, -50); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(-16, -38); g.lineTo(0, -54); g.lineTo(0, -42); g.lineTo(-10, -38); g.closePath(); g.fill();
       g.strokeStyle = 'rgba(20,14,8,.45)'; g.lineWidth = 1.2;
-      g.strokeRect(-13, -48, 26, 46);
+      g.strokeRect(-12, -38, 24, 36);
       break;
     }
     case 'boom': {
@@ -2628,7 +2628,16 @@ function drawPropShape(g, p) {
       break;
     }
     case 'cpit': {
-      g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(0, 4, 22, 10, 0, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(2, 6, 26, 11, 0, 0, TAU); g.fill();
+      g.fillStyle = '#6a6860';
+      g.beginPath();
+      g.moveTo(-22, 2); g.lineTo(-10, -10); g.lineTo(8, -12); g.lineTo(20, 0);
+      g.lineTo(14, 4); g.lineTo(6, -4); g.lineTo(-8, -2); g.lineTo(-16, 6);
+      g.closePath(); g.fill();
+      g.fillStyle = '#8a867c';
+      g.beginPath(); g.moveTo(-10, -10); g.lineTo(8, -12); g.lineTo(6, -4); g.lineTo(-8, -2); g.closePath(); g.fill();
+      g.fillStyle = '#4a4842';
+      g.beginPath(); g.moveTo(-22, 2); g.lineTo(-16, 6); g.lineTo(-8, -2); g.lineTo(-10, -10); g.closePath(); g.fill();
       break;
     }
     case 'ironbox': {
