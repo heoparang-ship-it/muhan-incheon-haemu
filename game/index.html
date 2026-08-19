@@ -1045,8 +1045,15 @@ function buildMap() {
   }
   rectEach(m, 52, 12, 32, 26, (i) => { if (m.zone[i] === Z.VILLAGE) m.zone[i] = Z.SALT; });
 
-  // 갈대밭
-  const reedBeds = [[44, 50, 15, 12], [61, 40, 13, 11], [32, 57, 12, 10], [20, 63, 11, 9], [66, 25, 9, 8], [36, 44, 8, 7]];
+  // 갈대밭 — 빈 들판을 엄폐로 메운다
+  const reedBeds = [
+    [44, 50, 15, 12], [61, 40, 13, 11], [32, 57, 12, 10], [20, 63, 11, 9], [66, 25, 9, 8], [36, 44, 8, 7],
+    [38, 54, 11, 8], [50, 46, 10, 8], [14, 66, 12, 8], [70, 46, 9, 7], [40, 18, 8, 6], [28, 50, 8, 6],
+    [52, 56, 8, 6], [8, 62, 8, 6],
+    // 갯벌 — 횡단 복선(x 48–67, y 62–73)을 비운 채 덤불로 메움
+    [36, 80, 12, 8], [48, 86, 12, 8], [26, 86, 11, 7], [58, 88, 10, 6],
+    [18, 78, 10, 7], [40, 90, 11, 6], [62, 80, 8, 6], [32, 74, 9, 6]
+  ];
   for (const [rx, ry, rw, rh] of reedBeds) {
     rectEach(m, rx, ry, rw, rh, (i, x, y) => {
       if (m.zone[i] === Z.SEA || m.zone[i] === Z.CLIFF) return;
@@ -1075,6 +1082,15 @@ function buildMap() {
   [20, 52, 2, 2], [8, 58, 2, 3], [17, 58, 3, 2], [24, 49, 2, 2], [25, 56, 3, 2],
   [22, 44, 2, 2], [28, 47, 3, 2], [26, 62, 2, 2], [16, 63, 3, 2]];
   houses.forEach((h, k) => addSolidHouse(m, h[0], h[1], h[2], h[3], k % 3 === 0 ? 'tile' : 'thatch', '주민 초가'));
+  // 어촌 빈 마당 — 초가로 메움 (본토 s≥58)
+  const extraHouses = [
+    [8, 52, 2, 2], [6, 56, 2, 2], [29, 44, 2, 2], [30, 52, 2, 2],
+    [32, 64, 2, 2], [19, 40, 2, 2], [33, 54, 2, 2], [5, 48, 2, 2],
+    [27, 41, 2, 2], [14, 67, 2, 2],
+    [4, 61, 2, 2], [35, 58, 2, 2], [36, 64, 2, 2], [10, 69, 2, 2],
+    [32, 38, 2, 2], [7, 70, 2, 2]
+  ];
+  extraHouses.forEach((h, k) => addSolidHouse(m, h[0], h[1], h[2], h[3], k % 2 ? 'tile' : 'thatch', '주민 초가'));
   addRoom(m, { id: 'tavern', name: '주막', x: 19, y: 46, w: 5, h: 4, roof: 'thatch', wallH: 1.3, tone: '#4a3c2b', roofTone: '#463c25', doorSide: 's' });
   addRoom(m, { id: 'shrine', name: '당집', x: 11, y: 60, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#4a3232', roofTone: '#3a2e31', doorSide: 's' });
 
@@ -1084,6 +1100,8 @@ function buildMap() {
 
   // 염전
   addSolidHouse(m, 71, 29, 3, 3, 'thatch', '소금 창고');
+  addSolidHouse(m, 81, 26, 2, 2, 'thatch', '염전 헛간');
+  addSolidHouse(m, 53, 16, 2, 2, 'thatch', '염부 초가');
   addRoom(m, { id: 'smugStore', name: '밀수품 창고', x: 73, y: 34, w: 6, h: 5, roof: 'thatch', wallH: 1.35, tone: '#40372a', roofTone: '#403624', doorSide: 's', locked: true });
 
   // 백석섬
@@ -1092,6 +1110,8 @@ function buildMap() {
   addRoom(m, { id: 'tideRoom', name: '조수 측정실', x: 79, y: 74, w: 4, h: 3, roof: 'tile', wallH: 1.35, tone: '#454039', roofTone: '#33383a', doorSide: 's', locked: true });
   addSolidHouse(m, 68, 71, 3, 3, 'tile', '신도 숙소');
   addSolidHouse(m, 78, 70, 3, 2, 'tile', '신도 숙소');
+  addSolidHouse(m, 66, 68, 2, 2, 'thatch', '섬 헛간');
+  addSolidHouse(m, 81, 79, 2, 2, 'tile', '초소 헛간');
 
   /* ---------- 8. 동굴 천장 ---------- */
   addCaveCeiling(m, caveTiles);
@@ -1283,10 +1303,15 @@ function addProp(m, o) {
   const p = Object.assign({ solid: false, cover: 0 }, o);
   let px = Math.round(p.tx), py = Math.round(p.ty);
   if (!inMap(px, py)) return null;
+  if (!m.propAt) m.propAt = new Uint8Array(MAP_W * MAP_H);
   const blocked = (x, y) => {
     if (!inMap(x, y)) return true;
     const i = idx(x, y);
     if (m.solid[i]) return true;
+    if (m.propAt[i]) return true;
+    const lane = m.lane ? m.lane[i] : 0;
+    if (!p.indoor && lane >= 2) return true;
+    if (p.solid && lane >= 1) return true;
     const rb = m.roof[i];
     if (!p.indoor && rb >= 0 && m.buildings[rb] && m.buildings[rb].kind !== 'cave') return true;
     return false;
@@ -1306,46 +1331,122 @@ function addProp(m, o) {
   }
   p.i = idx(px, py);
   m.props.push(p);
+  m.propAt[p.i] = 1;
   if (p.solid) m.solid[p.i] = 1;
   if (p.cover) m.cover[p.i] = Math.max(m.cover[p.i], p.cover);
   if (p.kind === 'lamp') m.lamps.push(p);
   return p;
 }
 
+/* lane: 1 = 고체 소품 금지(순찰·마당), 2 = 소품 자체 금지(길·문·목표) */
+function markLanes(m) {
+  m.lane = new Uint8Array(MAP_W * MAP_H);
+  const set = (x, y, v) => {
+    if (!inMap(x, y)) return;
+    const i = idx(x, y);
+    if (v > m.lane[i]) m.lane[i] = v;
+  };
+  const disk = (cx, cy, r, v) => {
+    const R = Math.ceil(r);
+    for (let dy = -R; dy <= R; dy++)
+      for (let dx = -R; dx <= R; dx++)
+        if (dx * dx + dy * dy <= r * r) set(cx + dx, cy + dy, v);
+  };
+  const poly = (pts, r, v) => {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const ax = pts[i][0], ay = pts[i][1], bx = pts[i + 1][0], by = pts[i + 1][1];
+      const steps = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) * 2));
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        disk(Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t), r, v);
+      }
+    }
+  };
+
+  for (let y = 62; y <= 71; y++)
+    for (let x = 20; x <= 29; x++) set(x, y, 2);
+
+  for (let y = 0; y < MAP_H; y++)
+    for (let x = 0; x < MAP_W; x++) {
+      const t = m.terr[idx(x, y)];
+      if (t === T.DIRT || t === T.PIER) set(x, y, 2);
+      if (t === T.STONE) set(x, y, 1);
+    }
+  for (const d of m.doors) disk(d.tx, d.ty, 1.6, 2);
+
+  poly([[48, 62], [52, 65], [56, 68], [60, 70], [64, 72], [67, 73]], 2.4, 2);
+  poly([[66, 73], [68, 73]], 1.2, 2);
+  poly([[47, 63], [50, 65]], 1.2, 2);
+
+  [
+    [61, 26], [46, 47], [47, 46], [39, 32], [13, 61], [30, 9],
+    [75, 70], [73, 85], [88, 82], [75, 36], [67, 75], [66, 79], [91, 89],
+    [52, 42], [53, 43], [40, 32], [37, 31], [36, 42], [80, 75], [86, 85],
+    [23, 65], [25, 66], [22, 67], [26, 68], [84, 86], [88, 85], [83, 82]
+  ].forEach(q => disk(q[0], q[1], 1.8, 2));
+
+  [
+    [[40, 25], [52, 25], [57, 31], [57, 40]],
+    [[31, 32], [31, 45], [38, 50], [48, 50]],
+    [[44, 30], [44, 40], [50, 44], [38, 44]],
+    [[38, 36], [44, 36], [44, 39], [38, 39]],
+    [[50, 33], [54, 40], [48, 46], [45, 37]],
+    [[42, 34], [47, 36], [42, 41]],
+    [[28, 47], [23, 51], [19, 55], [25, 57]],
+    [[31, 54], [37, 57], [43, 59], [37, 53]],
+    [[13, 45], [20, 43], [25, 41], [16, 44]],
+    [[58, 21], [65, 21], [70, 27], [61, 29]],
+    [[68, 33], [75, 33], [78, 38], [70, 38]],
+    [[72, 36], [76, 41], [70, 43]],
+    [[54, 29], [59, 34], [53, 38]],
+    [[48, 58], [54, 61], [60, 64], [52, 59]],
+    [[46, 63], [50, 66], [44, 66]],
+    [[70, 70], [77, 70], [79, 76], [72, 79]],
+    [[74, 67], [80, 71], [81, 78], [74, 73]],
+    [[73, 73], [78, 77], [72, 81]],
+    [[68, 73], [72, 83], [78, 83]],
+    [[80, 80], [83, 82], [79, 84]],
+    [[84, 84], [87, 86], [84, 87]],
+    [[86, 82], [88, 86], [83, 85]]
+  ].forEach(p => poly(p, 1.15, 1));
+}
+
 function addProps(m) {
+  m.propAt = new Uint8Array(MAP_W * MAP_H);
+  markLanes(m);
+
   const lampSpots = [
     [45, 25, '정문 등불'], [31, 43, '뒷담 등불'], [59, 33, '옆문 등불'], [44, 36, '마당 등불'],
     [40, 40, '마당 등불'], [48, 36, '마당 등불'], [20, 51, '주막 등불'], [13, 58, '당집 등불'],
     [27, 60, '어촌 등불'], [67, 71, '선착장 등불'], [76, 70, '성소 등불'], [74, 86, '감금실 등불'],
     [83, 84, '동굴 등불'], [87, 87, '계류장 등불'], [61, 21, '염전 등불'], [72, 33, '창고 등불'],
+    [8, 50, '어촌 등불'], [32, 52, '어촌 등불'], [36, 62, '들판 등불'], [50, 48, '들판 등불'],
+    [64, 52, '갯가 등불'], [70, 28, '염전 등불'], [54, 18, '염전 등불'], [82, 76, '섬 등불'],
+    [64, 74, '선착장 등불'], [40, 22, '담장 등불'], [16, 64, '어촌 등불'], [28, 38, '비탈 등불'],
     [23, 17, '초소 신호등'], [29, 13, '봉수 신호등'], [32, 21, '절벽 신호등']
   ];
-  lampSpots.forEach((l, k) => addProp(m, { kind: 'lamp', tx: l[0], ty: l[1], name: l[2], on: true, radius: 5.6, signal: k >= 16 }));
-
-  for (let k = 0; k < 210; k++) {
-    const x = ri(3, MAP_W - 4), y = ri(3, MAP_H - 4), i = idx(x, y);
-    if (m.solid[i] || m.inside[i] >= 0 || m.roof[i] >= 0) continue;
-    const z = m.zone[i], t = m.terr[i];
-    if (z === Z.SEA || t === Z.FLAT) continue;
-    if (t === T.SALT || t === T.STONE || t === T.MUD || t === T.CAVE) continue;
-    const r = rnd();
-    if (z === Z.CLIFF && r < 0.55) addProp(m, { kind: 'pine', tx: x, ty: y, solid: true, cover: 2, s: rr(0.8, 1.25) });
-    else if (z === Z.VILLAGE && r < 0.36) addProp(m, { kind: 'tree', tx: x, ty: y, solid: true, cover: 2, s: rr(0.8, 1.15) });
-    else if (r < 0.42) addProp(m, { kind: 'rock', tx: x, ty: y, solid: r < 0.16, cover: 1, s: rr(0.55, 1.0) });
-    else addProp(m, { kind: 'bush', tx: x, ty: y, cover: 2, s: rr(0.65, 1.1) });
-  }
+  lampSpots.forEach((l, k) => addProp(m, { kind: 'lamp', tx: l[0], ty: l[1], name: l[2], on: true, radius: 5.6, signal: k >= 28 }));
 
   const villageProps = [[12, 46, 'net'], [17, 51, 'net'], [21, 57, 'rack'], [11, 52, 'rack'],
   [24, 46, 'jar'], [15, 45, 'jar'], [9, 55, 'jar'], [27, 54, 'cart'],
-  [18, 62, 'well'], [23, 51, 'boat'], [15, 65, 'boat'], [29, 51, 'rack']];
-  villageProps.forEach(p => addProp(m, { kind: p[2], tx: p[0], ty: p[1], solid: p[2] === 'cart' || p[2] === 'boat', cover: p[2] === 'cart' ? 2 : 1 }));
+  [18, 62, 'well'], [23, 51, 'boat'], [15, 65, 'boat'], [29, 51, 'rack'],
+  [8, 48, 'net'], [6, 54, 'jar'], [32, 50, 'cart'], [12, 64, 'rack'],
+  [20, 42, 'jar'], [28, 44, 'net'], [16, 56, 'crate'], [4, 58, 'rock']];
+  villageProps.forEach(p => addProp(m, { kind: p[2], tx: p[0], ty: p[1], solid: p[2] === 'cart' || p[2] === 'boat' || p[2] === 'rock', cover: p[2] === 'cart' ? 2 : 1 }));
 
   addProp(m, { kind: 'kiln', tx: 58, ty: 28, solid: true, cover: 2, name: '소금가마' });
   addProp(m, { kind: 'kiln', tx: 67, ty: 20, solid: true, cover: 2, name: '소금가마' });
+  addProp(m, { kind: 'kiln', tx: 76, ty: 18, solid: true, cover: 2, name: '소금가마' });
   addProp(m, { kind: 'cart', tx: 63, ty: 32, solid: true, cover: 2, name: '소금 수레' });
   addProp(m, { kind: 'cart', tx: 69, ty: 25, solid: true, cover: 2, name: '소금 수레' });
+  addProp(m, { kind: 'cart', tx: 56, ty: 24, solid: true, cover: 2, name: '소금 수레' });
   addProp(m, { kind: 'jar', tx: 44, ty: 38, cover: 1 });
   addProp(m, { kind: 'jar', tx: 46, ty: 39, cover: 1 });
+  addProp(m, { kind: 'jar', tx: 56, ty: 30, cover: 1 });
+  addProp(m, { kind: 'jar', tx: 64, ty: 18, cover: 1 });
+  addProp(m, { kind: 'jar', tx: 72, ty: 22, cover: 1 });
+  addProp(m, { kind: 'stone_pile', tx: 60, ty: 26, cover: 2, name: '소금 더미' });
+  addProp(m, { kind: 'stone_pile', tx: 74, ty: 28, cover: 2, name: '소금 더미' });
   addProp(m, { kind: 'cart', tx: 41, ty: 45, solid: true, cover: 2 });
 
   paintPath(m, [[66, 73], [68, 73]], 1.0, (i) => { m.terr[i] = T.PIER; });
@@ -1353,26 +1454,108 @@ function addProps(m) {
 
   addProp(m, { kind: 'belltower', tx: 75, ty: 69, solid: true, cover: 1, name: '종탑', h: 3.2 });
   addProp(m, { kind: 'altar', tx: 54, ty: 65, cover: 1, name: '선녀바위 제단' });
-  // 구호소와 해변 사이 — 빈 들판을 채우는 생활 흔적
   const midProps = [[36, 52, 'rack'], [40, 55, 'net'], [33, 50, 'jar'], [44, 47, 'cart'],
   [30, 44, 'jar'], [52, 50, 'rack'], [56, 44, 'net'], [49, 55, 'jar'],
   [37, 60, 'boat'], [42, 58, 'rack'], [58, 55, 'jar'], [61, 50, 'cart'],
-  [26, 40, 'well'], [50, 20, 'jar'], [66, 45, 'net'], [63, 58, 'rack']];
+  [26, 40, 'well'], [50, 20, 'jar'], [66, 45, 'net'], [63, 58, 'rack'],
+  [38, 48, 'crate'], [46, 54, 'net'], [54, 58, 'boat'], [60, 54, 'jar'],
+  [32, 56, 'rack'], [48, 44, 'cart'], [64, 42, 'net'], [28, 48, 'jar']];
   midProps.forEach(q => addProp(m, { kind: q[2], tx: q[0], ty: q[1], solid: q[2] === 'cart' || q[2] === 'boat', cover: q[2] === 'cart' ? 2 : 1 }));
-  for (const q of [[35, 47], [47, 51], [55, 47], [39, 53], [58, 60], [29, 55], [64, 48], [43, 52]])
+  for (const q of [[35, 47], [47, 51], [55, 47], [39, 53], [58, 60], [29, 55], [64, 48], [43, 52], [51, 46], [33, 44]])
     addProp(m, { kind: 'stone_pile', tx: q[0], ty: q[1], cover: 2, s: rr(0.8, 1.2), name: '돌탑' });
   addSolidHouse(m, 39, 49, 2, 2, 'thatch', '들막');
   addSolidHouse(m, 54, 52, 3, 2, 'thatch', '움막');
   addSolidHouse(m, 47, 57, 2, 2, 'thatch', '어망 창고');
+  addSolidHouse(m, 42, 54, 2, 2, 'thatch', '갈대 헛간');
+  addSolidHouse(m, 59, 48, 2, 2, 'thatch', '갯가 헛간');
   addProp(m, { kind: 'boat', tx: 67, ty: 74, solid: true, cover: 1, name: '형제의 어선' });
+  addProp(m, { kind: 'boat', tx: 38, ty: 84, solid: true, cover: 1, name: '버려진 어선' });
+  addProp(m, { kind: 'boat', tx: 54, ty: 90, solid: true, cover: 1, name: '버려진 어선' });
   addProp(m, { kind: 'wreck', tx: 87, ty: 87, cover: 2, name: '난파선 잔해' });
   addProp(m, { kind: 'wreck', tx: 84, ty: 87, cover: 2, name: '난파선 잔해' });
+  addProp(m, { kind: 'wreck', tx: 44, ty: 82, cover: 2, name: '난파선 잔해' });
+  addProp(m, { kind: 'wreck', tx: 30, ty: 90, cover: 2, name: '난파선 잔해' });
   addProp(m, { kind: 'crate', tx: 87, ty: 81, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 86, ty: 87, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 89, ty: 84, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 75, ty: 35, cover: 2, name: '밀수품 상자', indoor: true });
-  for (const q of [[83, 85], [85, 87], [88, 86], [82, 84], [86, 80]])
+  for (const q of [[83, 85], [85, 87], [88, 86], [82, 84], [86, 80], [84, 88], [89, 82]])
     addProp(m, { kind: 'stalag', tx: q[0], ty: q[1], cover: 1, s: rr(0.7, 1.25), name: '종유석' });
+
+  /* 격자 채움 — 길·문·목표·순찰로는 비우고 나머지를 구역별로 채운다 */
+  for (let y = 3; y < MAP_H - 3; y++) {
+    for (let x = 3; x < MAP_W - 3; x++) {
+      const i = idx(x, y);
+      if (m.solid[i] || m.propAt[i]) continue;
+      if (m.inside[i] >= 0 || (m.roof[i] >= 0 && m.buildings[m.roof[i]] && m.buildings[m.roof[i]].kind !== 'cave')) continue;
+      const z = m.zone[i], t = m.terr[i];
+      if (z === Z.SEA) continue;
+      if (t === T.DIRT || t === T.PIER) continue;
+      const n = smoothNoise(x * 0.31 + 1.7, y * 0.29 + 0.4, 1);
+      const key = x + 2 * y;
+      let kind = 'bush', solid = false, cover = 2, stride = 4, floor = 0.30;
+      if (z === Z.FLAT || t === T.MUD) {
+        stride = 6; floor = 0.42;
+        if (n > 0.78) { kind = 'wreck'; solid = false; cover = 2; }
+        else if (n > 0.64) { kind = 'rock'; solid = n > 0.88; cover = 1; }
+        else if (n > 0.50) { kind = 'net'; solid = false; cover = 1; }
+        else { kind = 'bush'; solid = false; cover = 2; }
+      } else if (z === Z.SALT || t === T.SALT) {
+        stride = 3; floor = 0.34;
+        if (n > 0.72) { kind = 'stone_pile'; solid = false; cover = 2; }
+        else if (n > 0.50) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.38) { kind = 'rock'; solid = n > 0.90; cover = 1; }
+        else { kind = 'bush'; solid = false; cover = 2; }
+      } else if (z === Z.CAVE || t === T.CAVE) {
+        stride = 4; floor = 0.38;
+        if (n > 0.62) { kind = 'stalag'; solid = true; cover = 1; }
+        else if (n > 0.40) { kind = 'rock'; solid = true; cover = 1; }
+        else { kind = 'crate'; solid = false; cover = 2; }
+      } else if (z === Z.CLIFF) {
+        stride = 3; floor = 0.28;
+        if (n > 0.52) { kind = 'pine'; solid = true; cover = 2; }
+        else if (n > 0.36) { kind = 'rock'; solid = n > 0.80; cover = 1; }
+        else { kind = 'bush'; solid = false; cover = 2; }
+      } else if (z === Z.MISSION) {
+        stride = 4; floor = 0.36;
+        if (n > 0.70) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.48) { kind = 'bush'; solid = false; cover = 2; }
+        else { kind = 'rock'; solid = false; cover = 1; }
+      } else if (z === Z.ISLAND) {
+        stride = 3; floor = 0.30;
+        if (n > 0.74) { kind = 'pine'; solid = true; cover = 2; }
+        else if (n > 0.56) { kind = 'rock'; solid = true; cover = 1; }
+        else if (n > 0.40) { kind = 'crate'; solid = false; cover = 2; }
+        else { kind = 'bush'; solid = false; cover = 2; }
+      } else {
+        stride = 3; floor = 0.28;
+        if (n > 0.80) { kind = 'tree'; solid = true; cover = 2; }
+        else if (n > 0.68) { kind = 'cart'; solid = n > 0.92; cover = 2; }
+        else if (n > 0.54) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.40) { kind = 'rock'; solid = n > 0.86; cover = 1; }
+        else { kind = 'bush'; solid = false; cover = 2; }
+      }
+      if (key % stride !== 0 || n < floor) continue;
+      addProp(m, { kind, tx: x, ty: y, solid, cover, s: 0.62 + n * 0.55 });
+    }
+  }
+
+  m.buildings.forEach(b => {
+    if (b.kind !== 'room' || !b.interiorTiles) return;
+    const spots = [];
+    for (const ti of b.interiorTiles) {
+      if (m.propAt[ti] || m.lane[ti] >= 2) continue;
+      spots.push(ti);
+    }
+    const n = Math.min(3, Math.max(1, Math.floor(spots.length / 6)));
+    for (let k = 0; k < n && k < spots.length; k++) {
+      const ti = spots[(k * 7 + b.x + b.y) % spots.length];
+      addProp(m, {
+        kind: k % 2 ? 'jar' : 'crate', tx: ti % MAP_W, ty: (ti / MAP_W) | 0,
+        indoor: true, solid: false, cover: 1
+      });
+    }
+  });
 }
 
 /* ===== c_nav.js ===== */
@@ -2201,7 +2384,7 @@ function drawProp(g, p) {
     q.translate(PROP_OX, PROP_OY);
     drawPropShape(q, p);
     propSprites.set(key, sp);
-    if (propSprites.size > 90) propSprites.delete(propSprites.keys().next().value);
+    if (propSprites.size > 180) propSprites.delete(propSprites.keys().next().value);
   }
   g.drawImage(sp, sx - PROP_OX, sy - PROP_OY);
 }
@@ -2827,7 +3010,9 @@ function spawnAll() {
     ['villager', 16, 48], ['villager', 22, 51], ['villager', 13, 55], ['villager', 26, 47],
     ['child', 19, 53], ['child', 24, 56], ['villager', 11, 58], ['villager', 28, 52],
     ['patient', 48, 30], ['patient', 50, 31], ['villager', 45, 35],
-    ['believer', 43, 42], ['believer', 46, 42], ['believer', 40, 38], ['believer', 48, 34]
+    ['believer', 43, 42], ['believer', 46, 42], ['believer', 40, 38], ['believer', 48, 34],
+    ['villager', 7, 50], ['villager', 32, 48], ['villager', 18, 42],
+    ['child', 9, 46], ['villager', 70, 32], ['believer', 76, 73]
   ];
   C.forEach((c, k) => {
     const p = nearestOpen(c[1], c[2], null); if (!p) return;
