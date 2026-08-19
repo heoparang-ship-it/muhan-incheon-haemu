@@ -1681,9 +1681,8 @@ function addProps(m) {
 
   /* 장소 단위 군집 — 반복 소품 대신 하나의 큰 실루엣으로 읽힌다 */
   [
-    ['scene_reed_bank', 42, 76, 0.78, 0], ['scene_reed_bank', 57, 80, 0.92, 1],
-    ['scene_reed_bank', 67, 74, 0.82, 0], ['scene_rock_shelf', 35, 85, 0.76, 0],
-    ['scene_rock_shelf', 54, 89, 0.90, 1], ['scene_rock_shelf', 79, 76, 0.72, 0],
+    ['scene_reed_bank', 45, 78, 0.68, 0], ['scene_reed_bank', 64, 78, 0.76, 1],
+    ['scene_rock_shelf', 55, 90, 0.70, 1],
     ['scene_fishing_yard', 10, 53, 0.72, 0], ['scene_fishing_yard', 29, 54, 0.70, 1],
     ['scene_fishing_yard', 58, 49, 0.68, 0]
   ].forEach(([asset, tx, ty, scale, flip]) => m.artScenery.push({ asset, tx, ty, scale, flip: !!flip }));
@@ -1709,9 +1708,12 @@ function addProps(m) {
     ['decal_tide_pool', [[50, 75], [59, 81]], 0.82, 0.70]
   ];
   decals.forEach(([asset, spots, scale, alpha], ai) => {
+    const light = asset === 'decal_salt_crust' || asset === 'decal_straw' ||
+      asset === 'decal_fish_scales' || asset === 'decal_pebbles';
     spots.forEach(([tx, ty], si) => m.artDecals.push({
       asset, tx, ty, scale: scale * (0.94 + ((tx * 3 + ty) % 5) * 0.025),
-      alpha, flip: ((ai + si) & 1) === 1
+      alpha: alpha * (light ? 0.58 : 0.46), blend: light ? 'soft-light' : 'multiply',
+      flip: ((ai + si) & 1) === 1
     }));
   });
 }
@@ -5891,6 +5893,7 @@ function drawWorldArt(g, id, tx, ty, opt, centered) {
   g.translate(x, y);
   if (opt && opt.flip) g.scale(-1, 1);
   g.globalAlpha = opt && opt.alpha != null ? opt.alpha : 1;
+  if (opt && opt.blend) g.globalCompositeOperation = opt.blend;
   const dy = centered ? -rec.meta.cellH / 2 : -rec.meta.anchorY;
   g.drawImage(im, 0, 0, rec.meta.cellW, rec.meta.cellH,
     -rec.meta.cellW * sc / 2, dy * sc, rec.meta.cellW * sc, rec.meta.cellH * sc);
