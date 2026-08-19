@@ -2669,7 +2669,8 @@ function drawProp(g, p) {
     const aid = p.kind === 'lamp' ? (p.on ? 'prop_lamp_on' : 'prop_lamp_off') : PROP_ASSET[p.kind];
     if (aid && ART.has(aid)) {
       g.save(); g.translate(sx, sy);
-      if (flip) g.scale(-1, 1);
+      const artFlip = p.kind === 'fence' ? !!p.fdir : flip;
+      if (artFlip) g.scale(-1, 1);
       const d = ART.img[aid].meta.dirs > 1 ? dirIndex((p.tx * 1.7 + p.ty * 2.3) % TAU, ART.img[aid].meta.dirs) : 0;
       const fr = (p.kind === 'lamp' && p.on) ? Math.floor(state.t * 7) : 0;
       const done = drawSprite(g, aid, 'idle', d, fr);
@@ -3257,9 +3258,13 @@ function drawBuildingSprite(g, id, b, alpha) {
   const wantH = (b.w + b.h) * (TH / 2) + (b.wallH || 1.4) * ZH + 36;
   const sc = Math.min(wantW / meta.cellW, wantH / meta.cellH) * 1.28;
   const dw = meta.cellW * sc, dh = meta.cellH * sc;
-  if (alpha != null) { g.save(); g.globalAlpha = alpha; }
+  g.save();
+  if (alpha != null) g.globalAlpha = alpha;
+  // 같은 원화 슬롯을 쓰는 집도 염분·습기·햇빛 차이로 조금씩 달라 보인다.
+  const weather = ((b.x * 13 + b.y * 17) % 9) - 4;
+  g.filter = `hue-rotate(${weather * 0.8}deg) saturate(${0.88 + (weather + 4) * 0.022}) brightness(${0.94 + ((b.x + b.y) % 5) * 0.018})`;
   g.drawImage(im, 0, 0, meta.cellW, meta.cellH, sx - dw / 2, sy - dh + 14, dw, dh);
-  if (alpha != null) g.restore();
+  g.restore();
   return true;
 }
 
