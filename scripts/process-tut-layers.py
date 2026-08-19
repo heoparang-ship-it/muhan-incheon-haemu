@@ -154,11 +154,11 @@ def main() -> None:
     ground.save(OUT_MAPS / "tut01_ground.png", "PNG", optimize=True)
     ground.save(OUT_ART / "tut01_ground.png", "PNG", optimize=True)
 
-    # Person-relative target heights (Commandos tutorial: person ~60px).
+    # World height at zoom 1 (person ~60px). Files are 2× so zoom-in has pixels.
     targets = {
-        "tent": 188,    # ~3 people; relief tent
-        "crates": 96,   # stacked crates to chest
-        "sacks": 100,   # 가마니 — 사람보다 커야 숨는다
+        "tent": 188,
+        "crates": 96,
+        "sacks": 100,
         "cart": 86,
         "nets": 100,
     }
@@ -167,11 +167,15 @@ def main() -> None:
         raw = Image.open(SRC / f"obj_{name}.png")
         keyed = chroma_clean(raw)
         trimmed = trim_alpha(keyed)
-        scaled = scale_to_height(trimmed, h)
+        scaled = scale_to_height(trimmed, h * 2)
         dest = OUT_OBJ / f"{name}.png"
         scaled.save(dest, "PNG", optimize=True)
         scaled.save(OUT_ART / f"obj_{name}_keyed.png", "PNG", optimize=True)
-        meta["objects"][name] = {"w": scaled.width, "h": scaled.height, "ox": 0.50, "oy": 0.90}
+        meta["objects"][name] = {
+            "w": scaled.width, "h": scaled.height,
+            "dw": int(round(scaled.width / 2)), "dh": h,
+            "ox": 0.50, "oy": 0.90,
+        }
 
     walk = classify_tiles(ground)
     meta["walk"] = walk

@@ -663,7 +663,7 @@ const CHAPTERS = {
   tut01: {
     id: 'tut01', name: '하선', brand: '튜토리얼 · 감나루 하선',
     title: '밀명 · 감나루 하선', time: 12 * 60, mapW: 32, mapH: 32,
-    zoom: 1, zoomPhone: 0.72   // TU01 줌0과 같게 1월드픽셀=1화면픽셀(PC)
+    zoom: 1, zoomPhone: 0.72, maxZoom: 2.05, minZoom: 0.38
   },
   ch1: {
     id: 'ch1', name: '1장', brand: '1장 · 감나루 · 실시간 분대 잠입 전술',
@@ -2359,7 +2359,7 @@ function drawTutSheet(g, p) {
   const z = groundZ(p.tx, p.ty);
   const sx = isoX(p.tx + .5, p.ty + .5), sy = isoY(p.tx + .5, p.ty + .5, z);
   const sc = p.s || 1;
-  const w = rec.img.naturalWidth * sc, h = rec.img.naturalHeight * sc;
+  const w = (rec.dw || rec.img.naturalWidth) * sc, h = (rec.dh || rec.img.naturalHeight) * sc;
   g.save();
   g.imageSmoothingEnabled = true;
   if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
@@ -2817,12 +2817,16 @@ const ART = {
 const TUT_PAINT_W = 1065, TUT_PAINT_H = 737;
 const TUT_PERSON_PX = 60, TUT_PERSON_CELL = 76;
 const TUT_VISUAL = { img: null, ok: false };
+const TUT_MIP = {
+  z0: { img: null, ok: false },   // 2× 이어붙인 촘촘한 장 — 당길 때
+  z2: { img: null, ok: false }    // ½ — 멀리 볼 때
+};
 const TUT_SHEETS = {
-  tent: { img: null, ok: false, ox: 0.50, oy: 0.90 },
-  crates: { img: null, ok: false, ox: 0.50, oy: 0.90 },
-  sacks: { img: null, ok: false, ox: 0.50, oy: 0.90 },
-  cart: { img: null, ok: false, ox: 0.50, oy: 0.88 },
-  nets: { img: null, ok: false, ox: 0.50, oy: 0.90 }
+  tent: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 229, dh: 188 },
+  crates: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 86, dh: 96 },
+  sacks: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 74, dh: 100 },
+  cart: { img: null, ok: false, ox: 0.50, oy: 0.88, dw: 100, dh: 86 },
+  nets: { img: null, ok: false, ox: 0.50, oy: 0.90, dw: 111, dh: 100 }
 };
 function tutPaintBox() {
   const cx = 0;
@@ -2839,16 +2843,26 @@ function loadTutImage(rec, src) {
 function loadTutVisual() {
   if (TUT_VISUAL.img) return;
   loadTutImage(TUT_VISUAL, 'assets/maps/tut01_ground.png');
+  loadTutImage(TUT_MIP.z0, 'assets/maps/tut01_ground_z0.png');
+  loadTutImage(TUT_MIP.z2, 'assets/maps/tut01_ground_z2.png');
   for (const id of Object.keys(TUT_SHEETS))
     loadTutImage(TUT_SHEETS[id], 'assets/maps/obj/' + id + '.png');
 }
+function tutPaintImage() {
+  const z = cam.zoom;
+  if (z >= 1.12 && TUT_MIP.z0.ok && TUT_MIP.z0.img && TUT_MIP.z0.img.naturalWidth) return TUT_MIP.z0.img;
+  if (z <= 0.62 && TUT_MIP.z2.ok && TUT_MIP.z2.img && TUT_MIP.z2.img.naturalWidth) return TUT_MIP.z2.img;
+  if (TUT_VISUAL.ok && TUT_VISUAL.img && TUT_VISUAL.img.naturalWidth) return TUT_VISUAL.img;
+  return null;
+}
 function drawTutVisual(g) {
-  if (!TUT_VISUAL.ok || !TUT_VISUAL.img || !TUT_VISUAL.img.naturalWidth) return false;
+  const im = tutPaintImage();
+  if (!im) return false;
   const b = tutPaintBox();
   g.save();
   g.imageSmoothingEnabled = true;
   if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
-  g.drawImage(TUT_VISUAL.img, b.x, b.y, b.w, b.h);
+  g.drawImage(im, b.x, b.y, b.w, b.h);
   g.restore();
   return true;
 }
@@ -7162,6 +7176,8 @@ function rebuildWorld() {
   initUI();
   centerOnSelected();
   const ch = chapter();
+  cam.minZoom = ch.minZoom || 0.30;
+  cam.maxZoom = ch.maxZoom || 1.65;
   cam.targetZoom = cam.zoom = isPhone() ? ch.zoomPhone : ch.zoom;
   const res = $('#result'); if (res) res.classList.remove('show');
   setMenuPause(false);
@@ -7174,7 +7190,7 @@ function beginMission(opts) {
   if (state) { state.paused = false; state.running = true; state.menuPause = false; }
   if (isPhone()) {
     state.followSel = true;
-    cam.targetZoom = cam.zoom = 0.46;
+    cam.targetZoom = cam.zoom = chapter().zoomPhone || 0.46;
     const fb = $('#followBtn'), fm = $('#followBtnM');
     if (fb) fb.classList.add('active');
     if (fm) fm.classList.add('active');
