@@ -900,7 +900,15 @@ const ZONE_NAME = {
 
 let map = null;
 
+const STORY_H = 1.82;
+const LEVELS = 2;
 function idx(tx, ty) { return ty * MAP_W + tx; }
+function idx3(tx, ty, lv) { return ((lv || 0) * MAP_W * MAP_H) + ty * MAP_W + tx; }
+function unpack3(i) {
+  const N = MAP_W * MAP_H, lv = i >= N ? 1 : 0, j = i % N;
+  return { tx: j % MAP_W, ty: (j / MAP_W) | 0, lv };
+}
+function unitLevel(u) { return (u && u.level) ? 1 : 0; }
 function inMap(tx, ty) { return tx >= 0 && ty >= 0 && tx < MAP_W && ty < MAP_H; }
 
 function buildMap() {
@@ -915,6 +923,10 @@ function buildMap() {
     tint: new Float32Array(N),
     zone: new Uint8Array(N),
     ao: new Float32Array(N),
+    walk1: new Uint8Array(N),
+    stair: new Uint8Array(N),
+    window: new Uint8Array(N),
+    storyH: new Float32Array(N),
     buildings: [], props: [], doors: [], lamps: [],
     doorAt: new Map()
   };
@@ -1035,6 +1047,10 @@ function buildMap() {
   paintPath(m, [[45, 26], [52, 22], [58, 19], [64, 17]], 1.2, (i) => { if (m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
   paintPath(m, [[58, 48], [60, 42], [62, 36], [64, 30], [66, 24]], 1.2, (i) => { if (m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
 
+  // 어촌 나무 마루 — WOOD 지형이 실제로 쓰이게
+  paintPath(m, [[18, 50], [21, 50], [21, 48]], 1.1, (i) => { if (m.zone[i] === Z.VILLAGE) m.terr[i] = T.WOOD; });
+  paintPath(m, [[12, 61], [14, 61]], 1.0, (i) => { if (m.zone[i] === Z.VILLAGE) m.terr[i] = T.WOOD; });
+
   // 염전
   for (let py = 0; py < 4; py++) for (let px = 0; px < 5; px++) {
     const bx = 55 + px * 5, by = 15 + py * 5;
@@ -1061,37 +1077,37 @@ function buildMap() {
   // 선녀바위
   paintDisc(m, 54, 62, 3.6, (i, x, y, d) => { m.terr[i] = T.ROCK; m.elev[i] = Math.max(m.elev[i], 0.5 + (3.6 - d) * 0.26); m.cover[i] = 2; });
 
-  /* ---------- 7. 건물 ---------- */
+  /* ---------- 7. 건물 — 스프라이트 발자국과 칸이 1:1 ---------- */
   compoundWall(m, 32, 26, 27, 23);
-  addRoom(m, { id: 'chapel', name: '예배당', x: 35, y: 29, w: 8, h: 6, roof: 'west', wallH: 1.9, tone: '#59503f', roofTone: '#4a4234', doorSide: 's' });
+  addRoom(m, { id: 'chapel', name: '예배당', x: 35, y: 29, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#59503f', roofTone: '#4a4234', doorSide: 's', stories: 2 });
   addRoom(m, { id: 'clinic', name: '무료 진료소', x: 47, y: 29, w: 6, h: 4, roof: 'tile', wallH: 1.35, tone: '#4c4238', roofTone: '#2f373b', doorSide: 's' });
-  addRoom(m, { id: 'office', name: '베일 집무실', x: 50, y: 40, w: 6, h: 5, roof: 'tile', wallH: 1.5, tone: '#4b4034', roofTone: '#32363a', doorSide: 'n', locked: true });
-  addRoom(m, { id: 'store', name: '약품 창고', x: 34, y: 41, w: 6, h: 4, roof: 'thatch', wallH: 1.25, tone: '#463b2c', roofTone: '#443a26', doorSide: 'n', locked: true });
-  addSolidHouse(m, 44, 43, 4, 3, 'tile', '조선인 봉사자 숙소');
-  addSolidHouse(m, 36, 35, 3, 3, 'thatch', '야학');
+  addRoom(m, { id: 'office', name: '베일 집무실', x: 50, y: 40, w: 6, h: 4, roof: 'tile', wallH: 1.5, tone: '#4b4034', roofTone: '#32363a', doorSide: 'n', locked: true });
+  addRoom(m, { id: 'store', name: '약품 창고', x: 34, y: 41, w: 5, h: 4, roof: 'thatch', wallH: 1.25, tone: '#463b2c', roofTone: '#443a26', doorSide: 'n', locked: true });
+  addRoom(m, { id: 'dorm', name: '조선인 봉사자 숙소', x: 44, y: 43, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#463c30', roofTone: '#303639', doorSide: 'n' });
+  addSolidHouse(m, 36, 36, 3, 2, 'thatch', '야학');
 
-  // 어촌
-  const houses = [[9, 43, 3, 2], [14, 42, 2, 3], [10, 49, 3, 2], [16, 47, 2, 2], [12, 54, 3, 3],
-  [20, 52, 2, 2], [8, 58, 2, 3], [17, 58, 3, 2], [24, 49, 2, 2], [25, 56, 3, 2],
+  // 어촌 — 2×2·3×2는 통짜, 4×4 이상은 입장
+  const houses = [[9, 43, 3, 2], [14, 42, 2, 2], [10, 49, 3, 2], [16, 47, 2, 2], [12, 54, 3, 2],
+  [20, 52, 2, 2], [8, 58, 2, 2], [17, 58, 3, 2], [24, 49, 2, 2], [25, 56, 3, 2],
   [22, 44, 2, 2], [28, 47, 3, 2], [26, 62, 2, 2], [16, 63, 3, 2]];
   houses.forEach((h, k) => addSolidHouse(m, h[0], h[1], h[2], h[3], k % 3 === 0 ? 'tile' : 'thatch', '주민 초가'));
-  addRoom(m, { id: 'tavern', name: '주막', x: 19, y: 46, w: 5, h: 4, roof: 'thatch', wallH: 1.3, tone: '#4a3c2b', roofTone: '#463c25', doorSide: 's' });
+  addRoom(m, { id: 'tavern', name: '주막', x: 19, y: 46, w: 5, h: 4, roof: 'thatch', wallH: 2.45, tone: '#4a3c2b', roofTone: '#463c25', doorSide: 's', stories: 2 });
   addRoom(m, { id: 'shrine', name: '당집', x: 11, y: 60, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#4a3232', roofTone: '#3a2e31', doorSide: 's' });
 
   // 절벽 초소
-  addSolidHouse(m, 27, 11, 3, 3, 'tile', '봉수 초소');
-  addSolidHouse(m, 19, 18, 2, 3, 'tile', '절벽 초소');
+  addRoom(m, { id: 'beacon', name: '봉수 초소', x: 26, y: 10, w: 4, h: 4, roof: 'tile', wallH: 1.45, tone: '#463c30', roofTone: '#303639', doorSide: 's' });
+  addSolidHouse(m, 19, 18, 3, 2, 'tile', '절벽 초소');
 
   // 염전
-  addSolidHouse(m, 71, 29, 3, 3, 'thatch', '소금 창고');
-  addRoom(m, { id: 'smugStore', name: '밀수품 창고', x: 73, y: 34, w: 6, h: 5, roof: 'thatch', wallH: 1.35, tone: '#40372a', roofTone: '#403624', doorSide: 's', locked: true });
+  addSolidHouse(m, 71, 29, 3, 2, 'thatch', '소금 창고');
+  addRoom(m, { id: 'smugStore', name: '밀수품 창고', x: 73, y: 34, w: 5, h: 4, roof: 'thatch', wallH: 1.35, tone: '#40372a', roofTone: '#403624', doorSide: 's', locked: true });
 
   // 백석섬
-  addRoom(m, { id: 'sanctum', name: '해상 예배당', x: 71, y: 71, w: 7, h: 5, roof: 'west', wallH: 1.95, tone: '#655d4c', roofTone: '#544c3d', doorSide: 's' });
-  addRoom(m, { id: 'cell', name: '감금실', x: 71, y: 81, w: 5, h: 4, roof: 'tile', wallH: 1.55, tone: '#3f3a35', roofTone: '#31373a', doorSide: 'n', locked: true });
-  addRoom(m, { id: 'tideRoom', name: '조수 측정실', x: 79, y: 74, w: 4, h: 3, roof: 'tile', wallH: 1.35, tone: '#454039', roofTone: '#33383a', doorSide: 's', locked: true });
-  addSolidHouse(m, 68, 71, 3, 3, 'tile', '신도 숙소');
-  addSolidHouse(m, 78, 70, 3, 2, 'tile', '신도 숙소');
+  addRoom(m, { id: 'sanctum', name: '해상 예배당', x: 70, y: 70, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#655d4c', roofTone: '#544c3d', doorSide: 's', stories: 2 });
+  addRoom(m, { id: 'cell', name: '감금실', x: 71, y: 81, w: 4, h: 4, roof: 'tile', wallH: 1.55, tone: '#3f3a35', roofTone: '#31373a', doorSide: 'n', locked: true });
+  addRoom(m, { id: 'tideRoom', name: '조수 측정실', x: 79, y: 73, w: 4, h: 4, roof: 'tile', wallH: 1.35, tone: '#454039', roofTone: '#33383a', doorSide: 's', locked: true });
+  addSolidHouse(m, 66, 71, 3, 2, 'tile', '신도 숙소');
+  addSolidHouse(m, 79, 67, 3, 2, 'tile', '신도 숙소');
 
   /* ---------- 8. 동굴 천장 ---------- */
   addCaveCeiling(m, caveTiles);
@@ -1233,6 +1249,9 @@ function addRoom(m, o) {
   const dx = side === 's' || side === 'n' ? o.x + Math.floor(o.w / 2) : (side === 'w' ? o.x : o.x + o.w - 1);
   const dy = side === 'e' || side === 'w' ? o.y + Math.floor(o.h / 2) : (side === 'n' ? o.y : o.y + o.h - 1);
   b.door = makeDoor(m, dx, dy, o.name, o.id + 'Door', !!o.locked);
+  punchWindows(m, b);
+  if (o.stories >= 2) addUpperFloor(m, b);
+  furnishRoom(m, b);
   return b;
 }
 
@@ -1258,6 +1277,82 @@ function addSolidHouse(m, x0, y0, w, h, roof, name) {
   }
   m.buildings.push(b);
   return b;
+}
+
+/* 벽에 창문 — 보행은 막고, 눈높이 시야는 통과 (코만도스2) */
+function punchWindows(m, b) {
+  if (!b.interiorTiles || !b.interiorTiles.length) return;
+  const doorI = b.door ? b.door.i : -1;
+  const cands = [];
+  for (let x = b.x; x < b.x + b.w; x++) for (let y = b.y; y < b.y + b.h; y++) {
+    if (!inMap(x, y)) continue;
+    const edge = (x === b.x || x === b.x + b.w - 1 || y === b.y || y === b.y + b.h - 1);
+    if (!edge) continue;
+    const i = idx(x, y);
+    if (i === doorI || !m.solid[i]) continue;
+    const isCorner = ((x === b.x || x === b.x + b.w - 1) && (y === b.y || y === b.y + b.h - 1));
+    if (isCorner) continue;
+    cands.push(i);
+  }
+  const n = Math.min(4, Math.max(1, Math.floor(cands.length / 3)));
+  for (let k = 0; k < n; k++) {
+    const i = cands[Math.floor((k + 0.5) * cands.length / n)];
+    if (i == null || m.window[i]) continue;
+    m.window[i] = 1;
+    if (!b.windows) b.windows = [];
+    b.windows.push(i);
+  }
+}
+
+/* 2층 — 실내 칸을 위층 보행으로, 문 옆 실내에 계단 */
+function addUpperFloor(m, b) {
+  if (!b.interiorTiles || !b.interiorTiles.length) return;
+  b.stories = 2;
+  b.wallH = Math.max(b.wallH || 1.4, 2.3);
+  for (const i of b.interiorTiles) {
+    m.walk1[i] = 1;
+    m.storyH[i] = STORY_H;
+  }
+  let sx, sy;
+  if (b.door) {
+    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+    for (const [dx, dy] of dirs) {
+      const x = b.door.tx + dx, y = b.door.ty + dy;
+      if (!inMap(x, y)) continue;
+      const i = idx(x, y);
+      if (m.inside[i] === m.buildings.indexOf(b) || b.interiorTiles.includes(i)) { sx = x; sy = y; break; }
+    }
+  }
+  if (sx == null) {
+    const mid = b.interiorTiles[0];
+    sx = mid % MAP_W; sy = (mid / MAP_W) | 0;
+  }
+  const si = idx(sx, sy);
+  m.stair[si] = 1;
+  m.walk1[si] = 1;
+  m.storyH[si] = STORY_H;
+  m.solid[si] = 0;
+  b.stair = { tx: sx, ty: sy, i: si };
+}
+
+/* 실내 가구 — 엄폐·소음 */
+function furnishRoom(m, b) {
+  const tiles = (b.interiorTiles || []).slice();
+  if (!tiles.length) return;
+  const kinds = b.id === 'store' || b.id === 'smugStore' ? ['crate', 'crate', 'jar', 'rack']
+    : b.id === 'cell' ? ['crate', 'jar']
+    : b.id === 'chapel' || b.id === 'sanctum' ? ['altar', 'jar', 'crate']
+    : b.id === 'tavern' ? ['jar', 'crate', 'rack', 'jar']
+    : ['jar', 'crate'];
+  let placed = 0;
+  for (let k = 0; k < kinds.length && placed < 5; k++) {
+    const i = tiles[(k * 3 + 1) % tiles.length];
+    const x = i % MAP_W, y = (i / MAP_W) | 0;
+    if (m.stair[i] || (b.door && b.door.i === i)) continue;
+    if (m.solid[i]) continue;
+    addProp(m, { kind: kinds[k], tx: x, ty: y, indoor: true, cover: kinds[k] === 'crate' || kinds[k] === 'rack' ? 2 : 1, name: b.name + ' 가구' });
+    placed++;
+  }
 }
 
 /* ---------- 동굴 천장 ---------- */
@@ -1318,7 +1413,7 @@ function addProps(m) {
     [40, 40, '마당 등불'], [48, 36, '마당 등불'], [20, 51, '주막 등불'], [13, 58, '당집 등불'],
     [27, 60, '어촌 등불'], [67, 71, '선착장 등불'], [76, 70, '성소 등불'], [74, 86, '감금실 등불'],
     [83, 84, '동굴 등불'], [87, 87, '계류장 등불'], [61, 21, '염전 등불'], [72, 33, '창고 등불'],
-    [23, 17, '초소 신호등'], [29, 13, '봉수 신호등'], [32, 21, '절벽 신호등']
+    [23, 17, '초소 신호등'], [25, 9, '봉수 신호등'], [32, 21, '절벽 신호등']
   ];
   lampSpots.forEach((l, k) => addProp(m, { kind: 'lamp', tx: l[0], ty: l[1], name: l[2], on: true, radius: 5.6, signal: k >= 16 }));
 
@@ -1326,7 +1421,7 @@ function addProps(m) {
     const x = ri(3, MAP_W - 4), y = ri(3, MAP_H - 4), i = idx(x, y);
     if (m.solid[i] || m.inside[i] >= 0 || m.roof[i] >= 0) continue;
     const z = m.zone[i], t = m.terr[i];
-    if (z === Z.SEA || t === Z.FLAT) continue;
+    if (z === Z.SEA || z === Z.FLAT) continue;
     if (t === T.SALT || t === T.STONE || t === T.MUD || t === T.CAVE) continue;
     const r = rnd();
     if (z === Z.CLIFF && r < 0.55) addProp(m, { kind: 'pine', tx: x, ty: y, solid: true, cover: 2, s: rr(0.8, 1.25) });
@@ -1370,7 +1465,9 @@ function addProps(m) {
   addProp(m, { kind: 'crate', tx: 87, ty: 81, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 86, ty: 87, cover: 2, name: '밀수품 상자' });
   addProp(m, { kind: 'crate', tx: 89, ty: 84, cover: 2, name: '밀수품 상자' });
-  addProp(m, { kind: 'crate', tx: 75, ty: 35, cover: 2, name: '밀수품 상자', indoor: true });
+  addProp(m, { kind: 'crate', tx: 75, ty: 36, cover: 2, name: '밀수품 상자', indoor: true });
+  addProp(m, { kind: 'crate', tx: 76, ty: 35, cover: 2, name: '밀수품 상자', indoor: true });
+  addProp(m, { kind: 'jar', tx: 74, ty: 36, cover: 1, indoor: true });
   for (const q of [[83, 85], [85, 87], [88, 86], [82, 84], [86, 80]])
     addProp(m, { kind: 'stalag', tx: q[0], ty: q[1], cover: 1, s: rr(0.7, 1.25), name: '종유석' });
 }
@@ -1406,23 +1503,29 @@ function waterDepth(i) {
 const DEEP = 0.30;   // 이보다 깊으면 걸어서 못 지난다
 
 /* ---------- 통행 판정 ---------- */
-function passable(tx, ty, unit) {
+function walkableAt(tx, ty, lv, unit) {
   if (!inMap(tx, ty)) return false;
   const i = idx(tx, ty);
+  if (lv === 1) {
+    if (!(map.walk1[i] || map.stair[i])) return false;
+    return true;
+  }
   if (map.solid[i]) return false;
   const d = map.doorAt.get(i);
   if (d && !d.open && !d.broken) {
-    // 잠긴 문은 막힌다. 잠기지 않은 문은 다가가면 열고 지나간다.
     if (d.locked) return false;
     if (!unit) return false;
   }
   const dep = waterDepth(i);
   if (dep > DEEP) {
-    if (unit && unit.waterWalk) return true;      // 도치의 물길
+    if (unit && unit.waterWalk) return true;
     return false;
   }
-  // 급경사는 못 오른다
   return true;
+}
+
+function passable(tx, ty, unit) {
+  return walkableAt(tx, ty, unitLevel(unit), unit);
 }
 
 /* 두 인접 타일 사이 고저차 통행 */
@@ -1454,31 +1557,41 @@ class Heap {
 /* ---------- 가장 가까운 통행 가능 타일 ---------- */
 function nearestOpen(tx, ty, unit, maxR) {
   tx = clamp(Math.round(tx), 0, MAP_W - 1); ty = clamp(Math.round(ty), 0, MAP_H - 1);
-  if (passable(tx, ty, unit)) return [tx, ty];
+  const lv = unitLevel(unit);
+  if (walkableAt(tx, ty, lv, unit)) return [tx, ty];
   const R = maxR || 14;
   for (let r = 1; r <= R; r++) {
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
       const nx = tx + dx, ny = ty + dy;
-      if (passable(nx, ny, unit)) return [nx, ny];
+      if (walkableAt(nx, ny, lv, unit)) return [nx, ny];
     }
   }
   return null;
 }
 
 /* ---------- A* ---------- */
-const _pathScratch = { came: new Int32Array(MAP_W * MAP_H), g: new Float32Array(MAP_W * MAP_H), stamp: new Int32Array(MAP_W * MAP_H), tick: 0 };
+const _pathScratch = { came: new Int32Array(MAP_W * MAP_H * 2), g: new Float32Array(MAP_W * MAP_H * 2), stamp: new Int32Array(MAP_W * MAP_H * 2), tick: 0 };
 
 function findPath(sx, sy, tx, ty, unit, limit) {
-  const S = nearestOpen(sx, sy, unit), Tg = nearestOpen(tx, ty, unit);
-  if (!S || !Tg) return [];
-  const [sgx, sgy] = S, [tgx, tgy] = Tg;
-  if (sgx === tgx && sgy === tgy) return [];
+  const slv = unitLevel(unit);
+  const S = nearestOpen(sx, sy, unit);
+  if (!S) return [];
+  const [sgx, sgy] = S;
+  let tlv = slv;
+  const ti0 = inMap(Math.round(tx), Math.round(ty)) ? idx(Math.round(tx), Math.round(ty)) : -1;
+  if (ti0 >= 0 && slv === 1 && !map.walk1[ti0] && !map.stair[ti0]) tlv = 0;
+  else if (ti0 >= 0 && slv === 0 && !walkableAt(Math.round(tx), Math.round(ty), 0, unit) && walkableAt(Math.round(tx), Math.round(ty), 1, unit)) tlv = 1;
+  const fake = { level: tlv, waterWalk: unit && unit.waterWalk, climb: unit && unit.climb };
+  const Tg = nearestOpen(tx, ty, fake);
+  if (!Tg) return [];
+  const [tgx, tgy] = Tg;
+  if (sgx === tgx && sgy === tgy && slv === tlv && !map.stair[idx(sgx, sgy)]) return [];
   const sc = _pathScratch; sc.tick++;
   const heap = new Heap();
-  const si = idx(sgx, sgy), ti = idx(tgx, tgy);
+  const si = idx3(sgx, sgy, slv), ti = idx3(tgx, tgy, tlv);
   sc.g[si] = 0; sc.came[si] = -1; sc.stamp[si] = sc.tick;
-  heap.push({ i: si, x: sgx, y: sgy, f: 0 });
+  heap.push({ i: si, x: sgx, y: sgy, lv: slv, f: 0 });
   const closed = new Set();
   let found = false, loops = 0, cap = limit || 30000;
   while (heap.size && loops++ < cap) {
@@ -1486,26 +1599,34 @@ function findPath(sx, sy, tx, ty, unit, limit) {
     if (closed.has(cur.i)) continue;
     closed.add(cur.i);
     if (cur.i === ti) { found = true; break; }
+    const tryN = (nx, ny, nlv, stepMul) => {
+      if (!walkableAt(nx, ny, nlv, unit)) return;
+      if (nlv === cur.lv && !stepOk(cur.x, cur.y, nx, ny, unit)) return;
+      if (nlv === cur.lv && (nx !== cur.x) && (ny !== cur.y)) {
+        if (!walkableAt(cur.x + (nx - cur.x), cur.y, nlv, unit) || !walkableAt(cur.x, cur.y + (ny - cur.y), nlv, unit)) return;
+      }
+      const ni = idx3(nx, ny, nlv);
+      if (closed.has(ni)) return;
+      const step = stepMul * moveCost(nx, ny, unit);
+      const ng = sc.g[cur.i] + step;
+      if (sc.stamp[ni] === sc.tick && sc.g[ni] <= ng) return;
+      sc.stamp[ni] = sc.tick; sc.g[ni] = ng; sc.came[ni] = cur.i;
+      const h = Math.hypot(tgx - nx, tgy - ny) * 1.02 + Math.abs(tlv - nlv) * 0.4;
+      heap.push({ i: ni, x: nx, y: ny, lv: nlv, f: ng + h });
+    };
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       if (!dx && !dy) continue;
-      const nx = cur.x + dx, ny = cur.y + dy;
-      if (!passable(nx, ny, unit)) continue;
-      if (!stepOk(cur.x, cur.y, nx, ny, unit)) continue;
-      if (dx && dy) { if (!passable(cur.x + dx, cur.y, unit) || !passable(cur.x, cur.y + dy, unit)) continue; }
-      const ni = idx(nx, ny);
-      if (closed.has(ni)) continue;
-      const step = (dx && dy ? 1.4142 : 1) * moveCost(nx, ny, unit);
-      const ng = sc.g[cur.i] + step;
-      if (sc.stamp[ni] === sc.tick && sc.g[ni] <= ng) continue;
-      sc.stamp[ni] = sc.tick; sc.g[ni] = ng; sc.came[ni] = cur.i;
-      const h = Math.hypot(tgx - nx, tgy - ny) * 1.02;
-      heap.push({ i: ni, x: nx, y: ny, f: ng + h });
+      tryN(cur.x + dx, cur.y + dy, cur.lv, (dx && dy) ? 1.4142 : 1);
     }
+    if (map.stair[idx(cur.x, cur.y)]) tryN(cur.x, cur.y, 1 - cur.lv, 1.25);
   }
-  if (!found) return [];
+  if (!found) {
+    /* 목적 층에 못 닿으면 같은 칸 다른 층은 무시하고 실패 */
+    return [];
+  }
   const raw = [];
   let c = ti, guard = 0;
-  while (c !== -1 && guard++ < 9000) { raw.push({ tx: c % MAP_W, ty: (c / MAP_W) | 0 }); c = sc.came[c]; }
+  while (c !== -1 && guard++ < 9000) { raw.push(unpack3(c)); c = sc.came[c]; }
   raw.reverse();
   return smoothPath(raw, unit);
 }
@@ -1522,11 +1643,13 @@ function smoothPath(p, unit) {
   return out;
 }
 function walkClear(a, b, unit) {
+  if ((a.lv || 0) !== (b.lv || 0)) return false;
   const d = Math.hypot(b.tx - a.tx, b.ty - a.ty), n = Math.ceil(d * 3);
   let pz = map.elev[idx(a.tx, a.ty)];
+  const lv = a.lv || 0;
   for (let i = 1; i <= n; i++) {
     const t = i / n, x = Math.round(lerp(a.tx, b.tx, t)), y = Math.round(lerp(a.ty, b.ty, t));
-    if (!passable(x, y, unit)) return false;
+    if (!walkableAt(x, y, lv, unit)) return false;
     const z = map.elev[idx(x, y)];
     if (Math.abs(z - pz) > ((unit && unit.climb) ? 0.95 : 0.52)) return false;
     pz = z;
@@ -1554,12 +1677,15 @@ function buildBlockHeights() {
       p.kind === 'cart' ? 1.15 : p.kind === 'kiln' ? 1.5 : p.kind === 'rock' ? 0.9 : 1.2;
     map.blockH[p.i] = h;
   }
+  for (let i = 0; i < N; i++) {
+    if (map.window[i]) map.blockH[i] = 0.88;
+    if (map.stair[i]) map.blockH[i] = Math.min(map.blockH[i], 0.55);
+  }
 }
 
-function hasSight(ax, ay, bx, by, eyeUp, targUp) {
-  const az = map.elev[idx(clamp(Math.round(ax), 0, MAP_W - 1), clamp(Math.round(ay), 0, MAP_H - 1))] + (eyeUp == null ? 1.6 : eyeUp);
-  const bzi = idx(clamp(Math.round(bx), 0, MAP_W - 1), clamp(Math.round(by), 0, MAP_H - 1));
-  const bz = map.elev[bzi] + (targUp == null ? 0.85 : targUp);
+function hasSight(ax, ay, bx, by, eyeUp, targUp, aLv, bLv) {
+  const az = groundZ(ax, ay, aLv) + (eyeUp == null ? 1.6 : eyeUp);
+  const bz = groundZ(bx, by, bLv) + (targUp == null ? 0.85 : targUp);
   const d = Math.hypot(bx - ax, by - ay);
   const n = Math.ceil(d * 2.2);
   if (n <= 1) return true;
@@ -1570,11 +1696,19 @@ function hasSight(ax, ay, bx, by, eyeUp, targUp) {
     const ii = idx(x, y);
     const rayZ = lerp(az, bz, t);
     if (map.solid[ii]) {
-      if (map.elev[ii] + map.blockH[ii] > rayZ) return false;
+      if (map.window[ii]) {
+        const sill = map.elev[ii] + 0.88;
+        const lintel = map.elev[ii] + 1.75;
+        if (rayZ < sill || rayZ > lintel) return false;
+      } else if (map.elev[ii] + map.blockH[ii] > rayZ) return false;
     } else {
       const dr = map.doorAt.get(ii);
       if (dr && !dr.open && !dr.broken && map.elev[ii] + 1.5 > rayZ) return false;
       if (map.elev[ii] > rayZ + 0.12) return false;   // 언덕 너머
+    }
+    if ((aLv || 0) !== (bLv || 0) && map.walk1[ii] && !map.stair[ii] && map.inside[ii] >= 0) {
+      const floorZ = map.elev[ii] + (map.storyH[ii] || STORY_H) - 0.12;
+      if ((az - floorZ) * (bz - floorZ) < 0 && Math.abs(rayZ - floorZ) < 0.22) return false;
     }
   }
   return true;
@@ -1598,9 +1732,11 @@ function soundAttenuation(ax, ay, bx, by) {
 }
 
 /* 지형의 실제 높이(유닛 발 높이) */
-function groundZ(tx, ty) {
+function groundZ(tx, ty, lv) {
   const x = clamp(Math.round(tx), 0, MAP_W - 1), y = clamp(Math.round(ty), 0, MAP_H - 1);
-  return map.elev[idx(x, y)];
+  const z = map.elev[idx(x, y)];
+  if (lv) return z + (map.storyH[idx(x, y)] || STORY_H);
+  return z;
 }
 function tileAt(tx, ty) {
   const x = clamp(Math.round(tx), 0, MAP_W - 1), y = clamp(Math.round(ty), 0, MAP_H - 1);
@@ -1959,27 +2095,51 @@ function drawWallTile(g, x, y, z0, h, tone, kind) {
   const Bb = { x: B.x, y: isoY(x + 1, y, z0) };
   const Cb = { x: C.x, y: isoY(x + 1, y + 1, z0) };
   const Db = { x: D.x, y: isoY(x, y + 1, z0) };
+  const win = map.window && map.window[idx(x, y)];
+  const wallIm = (typeof ART !== 'undefined' && ART.img && ART.img.bld_wall && ART.img.bld_wall.sheets)
+    ? ART.img.bld_wall.sheets.idle : null;
+  const texOk = wallIm && wallIm.complete && wallIm.naturalWidth;
 
-  // 오른쪽(동) 면
-  g.beginPath(); g.moveTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(Cb.x, Cb.y); g.lineTo(Bb.x, Bb.y); g.closePath();
-  g.fillStyle = shade(tone, 0.60); g.fill();
-  // 앞(남) 면
-  g.beginPath(); g.moveTo(D.x, D.y); g.lineTo(C.x, C.y); g.lineTo(Cb.x, Cb.y); g.lineTo(Db.x, Db.y); g.closePath();
-  g.fillStyle = shade(tone, 0.86); g.fill();
+  const face = (p0, p1, p2, p3, shadeF, uvFlip) => {
+    if (texOk) {
+      drawTexQuad(g, wallIm, [p0.x, p0.y], [p1.x, p1.y], [p2.x, p2.y], [p3.x, p3.y],
+        uvFlip ? [1, 0] : [0, 0], uvFlip ? [0, 0] : [1, 0], uvFlip ? [0, 1] : [1, 1], uvFlip ? [1, 1] : [0, 1]);
+      g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
+      g.fillStyle = 'rgba(0,0,0,' + (1 - shadeF) * 0.45 + ')'; g.fill();
+    } else {
+      g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
+      g.fillStyle = shade(tone, shadeF); g.fill();
+    }
+  };
 
-  // 윗면(갓돌 · 벽마루)
+  if (win) {
+    const t0 = 0.42, t1 = 0.88;
+    const lerpP = (p, q, t) => ({ x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t) });
+    const Be = lerpP(B, Bb, t0), Ce = lerpP(C, Cb, t0), De = lerpP(D, Db, t0);
+    const Bl = lerpP(B, Bb, t1), Cl = lerpP(C, Cb, t1), Dl = lerpP(D, Db, t1);
+    face(B, C, Ce, Be, 0.60);
+    face(D, C, Ce, De, 0.86);
+    face(Bl, Cl, Cb, Bb, 0.55);
+    face(Dl, Cl, Cb, Db, 0.80);
+    g.fillStyle = 'rgba(8,14,18,.72)';
+    g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(210,190,140,.45)'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.stroke();
+    g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.stroke();
+  } else {
+    face(B, C, Cb, Bb, 0.60);
+    face(D, C, Cb, Db, 0.86);
+  }
+
   g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(D.x, D.y); g.closePath();
   g.fillStyle = shade(tone, kind === 'wall' ? 1.30 : 1.10); g.fill();
-  // 질감 · 윤곽 한 번에
   g.strokeStyle = 'rgba(0,0,0,.26)'; g.lineWidth = 0.9;
   g.beginPath();
   g.moveTo(D.x, D.y); g.lineTo(C.x, C.y); g.lineTo(B.x, B.y);
-  if (kind === 'wall') {
+  if (kind === 'wall' && !win) {
     const t = 0.5;
     g.moveTo(D.x, lerp(D.y, Db.y, t)); g.lineTo(C.x, lerp(C.y, Cb.y, t)); g.lineTo(B.x, lerp(B.y, Bb.y, t));
-  } else {
-    g.moveTo(C.x, C.y); g.lineTo(Cb.x, Cb.y);
-    g.moveTo(D.x, D.y); g.lineTo(Db.x, Db.y);
   }
   g.stroke();
 }
@@ -2665,7 +2825,7 @@ function drawBuildingSprite(g, id, b, alpha) {
   const sx = isoX(cx, cy), sy = isoY(cx, cy, z);
   const wantW = (b.w + b.h) * (TW / 2);
   const wantH = (b.w + b.h) * (TH / 2) + (b.wallH || 1.4) * ZH + 36;
-  const sc = Math.min(wantW / meta.cellW, wantH / meta.cellH) * 1.28;
+  const sc = Math.min(wantW / meta.cellW, wantH / meta.cellH);
   const dw = meta.cellW * sc, dh = meta.cellH * sc;
   if (alpha != null) { g.save(); g.globalAlpha = alpha; }
   g.drawImage(im, 0, 0, meta.cellW, meta.cellH, sx - dw / 2, sy - dh + 14, dw, dh);
@@ -2741,7 +2901,7 @@ function baseUnit(o) {
     tx: 0, ty: 0, angle: 0.8, path: [], speed: 2.1, alive: true,
     crouch: false, carrying: null, carriedBy: null, unconscious: false,
     hidden: false, moveT: 0, bob: rnd() * TAU, wait: 0, action: null,
-    footT: 0, lastPrint: 0, tied: false, wakeAt: 0, hidingAwake: false
+    footT: 0, lastPrint: 0, tied: false, wakeAt: 0, hidingAwake: false, level: 0
   }, o);
 }
 
@@ -2860,8 +3020,14 @@ function moveUnit(u, dt) {
     if (u.kind === 'agent') { audio.door(true, u.tx, u.ty); emitNoise(u.tx, u.ty, 4.5, '문 여는 소리', u); }
   }
   const step = sp * dt;
-  if (d <= step) { u.tx = t.tx; u.ty = t.ty; u.path.shift(); }
-  else { u.tx += dx / d * step; u.ty += dy / d * step; }
+  if (d <= step) {
+    u.tx = t.tx; u.ty = t.ty;
+    if (t.lv != null) u.level = t.lv;
+    u.path.shift();
+  } else {
+    u.tx += dx / d * step; u.ty += dy / d * step;
+    if (t.lv != null && map.stair[tileAt(u.tx, u.ty)]) u.level = t.lv;
+  }
   u.angle = Math.atan2(dy, dx);
   u.bob += dt * sp * 3.4;
   u.moveT = 0.12;
@@ -2929,7 +3095,7 @@ function addFootprint(tx, ty, u) {
 const P8 = a => { let k = Math.round(normAngle(a) / (TAU / 8)); return ((k % 8) + 8) % 8; };
 
 function unitScreen(u) {
-  const z = groundZ(u.tx, u.ty);
+  const z = groundZ(u.tx, u.ty, u.level);
   return { x: isoX(u.tx + .5, u.ty + .5), y: isoY(u.tx + .5, u.ty + .5, z), z };
 }
 
@@ -3355,7 +3521,7 @@ function guardSees(g, a, dt) {
   const fov = g.ai === 'alert' ? t.fov * 1.3 : (g.talkT > 0 ? t.fov * 0.55 : t.fov);
   const off = angleDiff(ang, g.angle);
   if (off > fov) return 0;
-  if (!hasSight(g.tx, g.ty, a.tx, a.ty)) return 0;
+  if (!hasSight(g.tx, g.ty, a.tx, a.ty, 1.6, 0.85, g.level, a.level)) return 0;
 
   const inner = off < fov * VISION.INNER_FOV && d < range * VISION.INNER_RANGE;   // 안쪽 시야 = 즉시 식별
   let vis = (1 - concealment(a)) * lampExposure(a.tx, a.ty);
@@ -3942,7 +4108,7 @@ function newState() {
 const EVIDENCE = [
   { id: 'relic', name: '실종자 유품', where: '염전 폐우물', tx: 61, ty: 26 },
   { id: 'forgedOrd', name: '위조 서품장', where: '베일 집무실', tx: 52, ty: 42 },
-  { id: 'deadSeal', name: '사망 선교사의 인장', where: '베일 집무실', tx: 53, ty: 43 },
+  { id: 'deadSeal', name: '사망 선교사의 인장', where: '베일 집무실', tx: 53, ty: 42 },
   { id: 'deedBook', name: '재산 양도 명부', where: '예배당 설교대', tx: 40, ty: 32 },
   { id: 'halo', name: '가짜 후광 장치', where: '예배당 뒤', tx: 37, ty: 31 },
   { id: 'sedative', name: '진정 성분 약병', where: '약품 창고', tx: 36, ty: 42 },
@@ -3998,6 +4164,10 @@ function buildInteractables() {
   pipeSpots.forEach((q, k) => add({ kind: 'pipe', id: 'pipe' + k, name: '구리관 ' + (k + 1), tx: q[0], ty: q[1], glyph: '管', time: 1.5 }));
   add({ kind: 'escape', id: 'escapeBoat', name: '탈출선', tx: 91, ty: 89, glyph: '船', time: 1.0 });
   add({ kind: 'secretPath', id: 'secretPath', name: '옛 피난 통로', tx: 66, ty: 79, glyph: '穴', time: 1.5, hidden: true });
+  for (const b of map.buildings) {
+    if (!b.stair) continue;
+    L.push({ kind: 'stairs', id: 'stair-' + (b.id || b.name), name: (b.name || '집') + ' 계단', tx: b.stair.tx, ty: b.stair.ty, glyph: '階', time: 0.35 });
+  }
 
   interactables = L;
 }
@@ -4109,6 +4279,19 @@ function interact(a, fromQueue) {
   switch (o.kind) {
     case 'evidence': {
       startAction(a, o.time, () => takeEvidence(o), o.name + '을(를) 살피는 중');
+      break;
+    }
+    case 'stairs': {
+      const dest = 1 - unitLevel(a);
+      const go = () => {
+        a.level = dest;
+        a.path = [];
+        toast(dest ? '2층으로 올랐다' : '아래층으로 내려왔다', 'plan');
+      };
+      if (Math.hypot(a.tx - o.tx, a.ty - o.ty) > 0.85) {
+        setPath(a, o.tx, o.ty);
+        startAction(a, 0.2, go, '계단을 오르는 중');
+      } else go();
       break;
     }
     case 'well': {
@@ -5445,6 +5628,46 @@ function drawEffects(g2) {
 }
 
 /* ---------- 정렬 렌더 ---------- */
+function drawStairs(g, b) {
+  if (!b.stair) return;
+  const x = b.stair.tx, y = b.stair.ty;
+  const z0 = map.elev[idx(x, y)], z1 = z0 + (map.storyH[idx(x, y)] || STORY_H);
+  g.save();
+  for (let k = 0; k < 6; k++) {
+    const t0 = k / 6, t1 = (k + 1) / 6;
+    const za = lerp(z0, z1, t0), zb = lerp(z0, z1, t1);
+    const inset = 0.18;
+    g.beginPath();
+    g.moveTo(isoX(x + inset, y + t0), isoY(x + inset, y + t0, za));
+    g.lineTo(isoX(x + 1 - inset, y + t0), isoY(x + 1 - inset, y + t0, za));
+    g.lineTo(isoX(x + 1 - inset, y + t1), isoY(x + 1 - inset, y + t1, zb));
+    g.lineTo(isoX(x + inset, y + t1), isoY(x + inset, y + t1, zb));
+    g.closePath();
+    g.fillStyle = k % 2 ? '#5a4634' : '#4a3828';
+    g.fill();
+    g.strokeStyle = 'rgba(20,12,8,.35)'; g.lineWidth = 0.8; g.stroke();
+  }
+  g.restore();
+}
+
+function drawUpperDeck(g, b) {
+  if (!b.interiorTiles) return;
+  g.save();
+  for (const i of b.interiorTiles) {
+    const x = i % MAP_W, y = (i / MAP_W) | 0;
+    const z = map.elev[i] + (map.storyH[i] || STORY_H);
+    g.beginPath();
+    g.moveTo(isoX(x, y), isoY(x, y, z));
+    g.lineTo(isoX(x + 1, y), isoY(x + 1, y, z));
+    g.lineTo(isoX(x + 1, y + 1), isoY(x + 1, y + 1, z));
+    g.lineTo(isoX(x, y + 1), isoY(x, y + 1, z));
+    g.closePath();
+    g.fillStyle = 'rgba(92,70,48,.82)'; g.fill();
+    g.strokeStyle = 'rgba(28,18,10,.28)'; g.lineWidth = 0.8; g.stroke();
+  }
+  g.restore();
+}
+
 function drawSorted(g2) {
   const b = visibleTileBounds();
   const items = [];
@@ -5456,15 +5679,22 @@ function drawSorted(g2) {
     const bd = map.buildings[bi];
     if (bd.x + bd.w < b.xMin - 4 || bd.x > b.xMax + 4 || bd.y + bd.h < b.yMin - 4 || bd.y > b.yMax + 4) continue;
     const tone = hex2rgb(bd.tone || '#4a4238');
+    const occupied = !!(bd.interiorSet && bd.interiorSet.size && agents.some(a => a.alive && bd.interiorSet.has(tileAt(a.tx, a.ty))));
     for (const i of bd.tiles) {
       const x = i % MAP_W, y = (i / MAP_W) | 0;
       if (!inView(x, y)) continue;
       if (state.ropes.has(i)) continue;
       const z = map.elev[i], h = bd.kind === 'wall' ? 1.6 : (bd.wallH || 1.4);
       const kind = bd.kind === 'wall' ? 'wall' : 'house';
-      if (bd.artBody) continue;
+      if (bd.artBody && !occupied && bd.kind !== 'wall') continue;
       items.push({ d: x + y, z: 0, f: () => drawWallTile(g2, x, y, z, h, tone, kind) });
       wallCount++;
+    }
+    if (bd.stair && (occupied || !bd.artBody)) {
+      items.push({ d: bd.stair.tx + bd.stair.ty, z: 0.6, f: () => drawStairs(g2, bd) });
+    }
+    if (bd.stories >= 2 && occupied) {
+      items.push({ d: bd.x + bd.y + bd.w + bd.h - 0.8, z: 0.7, f: () => drawUpperDeck(g2, bd) });
     }
     /* 지붕 · 동굴 천장 */
     if (bd.kind !== 'wall' && bd.kind !== 'cave')
@@ -5503,9 +5733,9 @@ function drawSorted(g2) {
   }
 
   /* 유닛 */
-  for (const c of civilians) { if (c.dead || !inView(c.tx, c.ty)) continue; items.push({ d: c.tx + c.ty, z: 1, f: () => drawCivil(g2, c) }); }
-  for (const g of guards) { if (g.hidden || !inView(g.tx, g.ty)) continue; items.push({ d: g.tx + g.ty, z: g.unconscious ? 0.5 : 1, f: () => (g.boss ? drawVale(g2, g) : drawGuard(g2, g)) }); }
-  for (const a of agents) { if (!a.alive || !inView(a.tx, a.ty)) continue; items.push({ d: a.tx + a.ty, z: 1.5, f: () => drawAgent(g2, a) }); }
+  for (const c of civilians) { if (c.dead || !inView(c.tx, c.ty)) continue; items.push({ d: c.tx + c.ty + (c.level || 0) * 0.4, z: 1 + (c.level || 0), f: () => drawCivil(g2, c) }); }
+  for (const g of guards) { if (g.hidden || !inView(g.tx, g.ty)) continue; items.push({ d: g.tx + g.ty + (g.level || 0) * 0.4, z: (g.unconscious ? 0.5 : 1) + (g.level || 0), f: () => (g.boss ? drawVale(g2, g) : drawGuard(g2, g)) }); }
+  for (const a of agents) { if (!a.alive || !inView(a.tx, a.ty)) continue; items.push({ d: a.tx + a.ty + (a.level || 0) * 0.4, z: 1.5 + (a.level || 0), f: () => drawAgent(g2, a) }); }
 
   items.sort((p, q) => (p.d - q.d) || (p.z - q.z));
   for (const it of items) it.f();
@@ -6395,8 +6625,9 @@ function closestBldArt(b) {
   for (const id in ART.img) {
     const m = id.match(/^bld_(west|tile|thatch)_(\d+)x(\d+)$/);
     if (!m) continue;
-    const roofPen = m[1] === b.roof ? 0 : 28;
-    const score = Math.abs(+m[2] - b.w) + Math.abs(+m[3] - b.h) + roofPen;
+    if (+m[2] !== b.w || +m[3] !== b.h) continue;
+    const roofPen = m[1] === b.roof ? 0 : 8;
+    const score = roofPen;
     if (score < bestScore) { bestScore = score; best = id; }
   }
   return best;
@@ -6405,7 +6636,8 @@ function closestBldArt(b) {
 function bindArt() {
   if (typeof ART === 'undefined') return;
   for (const b of map.buildings) {
-    if (b.kind === 'wall' || b.kind === 'cave') continue;
+    if (b.kind === 'cave') continue;
+    if (b.kind === 'wall') { b.artWall = true; continue; }
     const fp = b.w + 'x' + b.h;
     const cand = ['bld_' + b.id, 'bld_' + b.roof + '_' + fp];
     const near = closestBldArt(b);
@@ -6614,10 +6846,10 @@ function boot() {
     get state() { return state; }, get agents() { return agents; }, get guards() { return guards; },
     get civilians() { return civilians; }, get map() { return map; }, get vale() { return vale; },
     get interactables() { return interactables; },
-    cam, findPath, passable, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
+    cam, findPath, passable, walkableAt, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
     interact, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
-    nearestInteract, screenToTile, centerOnSelected, groundZ, idx, MAP_W, MAP_H,
+    nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
