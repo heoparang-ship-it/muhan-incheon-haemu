@@ -80,8 +80,12 @@ with sync_playwright() as p:
         paths[name] = page.evaluate(
             """([sx, sy, tx, ty]) => {
           const H = window.__HAEMU__;
+          const a = H.nearestOpen ? H.nearestOpen(sx, sy, H.agents[0]) : [sx, sy];
+          const b = H.nearestOpen ? H.nearestOpen(tx, ty, H.agents[0]) : [tx, ty];
           const path = H.findPath(sx, sy, tx, ty, H.agents[0]);
-          return { len: path.length, ok: path.length > 0 };
+          const snapA = Math.hypot((a && a[0]) - sx, (a && a[1]) - sy);
+          const snapB = Math.hypot((b && b[0]) - tx, (b && b[1]) - ty);
+          return { len: path.length, ok: path.length > 0 && snapA < 3 && snapB < 3, snapA, snapB };
         }""",
             [sx, sy, tx, ty],
         )
@@ -90,14 +94,16 @@ with sync_playwright() as p:
         page.evaluate(
             """([tx, ty, zoom]) => {
           const H = window.__HAEMU__;
-          H.cam.x = (tx - ty) * 32;
-          H.cam.y = (tx + ty) * 16;
+          H.state.followSel = false;
+          const TW = 64, TH = 32;
+          H.cam.x = (tx + 0.5 - (ty + 0.5)) * (TW / 2);
+          H.cam.y = (tx + 0.5 + ty + 0.5) * (TH / 2);
           H.cam.zoom = zoom;
           H.cam.targetZoom = zoom;
         }""",
             [tx, ty, zoom],
         )
-        page.wait_for_timeout(180)
+        page.wait_for_timeout(220)
         page.screenshot(path=str(out / f"{name}.png"))
 
     fail = []

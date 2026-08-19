@@ -1369,9 +1369,15 @@ function markLanes(m) {
   for (let y = 0; y < MAP_H; y++)
     for (let x = 0; x < MAP_W; x++) {
       const t = m.terr[idx(x, y)];
-      if (t === T.DIRT || t === T.PIER) set(x, y, 2);
+      if (t === T.PIER) set(x, y, 2);
       if (t === T.STONE) set(x, y, 1);
     }
+  [
+    [[11, 43], [15, 47], [19, 51], [24, 55], [30, 59], [37, 61], [44, 62], [49, 62]],
+    [[22, 40], [28, 37], [34, 34], [40, 30], [45, 26]],
+    [[45, 26], [52, 22], [58, 19], [64, 17]],
+    [[58, 48], [60, 42], [62, 36], [64, 30], [66, 24]]
+  ].forEach(p => poly(p, 1.45, 2));
   for (const d of m.doors) disk(d.tx, d.ty, 1.6, 2);
 
   poly([[48, 62], [52, 65], [56, 68], [60, 70], [64, 72], [67, 73]], 2.4, 2);
@@ -1482,7 +1488,51 @@ function addProps(m) {
   for (const q of [[83, 85], [85, 87], [88, 86], [82, 84], [86, 80], [84, 88], [89, 82]])
     addProp(m, { kind: 'stalag', tx: q[0], ty: q[1], cover: 1, s: rr(0.7, 1.25), name: '종유석' });
 
-  /* 격자 채움 — 길·문·목표·순찰로는 비우고 나머지를 구역별로 채운다 */
+  m.buildings.forEach(b => {
+    if (b.kind !== 'solid' && b.kind !== 'room') return;
+    const cand = [];
+    for (let y = b.y - 1; y <= b.y + b.h; y++) {
+      for (let x = b.x - 1; x <= b.x + b.w; x++) {
+        if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) continue;
+        if (!inMap(x, y)) continue;
+        const i = idx(x, y);
+        if (m.solid[i] || m.propAt[i] || (m.lane && m.lane[i] >= 2)) continue;
+        if (m.zone[i] === Z.SEA || m.terr[i] === T.PIER) continue;
+        cand.push([x, y]);
+      }
+    }
+    const n = Math.min(b.kind === 'room' ? 2 : 3, cand.length);
+    for (let k = 0; k < n; k++) {
+      const [x, y] = cand[(k * 5 + b.x + b.y) % cand.length];
+      const kind = k % 3 === 0 ? 'jar' : (k % 3 === 1 ? 'bush' : 'crate');
+      addProp(m, { kind, tx: x, ty: y, cover: 1, solid: false });
+    }
+  });
+
+  /* 갯벌 갈대 — 횡단로를 피해 타일 자체를 메움 */
+  for (let y = 4; y < MAP_H - 3; y++) {
+    for (let x = 4; x < MAP_W - 3; x++) {
+      const i = idx(x, y);
+      if (m.lane[i] >= 2 || m.solid[i]) continue;
+      if (m.zone[i] !== Z.FLAT || (m.terr[i] !== T.MUD && m.terr[i] !== T.SAND)) continue;
+      const n = smoothNoise(x * 0.22 + 3.3, y * 0.20 + 1.1, 1);
+      if (n < 0.58) continue;
+      m.terr[i] = T.REED;
+      m.cover[i] = Math.max(m.cover[i], 3);
+    }
+  }
+
+  const nearProp = (x, y, r) => {
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy;
+        if (inMap(nx, ny) && m.propAt[idx(nx, ny)]) return true;
+      }
+    return false;
+  };
+
+  /* 소품 채움 — 격자 대신 잡음으로 뭉쳐 놓고, 옆칸은 비운다 */
   for (let y = 3; y < MAP_H - 3; y++) {
     for (let x = 3; x < MAP_W - 3; x++) {
       const i = idx(x, y);
@@ -1490,52 +1540,53 @@ function addProps(m) {
       if (m.inside[i] >= 0 || (m.roof[i] >= 0 && m.buildings[m.roof[i]] && m.buildings[m.roof[i]].kind !== 'cave')) continue;
       const z = m.zone[i], t = m.terr[i];
       if (z === Z.SEA) continue;
-      if (t === T.DIRT || t === T.PIER) continue;
+      if (t === T.PIER) continue;
       const n = smoothNoise(x * 0.31 + 1.7, y * 0.29 + 0.4, 1);
-      const key = x + 2 * y;
-      let kind = 'bush', solid = false, cover = 2, stride = 4, floor = 0.30;
+      const n2 = smoothNoise(x * 0.73 + 4.2, y * 0.81 + 2.1, 1);
+      let kind = 'bush', solid = false, cover = 2, thresh = 0.56, gap = 1;
       if (z === Z.FLAT || t === T.MUD) {
-        stride = 6; floor = 0.42;
-        if (n > 0.78) { kind = 'wreck'; solid = false; cover = 2; }
-        else if (n > 0.64) { kind = 'rock'; solid = n > 0.88; cover = 1; }
-        else if (n > 0.50) { kind = 'net'; solid = false; cover = 1; }
+        thresh = 0.54; gap = 2;
+        if (n > 0.84) { kind = 'wreck'; solid = false; cover = 2; }
+        else if (n > 0.74) { kind = 'rock'; solid = n > 0.90; cover = 1; }
+        else if (n > 0.64) { kind = 'net'; solid = false; cover = 1; }
         else { kind = 'bush'; solid = false; cover = 2; }
       } else if (z === Z.SALT || t === T.SALT) {
-        stride = 3; floor = 0.34;
-        if (n > 0.72) { kind = 'stone_pile'; solid = false; cover = 2; }
-        else if (n > 0.50) { kind = 'jar'; solid = false; cover = 1; }
-        else if (n > 0.38) { kind = 'rock'; solid = n > 0.90; cover = 1; }
+        thresh = 0.50; gap = 1;
+        if (n > 0.80) { kind = 'stone_pile'; solid = false; cover = 2; }
+        else if (n > 0.62) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.52) { kind = 'rock'; solid = false; cover = 1; }
         else { kind = 'bush'; solid = false; cover = 2; }
       } else if (z === Z.CAVE || t === T.CAVE) {
-        stride = 4; floor = 0.38;
-        if (n > 0.62) { kind = 'stalag'; solid = true; cover = 1; }
-        else if (n > 0.40) { kind = 'rock'; solid = true; cover = 1; }
+        thresh = 0.52; gap = 1;
+        if (n > 0.70) { kind = 'stalag'; solid = true; cover = 1; }
+        else if (n > 0.50) { kind = 'rock'; solid = true; cover = 1; }
         else { kind = 'crate'; solid = false; cover = 2; }
       } else if (z === Z.CLIFF) {
-        stride = 3; floor = 0.28;
-        if (n > 0.52) { kind = 'pine'; solid = true; cover = 2; }
-        else if (n > 0.36) { kind = 'rock'; solid = n > 0.80; cover = 1; }
+        thresh = 0.48; gap = 1;
+        if (n > 0.58) { kind = 'pine'; solid = true; cover = 2; }
+        else if (n > 0.40) { kind = 'rock'; solid = n > 0.82; cover = 1; }
         else { kind = 'bush'; solid = false; cover = 2; }
       } else if (z === Z.MISSION) {
-        stride = 4; floor = 0.36;
-        if (n > 0.70) { kind = 'jar'; solid = false; cover = 1; }
-        else if (n > 0.48) { kind = 'bush'; solid = false; cover = 2; }
-        else { kind = 'rock'; solid = false; cover = 1; }
+        thresh = 0.50; gap = 1;
+        if (n > 0.78) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.58) { kind = 'bush'; solid = false; cover = 2; }
+        else { kind = 'crate'; solid = false; cover = 1; }
       } else if (z === Z.ISLAND) {
-        stride = 3; floor = 0.30;
-        if (n > 0.74) { kind = 'pine'; solid = true; cover = 2; }
-        else if (n > 0.56) { kind = 'rock'; solid = true; cover = 1; }
-        else if (n > 0.40) { kind = 'crate'; solid = false; cover = 2; }
+        thresh = 0.50; gap = 1;
+        if (n > 0.78) { kind = 'pine'; solid = true; cover = 2; }
+        else if (n > 0.62) { kind = 'rock'; solid = true; cover = 1; }
+        else if (n > 0.48) { kind = 'crate'; solid = false; cover = 2; }
         else { kind = 'bush'; solid = false; cover = 2; }
       } else {
-        stride = 3; floor = 0.28;
-        if (n > 0.80) { kind = 'tree'; solid = true; cover = 2; }
-        else if (n > 0.68) { kind = 'cart'; solid = n > 0.92; cover = 2; }
-        else if (n > 0.54) { kind = 'jar'; solid = false; cover = 1; }
-        else if (n > 0.40) { kind = 'rock'; solid = n > 0.86; cover = 1; }
+        thresh = 0.46; gap = 1;
+        if (n > 0.88) { kind = 'tree'; solid = true; cover = 2; }
+        else if (n > 0.80) { kind = 'jar'; solid = false; cover = 1; }
+        else if (n > 0.70) { kind = 'rock'; solid = n > 0.92; cover = 1; }
+        else if (n > 0.62) { kind = 'rack'; solid = false; cover = 1; }
         else { kind = 'bush'; solid = false; cover = 2; }
       }
-      if (key % stride !== 0 || n < floor) continue;
+      if (n < thresh || n2 < 0.34) continue;
+      if (nearProp(x, y, gap)) continue;
       addProp(m, { kind, tx: x, ty: y, solid, cover, s: 0.62 + n * 0.55 });
     }
   }
@@ -6816,7 +6867,7 @@ function boot() {
     get state() { return state; }, get agents() { return agents; }, get guards() { return guards; },
     get civilians() { return civilians; }, get map() { return map; }, get vale() { return vale; },
     get interactables() { return interactables; },
-    cam, findPath, passable, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
+    cam, findPath, passable, nearestOpen, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
     interact, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, MAP_W, MAP_H,
