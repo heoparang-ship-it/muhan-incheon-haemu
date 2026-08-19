@@ -1031,10 +1031,17 @@ function buildMap() {
     if (m.zone[i] !== Z.VILLAGE) return;
     if (smoothNoise(x, y, 0.28) > 0.56) m.terr[i] = T.DIRT;
   });
-  paintPath(m, [[11, 43], [15, 47], [19, 51], [24, 55], [30, 59], [37, 61], [44, 62], [49, 62]], 1.35, (i) => { if (m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
-  paintPath(m, [[22, 40], [28, 37], [34, 34], [40, 30], [45, 26]], 1.25, (i) => { if (m.zone[i] !== Z.CLIFF && m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
-  paintPath(m, [[45, 26], [52, 22], [58, 19], [64, 17]], 1.2, (i) => { if (m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
-  paintPath(m, [[58, 48], [60, 42], [62, 36], [64, 30], [66, 24]], 1.2, (i) => { if (m.zone[i] !== Z.SEA) m.terr[i] = T.DIRT; });
+  /* 흙길 — 폭을 잡음으로 흔들어 자로 그린 직선이 아니라 밟아 생긴 길처럼 */
+  const wornRoad = (pts, w, skipCliff) => paintPath(m, pts, w, (i, d, x, y) => {
+    if (m.zone[i] === Z.SEA) return;
+    if (skipCliff && m.zone[i] === Z.CLIFF) return;
+    if (d > 0.52 + smoothNoise(x * 1.6, y * 1.6, 0.5) * 0.48) return;
+    m.terr[i] = T.DIRT;
+  });
+  wornRoad([[11, 43], [15, 47], [19, 51], [24, 55], [30, 59], [37, 61], [44, 62], [49, 62]], 1.8);
+  wornRoad([[22, 40], [28, 37], [34, 34], [40, 30], [45, 26]], 1.65, true);
+  wornRoad([[45, 26], [52, 22], [58, 19], [64, 17]], 1.6);
+  wornRoad([[58, 48], [60, 42], [62, 36], [64, 30], [66, 24]], 1.6);
 
   // 염전
   for (let py = 0; py < 4; py++) for (let px = 0; px < 5; px++) {
@@ -1533,26 +1540,26 @@ function addProps(m) {
     }
   }
 
-  /* 군집 배치 — 소품을 흩뿌리지 않고 3~4개씩 뭉쳐 심는다 */
-  const OFFS = [[0, 0], [1, 0], [0, 1], [-1, 1], [1, -1]];
+  /* 군집 배치 — 소품을 흩뿌리지 않고 3~5개씩 뭉쳐 심는다 */
+  const OFFS = [[0, 0], [1, 0], [0, 1], [-1, 1], [1, -1], [-1, 0]];
   const RECIPES = {
     [Z.VILLAGE]: [
       ['tree', 'bush', 'bush'], ['jar', 'jar', 'crate'], ['rack', 'net', 'bush'],
-      ['rock', 'bush', 'bush'], ['tree', 'jar', 'bush']
+      ['rock', 'bush', 'bush'], ['tree', 'tree', 'bush', 'bush']
     ],
     [Z.BEACH]: [['net', 'rack', 'bush'], ['rock', 'rock', 'bush'], ['net', 'bush']],
     [Z.CLIFF]: [
-      ['pine', 'pine', 'rock'], ['pine', 'bush', 'bush'], ['rock', 'rock', 'bush'],
-      ['pine', 'pine', 'pine', 'bush']
+      ['pine', 'pine', 'rock'], ['pine', 'pine', 'bush', 'bush'], ['rock', 'rock', 'bush'],
+      ['pine', 'pine', 'pine', 'bush', 'pine'], ['pine', 'pine', 'pine', 'pine']
     ],
     [Z.SALT]: [['stone_pile', 'jar', 'jar'], ['jar', 'crate', 'bush'], ['rock', 'bush']],
-    [Z.ISLAND]: [['pine', 'rock', 'bush'], ['rock', 'bush', 'crate'], ['pine', 'pine', 'rock']],
+    [Z.ISLAND]: [['pine', 'rock', 'bush'], ['rock', 'bush', 'crate'], ['pine', 'pine', 'rock', 'bush']],
     [Z.FLAT]: [['rock', 'rock', 'bush'], ['net', 'net'], ['wreck', 'rock', 'bush']],
     [Z.CAVE]: [['stalag', 'stalag', 'rock'], ['rock', 'rock', 'crate']]
   };
   const GATE = {
-    [Z.VILLAGE]: 0.50, [Z.BEACH]: 0.55, [Z.CLIFF]: 0.34, [Z.SALT]: 0.55,
-    [Z.ISLAND]: 0.46, [Z.FLAT]: 0.66, [Z.CAVE]: 0.42
+    [Z.VILLAGE]: 0.50, [Z.BEACH]: 0.55, [Z.CLIFF]: 0.30, [Z.SALT]: 0.55,
+    [Z.ISLAND]: 0.44, [Z.FLAT]: 0.66, [Z.CAVE]: 0.42
   };
   for (let sy = 5; sy < MAP_H - 5; sy += 5) {
     for (let sx = 5; sx < MAP_W - 5; sx += 5) {
@@ -1875,11 +1882,32 @@ function buildTerrainColors() {
   const N = MAP_W * MAP_H;
   const a = new Float32Array(N * 3), b = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) {
-    const c = TERR_RGB[map.terr[i]] || TERR_RGB[T.GRASS];
+    const x = i % MAP_W, y = (i / MAP_W) | 0;
+    const t = map.terr[i];
+    const c = TERR_RGB[t] || TERR_RGB[T.GRASS];
+    let cr = c[0], cg = c[1], cb = c[2];
+    /* 큰 붓 얼룩 — 코만도스처럼 초지가 한 색이 아니라 짙푸른 풀밭·마른 누런 풀이
+       뭉텅이로 섞이게 한다. 잦은 잡음이 아니라 10~20칸짜리 낮은 주파수. */
+    const mead = smoothNoise(x, y, 0.037);
+    const dry = smoothNoise(x + 57, y + 23, 0.052);
+    const mix = (tr, tg, tb, k) => {
+      k = clamp(k, 0, 0.55);
+      cr += (tr - cr) * k; cg += (tg - cg) * k; cb += (tb - cb) * k;
+    };
+    if (t === T.GRASS || t === T.REED) {
+      if (mead > 0.54) mix(36, 74, 38, (mead - 0.54) * 1.5);
+      if (dry > 0.58) mix(96, 86, 50, (dry - 0.58) * 1.6);
+    } else if (t === T.SAND) {
+      if (dry < 0.45) mix(58, 54, 44, (0.45 - dry) * 1.2);
+    } else if (t === T.MUD) {
+      if (mead > 0.56) mix(72, 78, 62, (mead - 0.56) * 1.0);
+    } else if (t === T.DIRT) {
+      if (dry > 0.55) mix(88, 76, 54, (dry - 0.55) * 0.9);
+    }
     const j = (map.tint[i] - 0.5);
-    a[i * 3] = c[0] * (1 + j * 0.19) + j * 7;
-    a[i * 3 + 1] = c[1] * (1 + j * 0.16) + j * 6;
-    a[i * 3 + 2] = c[2] * (1 + j * 0.13) + j * 5;
+    a[i * 3] = cr * (1 + j * 0.19) + j * 7;
+    a[i * 3 + 1] = cg * (1 + j * 0.16) + j * 6;
+    a[i * 3 + 2] = cb * (1 + j * 0.13) + j * 5;
   }
   const pass = (src, dst, w0) => {
     for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
@@ -1951,8 +1979,35 @@ function drawTile(g, x, y) {
       drawTileTexture(g, x, y, [[ax, ay], [bx, by], [cx2, cy2], [dx2, dy2]])) {
     blendTileEdges(g, x, y, [[ax, ay], [bx, by], [cx2, cy2], [dx2, dy2]]);
     quad();
-    g.fillStyle = 'rgba(' + (r | 0) + ',' + (gg | 0) + ',' + (bb | 0) + ',0.30)';
+    g.fillStyle = 'rgba(' + (r | 0) + ',' + (gg | 0) + ',' + (bb | 0) + ',0.32)';
     g.fill();
+    /* 손그림 디테일 — 풀잎·갈대·들꽃을 청크 구울 때 심는다 */
+    const mx0 = (ax + cx2) / 2, my0 = (ay + cy2) / 2;
+    if (t === T.GRASS || t === T.REED) {
+      const gate = vnoise(x * 13, y * 17, 1);
+      if (gate > (t === T.REED ? 0.2 : 0.5)) {
+        const nB = t === T.REED ? 6 : 3;
+        g.strokeStyle = 'rgba(' + Math.min(255, r * 1.35 + 30 | 0) + ',' + Math.min(255, gg * 1.4 + 34 | 0) + ',' + Math.min(255, bb * 1.1 + 12 | 0) + ',0.40)';
+        g.lineWidth = 1.1;
+        for (let k = 0; k < nB; k++) {
+          const px = mx0 + (vnoise(x * 7 + k, y * 3 + k, 1) - .5) * 44;
+          const py = my0 + (vnoise(x * 3 + k, y * 7 + k, 1) - .5) * 20;
+          const sw = (vnoise(k + 1, x * 2 + y, 1) - .5) * 4.5;
+          const hh = t === T.REED ? 18 + vnoise(x + k, y, 1) * 12 : 6 + vnoise(x + k, y, 1) * 5;
+          g.beginPath(); g.moveTo(px, py);
+          g.quadraticCurveTo(px + sw, py - hh * 0.6, px + sw * 2, py - hh);
+          g.stroke();
+        }
+      }
+      if (t === T.GRASS && vnoise(x * 31, y * 29, 1) > 0.94) {
+        g.fillStyle = vnoise(x, y * 11, 1) > 0.5 ? 'rgba(216,206,148,.55)' : 'rgba(206,186,196,.45)';
+        for (let k = 0; k < 3; k++) {
+          const px = mx0 + (vnoise(x * 5 + k, y * 9, 1) - .5) * 34;
+          const py = my0 + (vnoise(x * 9, y * 5 + k, 1) - .5) * 16;
+          g.beginPath(); g.ellipse(px, py, 1.6, 1.1, 0, 0, TAU); g.fill();
+        }
+      }
+    }
     if (f < 0.99) { quad(); g.fillStyle = 'rgba(0,0,0,' + clamp((1 - f) * 0.62, 0, 0.5).toFixed(3) + ')'; g.fill(); }
     else if (f > 1.02) { quad(); g.fillStyle = 'rgba(255,246,224,' + clamp((f - 1) * 0.5, 0, 0.4).toFixed(3) + ')'; g.fill(); }
     const wetT = map.elev[i] + 0.14;
@@ -2410,14 +2465,19 @@ function propKey(p) {
   return k;
 }
 
+/* 좌우를 뒤집어도 어색하지 않은 소품 — 반복 배치 티를 없앤다 */
+const PROP_MIRROR = { bush: 1, rock: 1, tree: 1, pine: 1, stalag: 1, stone_pile: 1, jar: 1, crate: 1, wreck: 1 };
+
 function drawProp(g, p) {
   const z = groundZ(p.tx, p.ty);
   const sx = isoX(p.tx + .5, p.ty + .5), sy = isoY(p.tx + .5, p.ty + .5, z);
+  const flip = PROP_MIRROR[p.kind] && ((p.tx * 7 + p.ty * 13) & 1);
   /* 실사 스프라이트가 있으면 그것으로 */
   if (typeof ART !== 'undefined') {
     const aid = p.kind === 'lamp' ? (p.on ? 'prop_lamp_on' : 'prop_lamp_off') : PROP_ASSET[p.kind];
     if (aid && ART.has(aid)) {
       g.save(); g.translate(sx, sy);
+      if (flip) g.scale(-1, 1);
       const d = ART.img[aid].meta.dirs > 1 ? dirIndex((p.tx * 1.7 + p.ty * 2.3) % TAU, ART.img[aid].meta.dirs) : 0;
       const fr = (p.kind === 'lamp' && p.on) ? Math.floor(state.t * 7) : 0;
       const done = drawSprite(g, aid, 'idle', d, fr);
@@ -2436,7 +2496,13 @@ function drawProp(g, p) {
     propSprites.set(key, sp);
     if (propSprites.size > 180) propSprites.delete(propSprites.keys().next().value);
   }
-  g.drawImage(sp, sx - PROP_OX, sy - PROP_OY);
+  if (flip) {
+    g.save(); g.translate(sx, sy); g.scale(-1, 1);
+    g.drawImage(sp, -PROP_OX, -PROP_OY);
+    g.restore();
+  } else {
+    g.drawImage(sp, sx - PROP_OX, sy - PROP_OY);
+  }
 }
 
 function drawPropShape(g, p) {
@@ -2445,7 +2511,8 @@ function drawPropShape(g, p) {
   const shadow = (w, h) => { g.fillStyle = 'rgba(0,0,0,.36)'; g.beginPath(); g.ellipse(0, 2, (w || 15) * s, (h || 7) * s, 0, 0, TAU); g.fill(); };
   switch (p.kind) {
     case 'pine': {
-      shadow(13, 6);
+      g.fillStyle = 'rgba(0,0,0,.28)';
+      g.beginPath(); g.ellipse(6 * s, 3, 20 * s, 8.5 * s, 0, 0, TAU); g.fill();
       g.fillStyle = '#241d15'; g.fillRect(-2.4 * s, -17 * s, 4.8 * s, 18 * s);
       for (let k = 0; k < 3; k++) {
         const yy = -19 * s - k * 13 * s, ww = (25 - k * 6.4) * s;
@@ -2457,7 +2524,8 @@ function drawPropShape(g, p) {
       break;
     }
     case 'tree': {
-      shadow(15, 7);
+      g.fillStyle = 'rgba(0,0,0,.26)';
+      g.beginPath(); g.ellipse(7 * s, 3, 23 * s, 9.5 * s, 0, 0, TAU); g.fill();
       g.strokeStyle = '#2b2118'; g.lineWidth = 5 * s; g.lineCap = 'round';
       g.beginPath(); g.moveTo(0, 0); g.lineTo(-1 * s, -19 * s); g.stroke();
       g.fillStyle = '#243523'; g.beginPath(); g.ellipse(0, -30 * s, 24 * s, 17 * s, 0, 0, TAU); g.fill();
@@ -2889,9 +2957,9 @@ function blendTileEdges(g, x, y, q) {
     const u1 = u0 + 1 / s, v1 = v0 + 1 / s;
     const uvs = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
     const P0 = q[e0], P1 = q[e1];
-    const wedge = (depth, alpha) => {
-      const W0 = [P0[0] + (cx - P0[0]) * depth, P0[1] + (cy - P0[1]) * depth];
-      const W1 = [P1[0] + (cx - P1[0]) * depth, P1[1] + (cy - P1[1]) * depth];
+    const wedge = (d0, d1, alpha) => {
+      const W0 = [P0[0] + (cx - P0[0]) * d0, P0[1] + (cy - P0[1]) * d0];
+      const W1 = [P1[0] + (cx - P1[0]) * d1, P1[1] + (cy - P1[1]) * d1];
       g.save();
       g.beginPath();
       g.moveTo(P0[0], P0[1]); g.lineTo(P1[0], P1[1]);
@@ -2901,8 +2969,10 @@ function blendTileEdges(g, x, y, q) {
       drawTexQuad(g, im, q[0], q[1], q[2], q[3], uvs[0], uvs[1], uvs[2], uvs[3]);
       g.restore();
     };
-    wedge(0.66, 0.34);
-    wedge(0.30, 0.42);
+    // 물결 경계 — 양 끝 깊이를 다르게 해 직선이 아니라 굽이치게
+    const j0 = vnoise(x * 3 + e * 7, y * 3, 1), j1 = vnoise(x * 3, y * 3 + e * 5, 1);
+    wedge(0.42 + j0 * 0.5, 0.42 + j1 * 0.5, 0.34);
+    wedge(0.16 + j0 * 0.26, 0.16 + j1 * 0.26, 0.42);
   }
 }
 
