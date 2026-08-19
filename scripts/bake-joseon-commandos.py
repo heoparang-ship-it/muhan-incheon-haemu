@@ -213,6 +213,8 @@ def update_asset_data():
         rec = assets.get(p.stem)
         if not rec or rec.get("kind") == "texture":
             continue
+        if p.stem == "agent_haeju":
+            continue
         rec["sheets"]["idle"] = f"assets/chars/{p.name}?{v}"
         walk = CHARS / f"{p.stem}_walk.png"
         if walk.exists():
@@ -248,8 +250,12 @@ def main():
     OBJ.mkdir(parents=True, exist_ok=True)
     PROPS.mkdir(exist_ok=True)
 
+    skip = {"agent_haeju"}  # grok originals — scripts/process-grok-haeju.py
     for p in sorted(CHARS.glob("*.png")):
         if p.name.endswith("_walk.png"):
+            continue
+        if p.stem in skip:
+            print("skip grok", p.name)
             continue
         im = punch_magenta(Image.open(p))
         im.save(p)
@@ -257,12 +263,15 @@ def main():
         walk.save(CHARS / f"{p.stem}_walk.png")
         print("char", p.name, im.size, "walk", walk.size)
 
-    ground = MAPS / "tut01_ground.png"
-    if ground.exists():
-        ship = extract_ship_occluder(Image.open(ground))
-        dest = OBJ / "ship.png"
-        ship.save(dest)
-        print("ship occluder", dest, ship.size)
+    dest = OBJ / "ship.png"
+    if not dest.exists():
+        ground = MAPS / "tut01_ground.png"
+        if ground.exists():
+            ship = extract_ship_occluder(Image.open(ground))
+            ship.save(dest)
+            print("ship occluder", dest, ship.size)
+    else:
+        print("keep existing", dest)
 
     bake_barrel().save(PROPS / "prop_barrel3d.png")
     bake_lantern().save(PROPS / "prop_lantern3d.png")

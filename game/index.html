@@ -633,7 +633,7 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
   }, { capture: true, passive: false });
   </script>
 </div>
-<script src="asset-data.js?v=11"></script>
+<script src="asset-data.js?v=13"></script>
 <script>
 (function(){
 const PORTRAITS = {
@@ -3094,15 +3094,15 @@ function drawUnitSprite(g, id, u, alpha) {
   const frames = clip ? clip.frames : 1;
   const f = Math.floor((walking ? u.bob * 0.62 : state.t * 2.2 + u.bob * 0.1) % frames);
   const d = dirIndex(u.angle, rec.meta.dirs);
-  const sc = isTut()
-    ? (TUT_PERSON_PX / (rec.meta.cellH || TUT_PERSON_CELL))
-    : (walking ? 1.18 : 1.15);
-  if (walking) {
+  const target = isTut() ? TUT_PERSON_PX : (walking ? 76 * 1.18 : 76 * 1.15);
+  const sc = target / (rec.meta.cellH || TUT_PERSON_CELL);
+  const fakeBob = walking && !rec.sheets.walk;
+  if (fakeBob) {
     g.save();
     g.translate(0, Math.sin(u.bob * 2.4) * 1.4);
   }
   const ok = drawSprite(g, id, key, d, f, alpha, sc);
-  if (walking) g.restore();
+  if (fakeBob) g.restore();
   return ok;
 }
 
