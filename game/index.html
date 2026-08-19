@@ -11,7 +11,7 @@
 <title>무한인천: 해무의 성가</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="무한인천: 해무의 성가">
-<meta property="og:description" content="조선판 코만도스. 초소 튜토리얼을 넘고, 밀물 전에 감나루에서 증거와 주민을 빼내라.">
+<meta property="og:description" content="조선판 코만도스. 감나루 하선에서 손을 익히고, 밀물 전에 증거와 주민을 빼내라.">
 <meta property="og:image" content="cover.jpg">
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
@@ -475,14 +475,14 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
   </header>
 
   <aside id="objectives">
-    <div class="pTitle"><span id="objTitle">밀명 · 선창 초소</span><button id="collapseObj">×</button></div>
+    <div class="pTitle"><span id="objTitle">밀명 · 감나루 하선</span><button id="collapseObj">×</button></div>
     <div class="sub">주요 목표</div>
     <div id="goalList"></div>
     <div class="sub" id="folkHead">설화 미니 미션</div>
     <div id="folkList"></div>
     <div class="sub" id="evHead">증거</div>
     <div id="evList"></div>
-    <div class="hintbox" id="objHint">이 초소가 1장 감나루의 문법이다. 제압·숨김·유인·자물쇠·울타리. 들키면 일하는 신도도 달려든다.</div>
+    <div class="hintbox" id="objHint">이 하선이 1장 감나루의 문법이다. 제압·숨김·유인·자물쇠·그물. 들키면 일하는 신도도 달려든다.</div>
   </aside>
 
   <aside id="unitInfo">
@@ -530,13 +530,13 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
 
   <div id="tutorial">
     <button id="tutClose">×</button>
-    <b id="tutTitle">초소의 첫 동선</b>
+    <b id="tutTitle">하선의 첫 동선</b>
     <ol id="tutSteps">
       <li>해주는 변장·자물쇠, 무진은 배후 제압·숨김. <b>둘만</b> 보낸다.</li>
-      <li>순찰이 길을 비울 때 담배 피우는 신도를 <b>뒤에서 제압</b>하고 묶는다.</li>
-      <li>몸을 숲에 숨기고, 성냥갑을 찾아 <b>던져 유인</b>한다.</li>
-      <li>해주가 <b>전신주</b>를 타면 아래에서는 보이지 않는다.</li>
-      <li>철제 상자에서 쇠가위를 얻어 가시울타리를 자른다. 지뢰는 무진이 찾는다.</li>
+      <li>줄이 비면 쉬는 짐꾼을 <b>뒤에서 제압</b>하고 묶는다.</li>
+      <li>몸을 <b>가마니</b> 뒤에 숨기고, 향주머니를 찾아 <b>던져 유인</b>한다.</li>
+      <li>해주가 <b>널빤지 밑</b>으로 기면 위에서는 보이지 않는다.</li>
+      <li>상자에서 사공 칼을 얻어 <b>그물 울타리</b>를 끊는다. 천막에서 상륙첩.</li>
     </ol>
   </div>
 
@@ -656,7 +656,7 @@ const PORTRAITS = {
 
 
 const TW = 64, TH = 32, ZH = 20;          // 타일 폭/높이, 높이 1단위의 화면 픽셀
-let MAP_W = 96, MAP_H = 96;               // 타일 맵 크기 — 1장은 96, 초소 튜토리얼은 32
+let MAP_W = 96, MAP_H = 96;               // 타일 맵 크기 — 1장은 96, 하선 튜토리얼은 32
 const TAU = Math.PI * 2;
 
 const CHAPTERS = {
@@ -1433,109 +1433,95 @@ function addProps(m) {
     addProp(m, { kind: 'stalag', tx: q[0], ty: q[1], cover: 1, s: rr(0.7, 1.25), name: '종유석' });
 }
 
-/* ---------- 튜토리얼: 감나루 선창 검문소 (32×32, 코만도스 TU01식 랜드마크) ---------- */
-function addCPit(m, cx, cy, openDx, openDy) {
-  const walls = [];
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    if (!dx && !dy) continue;
-    if (dx === openDx && dy === openDy) continue;
-    if (dx === openDx && !dy) continue;
-    const x = cx + dx, y = cy + dy;
+/* ---------- 튜토리얼: 감나루 하선 (바닥 그림 + 떨어진 소품) ---------- */
+/* 그림 픽셀 → 칸. 바닥은 Y64처럼 한 장, 소품은 MA2처럼 따로 올린다. */
+function tutPaintToTile(px, py) {
+  const b = tutPaintBox();
+  return unIso(b.x + px, b.y + py);
+}
+
+function stampAround(m, tx, ty, cells, solid, cover) {
+  for (const [dx, dy] of cells) {
+    const x = Math.round(tx) + dx, y = Math.round(ty) + dy;
     if (!inMap(x, y)) continue;
     const i = idx(x, y);
-    m.terr[i] = T.STONE; m.elev[i] = 1.12; m.solid[i] = 1;
-    m.cover[i] = Math.max(m.cover[i], 2);
-    walls.push(i);
+    if (solid) m.solid[i] = 1;
+    if (cover) m.cover[i] = Math.max(m.cover[i], cover);
   }
-  const ii = idx(cx, cy);
-  m.terr[ii] = T.DIRT; m.elev[ii] = 0.96; m.solid[ii] = 0; m.cover[ii] = 2;
-  addProp(m, { kind: 'cpit', tx: cx, ty: cy, solid: false, cover: 2, name: '토치카', s: 1 });
-  return walls;
 }
+
+/* 흙 .  / 물 ~  / 그림 밖 #   — 칸은 아직 32×32 */
+const TUT_WALK = [
+  '#########........###############',
+  '########..........##############',
+  '#######............#############',
+  '######..............############',
+  '#####................###########',
+  '####..................##########',
+  '###....................#########',
+  '##......................########',
+  '#...~.~..................#######',
+  '.~....~...................######',
+  '.~.....~...................#####',
+  '.......~~~~.................####',
+  '..~.....~~...................###',
+  '..~...~~~~~...................##',
+  '..~~~~~~~~.....................#',
+  '................................',
+  '................................',
+  '#...............................',
+  '##..............................',
+  '###.............................',
+  '####............................',
+  '#####...........................',
+  '######..........................',
+  '#######..~.~.~.................#',
+  '########~....~~...............##',
+  '#########.~~~~~~.............###',
+  '##########..................####',
+  '###########................#####',
+  '############..............######',
+  '#############............#######',
+  '##############..........########',
+  '###############........#########'
+];
 
 function buildTutMap() {
   const m = emptyMap();
   for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
     const i = idx(x, y);
-    const edge = x < 2 || y < 2 || x > MAP_W - 3 || y > MAP_H - 3;
+    const ch = (TUT_WALK[y] && TUT_WALK[y][x]) || '#';
     const n = smoothNoise(x, y, 0.18) * 0.55 + smoothNoise(x, y, 0.42) * 0.45;
-    m.terr[i] = n > 0.62 ? T.DIRT : T.GRASS;
-    m.elev[i] = 0.98 + (smoothNoise(x, y, 0.09) - 0.5) * 0.10;
-    m.zone[i] = Z.VILLAGE;
     m.tint[i] = n;
-    if (edge) { m.solid[i] = 1; m.terr[i] = T.ROCK; m.elev[i] = 1.35; }
+    m.zone[i] = Z.BEACH;
+    if (ch === '.') {
+      m.terr[i] = T.DIRT; m.elev[i] = 0.96 + (n - 0.5) * 0.06; m.solid[i] = 0;
+    } else if (ch === '~') {
+      m.terr[i] = T.SEA; m.elev[i] = -0.55; m.solid[i] = 1; m.zone[i] = Z.SEA;
+    } else {
+      m.terr[i] = T.ROCK; m.elev[i] = 1.2; m.solid[i] = 1;
+    }
   }
 
-  /* 흙길 — 화면 아래왼쪽에서 위오른쪽으로 (tx↑, ty↓) */
-  paintPath(m, [[5, 27], [9, 23], [13, 19], [16, 16], [20, 12], [24, 9], [28, 6]], 2.35, (i, d) => {
-    m.terr[i] = T.DIRT; m.elev[i] = 0.94 - d * 0.02; m.solid[i] = 0;
+  /* 널빤지 — 그림에 구워 둔 길. 칸만 나무로 연다. */
+  paintPath(m, [[11, 16], [13, 17], [15, 18]], 1.15, (i) => {
+    m.terr[i] = T.WOOD; m.elev[i] = 0.98; m.solid[i] = 0; m.zone[i] = Z.BEACH;
   });
 
-  /* 숲 가장자리 — 플레이 공간을 초소 디오라마로 가둔다 */
-  const trees = [
-    [3, 8], [4, 6], [6, 5], [8, 4], [11, 3], [15, 3], [19, 3], [23, 4], [26, 5], [28, 8],
-    [3, 12], [4, 16], [3, 20], [4, 24], [6, 28], [10, 29], [14, 29], [18, 28], [22, 28], [26, 26],
-    [28, 22], [29, 18], [29, 13], [27, 10], [5, 10], [7, 7], [9, 6], [21, 4], [25, 7], [8, 27]
-  ];
-  trees.forEach((q, k) => addProp(m, {
-    kind: k % 3 === 0 ? 'pine' : 'tree', tx: q[0], ty: q[1], solid: true, cover: 2, s: rr(0.95, 1.28)
-  }));
+  /* 떨어진 소품 — 배는 바닥에 남기고, 천막·상자·가마니·수레·그물만 올린다. */
+  addProp(m, { kind: 'tent', sheet: 'tent', tx: 19, ty: 12, solid: true, cover: 2, name: '맞이 천막', s: 1 });
+  stampAround(m, 19, 12, [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1]], true, 2);
 
-  /* 숨길 숲 — 초소 북서쪽 */
-  for (const q of [[6, 10], [7, 11], [8, 10], [5, 12], [7, 9], [6, 13], [8, 12]]) {
-    const i = idx(q[0], q[1]);
-    m.terr[i] = T.REED; m.cover[i] = 3; m.solid[i] = 0;
-    addProp(m, { kind: 'bush', tx: q[0], ty: q[1], cover: 3, s: rr(0.9, 1.2), name: '숨숲' });
-  }
+  addProp(m, { kind: 'crates', sheet: 'crates', tx: 17, ty: 17, solid: true, cover: 2, name: '구호 상자', s: 1 });
+  stampAround(m, 17, 17, [[1, 0], [0, 1]], true, 2);
 
-  /* 초소 부스 — 사람 키보다 한 뼘 높은 나무 초소 */
-  addProp(m, { kind: 'booth', tx: 13, ty: 15, solid: true, cover: 2, name: '선창 초소', s: 1 });
+  addProp(m, { kind: 'sacks', sheet: 'sacks', tx: 20, ty: 22, solid: true, cover: 3, name: '가마니', s: 1 });
+  stampAround(m, 20, 22, [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, 1], [1, -1], [-1, -1], [1, 1]], false, 3);
 
-  /* C형 토치카 세 곳 — 허리 높이, 길은 열려 있다 */
-  addCPit(m, 11, 15, 1, 0);
-  addCPit(m, 19, 13, -1, 1);
-  addCPit(m, 16, 19, 0, -1);
+  addProp(m, { kind: 'cart', sheet: 'cart', tx: 21, ty: 17, solid: true, cover: 2, name: '짐수레', s: 1 });
 
-  /* 차단봉 · 마름쇠 */
-  addProp(m, { kind: 'boom', tx: 15, ty: 16, solid: false, cover: 1, name: '차단봉', s: 1.05 });
-  addProp(m, { kind: 'boom', tx: 17, ty: 14, solid: false, cover: 1, name: '차단봉', s: 1.0 });
-  for (const q of [[14, 18], [18, 16], [16, 13], [12, 18], [20, 15]])
-    addProp(m, { kind: 'hedgehog', tx: q[0], ty: q[1], solid: true, cover: 1, name: '마름쇠', s: rr(0.9, 1.1) });
-
-  /* 전신주 세 개 — 줄에 매달리면 아래 시야에 안 잡힌다 */
-  const poles = [[15, 12], [21, 16], [12, 20]];
-  poles.forEach((q, k) => {
-    const p = addProp(m, { kind: 'pole', tx: q[0], ty: q[1], solid: true, cover: 1, name: '전신주', s: 1, poleId: k });
-    if (p) m.poles.push(p);
-  });
-  m.wires = [[0, 1], [1, 2], [2, 0]];
-
-  /* 가시울타리 — 서쪽 우회를 막는다 */
-  const wireLine = [[8, 12], [9, 13], [9, 14], [8, 16], [8, 17], [9, 18]];
-  wireLine.forEach((q, k) => addProp(m, {
-    kind: 'wire', tx: q[0], ty: q[1], solid: true, cover: 1, name: '가시울타리', s: 1, wireId: k
-  }));
-
-  /* 지뢰 — 울타리 바로 안쪽 */
-  for (const q of [[10, 14], [10, 15], [9, 16]]) {
-    if (inMap(q[0], q[1])) m.mine[idx(q[0], q[1])] = 1;
-  }
-
-  /* 철제 상자 · 나무 상자 · 통 · 표지 */
-  addProp(m, { kind: 'ironbox', tx: 22, ty: 10, solid: true, cover: 1, name: '철제 상자', s: 1 });
-  addProp(m, { kind: 'crate', tx: 12, ty: 13, cover: 2, name: '구호 상자' });
-  addProp(m, { kind: 'crate', tx: 11, ty: 13, cover: 2, name: '구호 상자' });
-  addProp(m, { kind: 'barrel', tx: 12, ty: 14, solid: true, cover: 1, name: '기름통', s: 1 });
-  addProp(m, { kind: 'barrel', tx: 20, ty: 12, solid: true, cover: 1, name: '기름통', s: 0.95 });
-  addProp(m, { kind: 'signpost', tx: 18, ty: 11, solid: false, cover: 0, name: '백해구호소', s: 1 });
-
-  addProp(m, { kind: 'lamp', tx: 14, ty: 14, name: '초소 등불', on: true, radius: 4.8 });
-  addProp(m, { kind: 'lamp', tx: 20, ty: 11, name: '안쪽 등불', on: true, radius: 4.4 });
-
-  addProp(m, { kind: 'rock', tx: 24, ty: 14, solid: true, cover: 1, s: 0.9 });
-  addProp(m, { kind: 'rock', tx: 7, ty: 22, solid: true, cover: 1, s: 0.8 });
-  addProp(m, { kind: 'bush', tx: 23, ty: 18, cover: 2, s: 1.05 });
-  addProp(m, { kind: 'bush', tx: 10, ty: 22, cover: 2, s: 1.0 });
+  addProp(m, { kind: 'nets', sheet: 'nets', tx: 18, ty: 22, solid: true, cover: 1, name: '그물 울타리', s: 1 });
+  stampAround(m, 18, 22, [[-1, 0], [1, 0]], true, 1);
 
   return finishMap(m);
 }
@@ -1725,7 +1711,8 @@ function buildBlockHeights() {
     if (!p.solid) continue;
     const h = p.kind === 'belltower' ? 3.2 : p.kind === 'pole' ? 4.4 : p.kind === 'booth' ? 2.4 :
       p.kind === 'pine' ? 2.6 : p.kind === 'tree' ? 2.3 :
-      p.kind === 'cart' ? 1.15 : p.kind === 'kiln' ? 1.5 : p.kind === 'rock' ? 0.9 :
+      p.kind === 'tent' ? 2.2 : p.kind === 'sacks' ? 1.35 : p.kind === 'crates' ? 1.1 :
+      p.kind === 'nets' ? 1.2 : p.kind === 'cart' ? 1.15 : p.kind === 'kiln' ? 1.5 : p.kind === 'rock' ? 0.9 :
       p.kind === 'hedgehog' ? 0.85 : p.kind === 'wire' ? 1.1 : p.kind === 'ironbox' ? 0.9 : 1.2;
     map.blockH[p.i] = h;
   }
@@ -2366,7 +2353,24 @@ function drawTeleWires(g) {
   g.restore();
 }
 
+function drawTutSheet(g, p) {
+  const rec = TUT_SHEETS[p.sheet];
+  if (!rec || !rec.ok || !rec.img || !rec.img.naturalWidth) return false;
+  const z = groundZ(p.tx, p.ty);
+  const sx = isoX(p.tx + .5, p.ty + .5), sy = isoY(p.tx + .5, p.ty + .5, z);
+  const sc = p.s || 1;
+  const w = rec.img.naturalWidth * sc, h = rec.img.naturalHeight * sc;
+  g.save();
+  g.imageSmoothingEnabled = true;
+  if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
+  if (p.cut) g.globalAlpha = 0.28;
+  g.drawImage(rec.img, sx - w * rec.ox, sy - h * rec.oy, w, h);
+  g.restore();
+  return true;
+}
+
 function drawProp(g, p) {
+  if (p.sheet && drawTutSheet(g, p)) return;
   const z = groundZ(p.tx, p.ty);
   const sx = isoX(p.tx + .5, p.ty + .5), sy = isoY(p.tx + .5, p.ty + .5, z);
   if (LANDMARK_PROPS[p.kind]) {
@@ -2809,22 +2813,34 @@ const ART = {
   hasTex(t) { return !!this.tex[t]; }
 };
 
-/* 튜토리얼 바닥 — 코만도스 TU01 줌0과 같은 1065×737 */
+/* 튜토리얼 바닥 — 코만도스 TU01 줌0과 같은 1065×737. 배는 그림, 짐은 따로. */
 const TUT_PAINT_W = 1065, TUT_PAINT_H = 737;
 const TUT_PERSON_PX = 60, TUT_PERSON_CELL = 76;
 const TUT_VISUAL = { img: null, ok: false };
+const TUT_SHEETS = {
+  tent: { img: null, ok: false, ox: 0.50, oy: 0.90 },
+  crates: { img: null, ok: false, ox: 0.50, oy: 0.90 },
+  sacks: { img: null, ok: false, ox: 0.50, oy: 0.90 },
+  cart: { img: null, ok: false, ox: 0.50, oy: 0.88 },
+  nets: { img: null, ok: false, ox: 0.50, oy: 0.90 }
+};
 function tutPaintBox() {
   const cx = 0;
   const cy = isoY(MAP_W * 0.5, MAP_H * 0.5, 0);
   return { x: cx - TUT_PAINT_W / 2, y: cy - TUT_PAINT_H / 2, w: TUT_PAINT_W, h: TUT_PAINT_H };
 }
+function loadTutImage(rec, src) {
+  const im = new Image();
+  im.onload = () => { rec.ok = true; };
+  im.onerror = () => { rec.ok = false; };
+  im.src = src;
+  rec.img = im;
+}
 function loadTutVisual() {
   if (TUT_VISUAL.img) return;
-  const im = new Image();
-  im.onload = () => { TUT_VISUAL.ok = true; };
-  im.onerror = () => { TUT_VISUAL.ok = false; };
-  im.src = 'assets/maps/tut01_visual.png';
-  TUT_VISUAL.img = im;
+  loadTutImage(TUT_VISUAL, 'assets/maps/tut01_ground.png');
+  for (const id of Object.keys(TUT_SHEETS))
+    loadTutImage(TUT_SHEETS[id], 'assets/maps/obj/' + id + '.png');
 }
 function drawTutVisual(g) {
   if (!TUT_VISUAL.ok || !TUT_VISUAL.img || !TUT_VISUAL.img.naturalWidth) return false;
@@ -3182,7 +3198,7 @@ function spawnAll() {
 }
 
 function spawnTut() {
-  const starts = [[6, 25], [7, 26]];
+  const starts = [[23, 25], [24, 25]];
   ['haeju', 'mujin'].forEach((id, k) => {
     const p = nearestOpen(starts[k][0], starts[k][1], null) || starts[k];
     agents.push(baseUnit({
@@ -3194,12 +3210,11 @@ function spawnTut() {
   });
 
   const G = [
-    ['acolyte', [[14, 16]], 'smoke', { loot: 'matches', angle: 0.7 }],
-    ['soldier', [[24, 8], [16, 14], [24, 8]], 'walker', {}],
-    ['acolyte', [[11, 15]], 'pit', {}],
-    ['acolyte', [[9, 13], [9, 13], [10, 12]], 'wireWork', {}],
-    ['soldier', [[20, 11], [23, 10], [20, 11]], 'inner1', {}],
-    ['steward', [[23, 12], [21, 10], [23, 12]], 'inner2', { checks: true }]
+    ['acolyte', [[15, 18]], 'smoke', { loot: 'matches', angle: 0.7 }],
+    ['soldier', [[20, 16], [18, 14], [22, 16]], 'walker', {}],
+    ['acolyte', [[18, 21], [17, 21], [18, 21]], 'wireWork', {}],
+    ['soldier', [[21, 13], [22, 14], [21, 13]], 'inner1', {}],
+    ['steward', [[21, 12], [22, 13], [21, 12]], 'inner2', { checks: true }]
   ];
   G.forEach((row, k) => {
     const [type, patrol, role, extra] = row;
@@ -4366,9 +4381,9 @@ const EVIDENCE_CH1 = [
 ];
 
 const EVIDENCE_TUT = [
-  { id: 'matches', name: '성냥갑', where: '담배 피우던 신도' },
-  { id: 'cutters', name: '쇠가위', where: '철제 상자' },
-  { id: 'pass', name: '통행증', where: '나무 상자' }
+  { id: 'matches', name: '향주머니', where: '쉬는 짐꾼' },
+  { id: 'cutters', name: '사공 칼', where: '쇠테 나무 상자' },
+  { id: 'pass', name: '상륙첩', where: '천막 안 구호 상자' }
 ];
 let EVIDENCE = EVIDENCE_CH1;
 
@@ -4385,16 +4400,16 @@ const OBJECTIVES_CH1 = [
 ];
 
 const OBJECTIVES_TUT = [
-  { id: 'koSmoke', text: '담배 피우는 신도를 제압하고 묶는다', hint: '순찰이 길을 비울 때 무진이 뒤에서' },
-  { id: 'hideBody', text: '묶은 몸을 숲에 숨긴다', hint: '북서쪽 수풀. 무진이 업거나 해주가 숨긴다' },
-  { id: 'lootPack', text: '몸에서 성냥갑을 찾는다', hint: '기절한 신도를 조사' },
-  { id: 'lureNext', text: '성냥갑을 던져 다음 경비를 유인한다', hint: '해주 X — 길을 보는 사병이 줍게' },
-  { id: 'koLure', text: '숙이는 사이 뒤에서 제압한다', hint: '유인된 경비가 허리를 숙일 때' },
-  { id: 'pole', text: '해주가 전신주를 타고 철제 상자까지 간다', hint: '줄에 매달리면 아래에서는 보이지 않는다' },
-  { id: 'cutters', text: '철제 상자에서 쇠가위를 챙긴다', hint: '해주는 만능열쇠, 무진은 부순다' },
-  { id: 'cutWire', text: '가시울타리를 자르고 지뢰를 걷는다', hint: '무진 X로 탐지. 천천히' },
-  { id: 'clear', text: '초소의 적을 모두 제압한다', hint: '일하는 신도도 보면 달려든다' },
-  { id: 'crates', text: '나무 상자에서 통행증을 얻는다', hint: '자물쇠는 없다. 아무나' }
+  { id: 'koSmoke', text: '쉬는 짐꾼을 제압하고 묶는다', hint: '줄이 비면 무진이 뒤에서' },
+  { id: 'hideBody', text: '묶은 몸을 가마니 뒤에 숨긴다', hint: '서쪽 가마니. 무진이 업는다' },
+  { id: 'lootPack', text: '몸에서 향주머니를 찾는다', hint: '기절한 신도를 조사' },
+  { id: 'lureNext', text: '향을 던져 다음을 부른다', hint: '해주 X — 그물 쪽으로' },
+  { id: 'koLure', text: '숙이는 사이 뒤에서 제압한다', hint: '유인된 신도가 허리를 숙일 때' },
+  { id: 'pole', text: '해주가 널빤지 밑으로 긴다', hint: '위 사람은 아래를 못 본다' },
+  { id: 'cutters', text: '상자에서 사공 칼을 챙긴다', hint: '해주는 고리를 연다. 무진은 뜯는다' },
+  { id: 'cutWire', text: '그물 울타리를 끊고 지난다', hint: '무진이 칼로 끊는다' },
+  { id: 'clear', text: '천막 앞을 비운다', hint: '집사는 변장이 얕으면 들킨다' },
+  { id: 'crates', text: '천막 상자에서 상륙첩을 얻는다', hint: '백해구호소 도장' }
 ];
 let OBJECTIVES = OBJECTIVES_CH1;
 
@@ -4455,14 +4470,10 @@ function buildInteractables() {
 function buildTutInteractables() {
   const L = [];
   const add = o => { L.push(o); };
-  add({ kind: 'pole', id: 'pole0', name: '전신주', tx: 15, ty: 12, glyph: '柱', time: 1.1 });
-  add({ kind: 'pole', id: 'pole1', name: '전신주', tx: 21, ty: 16, glyph: '柱', time: 1.1 });
-  add({ kind: 'pole', id: 'pole2', name: '전신주', tx: 12, ty: 20, glyph: '柱', time: 1.1 });
-  add({ kind: 'ironbox', id: 'ironbox', name: '철제 상자', tx: 22, ty: 10, glyph: '匣', time: 2.0, locked: true });
-  add({ kind: 'crate', id: 'crate0', name: '구호 상자', tx: 12, ty: 13, glyph: '箱', time: 1.2 });
-  add({ kind: 'crate', id: 'crate1', name: '구호 상자', tx: 11, ty: 13, glyph: '箱', time: 1.2 });
-  const wires = [[8, 12], [9, 13], [9, 14], [8, 16], [8, 17], [9, 18]];
-  wires.forEach((q, k) => add({ kind: 'wire', id: 'wire' + k, name: '가시울타리', tx: q[0], ty: q[1], glyph: '網', time: 1.4 }));
+  add({ kind: 'plank', id: 'plank', name: '널빤지 밑', tx: 11, ty: 16, glyph: '板', time: 1.2 });
+  add({ kind: 'ironbox', id: 'ironbox', name: '쇠테 상자', tx: 17, ty: 17, glyph: '匣', time: 2.0, locked: true });
+  add({ kind: 'crate', id: 'crate0', name: '구호 상자', tx: 20, ty: 13, glyph: '箱', time: 1.2 });
+  add({ kind: 'wire', id: 'nets0', name: '그물 울타리', tx: 18, ty: 22, glyph: '網', time: 1.4 });
   interactables = L;
 }
 
@@ -4553,7 +4564,7 @@ function interact(a, fromQueue) {
           state.inv.matches = true;
           state.evidence.matches = true;
           completeObjective('lootPack');
-          toast('성냥갑을 찾았다 — 해주 X로 던진다', 'good');
+          toast('향주머니를 찾았다 — 해주 X로 던진다', 'good');
         }
       }, '몸을 뒤지는 중');
       return;
@@ -4724,6 +4735,10 @@ function interact(a, fromQueue) {
       climbPole(a, o);
       break;
     }
+    case 'plank': {
+      crawlPlank(a, o);
+      break;
+    }
     case 'ironbox': {
       openIronBox(a, o);
       break;
@@ -4739,7 +4754,7 @@ function interact(a, fromQueue) {
         state.inv.pass = true;
         state.evidence.pass = true;
         completeObjective('crates');
-        toast('통행증을 찾았다 — 초소를 넘을 수 있다', 'good');
+        toast('상륙첩을 찾았다 — 이제 섬이다', 'good');
         maybeFinishTut();
       }, '상자를 여는 중');
       break;
@@ -4775,10 +4790,28 @@ function hideBody(a, g) {
     g.tx = a.tx; g.ty = a.ty;
     toast('경비를 은폐물 속에 숨겼다', 'good');
     if (isTut() && g.tutRole === 'smoke' && g.tied) completeObjective('hideBody');
-  } else toast(isTut() ? '숲과 수풀에만 숨길 수 있다' : '갈대·수풀·물속·동굴에만 숨길 수 있다', 'warn');
+  } else toast(isTut() ? '가마니 뒤에만 숨길 수 있다' : '갈대·수풀·물속·동굴에만 숨길 수 있다', 'warn');
+}
+
+function crawlPlank(a, o) {
+  if (a.id !== 'haeju') { toast('널빤지 밑은 해주가 긴다', 'warn'); return; }
+  if (a.onWire) {
+    a.onWire = false; a.hidden = false; a.wireT = 0;
+    const land = nearestOpen(a.tx, a.ty, a, 4);
+    if (land) { a.tx = land[0]; a.ty = land[1]; }
+    toast('널빤지 밑에서 나왔다', 'good');
+    return;
+  }
+  startAction(a, o.time || 1.2, () => {
+    a.onWire = true; a.hidden = true; a.wireT = 0; a.path = [];
+    a.tx = o.tx; a.ty = o.ty;
+    completeObjective('pole');
+    toast('널빤지 밑으로 기었다 — 위에서는 안 보인다. 상자 밑바닥에 베일.', 'good');
+  }, '널빤지 밑으로 기는 중');
 }
 
 function climbPole(a, o) {
+  if (isTut()) return crawlPlank(a, o);
   if (a.id !== 'haeju') { toast('전신주는 해주만 탄다', 'warn'); return; }
   if (!a.onWire && !state.objectives.koSmoke) {
     toast('먼저 길의 신도를 제압해야 전신주를 탈 수 있다', 'warn'); return;
@@ -4812,32 +4845,36 @@ function openIronBox(a, o) {
     completeObjective('cutters');
     if (smash) {
       emitNoise(a.tx, a.ty, 14, '문 파손', a);
-      toast('철제 상자를 뜯었다 — 쇠가위. 소리가 났다', 'warn');
-    } else toast('만능열쇠로 열었다 — 쇠가위', 'good');
+      toast('상자를 뜯었다 — 사공 칼. 소리가 났다', 'warn');
+    } else toast('고리를 열었다 — 사공 칼과 낫', 'good');
   }, smash ? '상자를 뜯는 중' : '자물쇠를 여는 중');
 }
 
 function cutWire(a, o) {
   if (o.done || o.cut) { toast('이미 잘린 울타리다', 'warn'); return; }
-  if (!state.inv.cutters) { toast('쇠가위가 없다. 철제 상자를 먼저 열어라', 'warn'); return; }
+  if (!state.inv.cutters) { toast(isTut() ? '사공 칼이 없다. 상자를 먼저 열어라' : '쇠가위가 없다. 철제 상자를 먼저 열어라', 'warn'); return; }
   startAction(a, 1.4, () => {
     o.done = true; o.cut = true;
     const i = idx(Math.round(o.tx), Math.round(o.ty));
     map.solid[i] = 0;
-    const pr = map.props.find(p => p.kind === 'wire' && Math.round(p.tx) === Math.round(o.tx) && Math.round(p.ty) === Math.round(o.ty));
+    const pr = map.props.find(p => (p.kind === 'wire' || p.kind === 'nets') && Math.round(p.tx) === Math.round(o.tx) && Math.round(p.ty) === Math.round(o.ty));
     if (pr) { pr.cut = true; pr.solid = false; }
+    map.solid[i] = 0;
+    for (const [dx, dy] of [[-1, 0], [1, 0]]) {
+      const x = Math.round(o.tx) + dx, y = Math.round(o.ty) + dy;
+      if (inMap(x, y)) map.solid[idx(x, y)] = 0;
+    }
     invalidateChunkAt(i);
-    toast('가시울타리를 잘랐다', 'good');
+    toast(isTut() ? '그물을 끊었다' : '가시울타리를 잘랐다', 'good');
     maybeCompleteCutWire();
-  }, '울타리를 자르는 중');
+  }, isTut() ? '그물을 끊는 중' : '울타리를 자르는 중');
 }
 
 function maybeCompleteCutWire() {
   if (!isTut()) return;
   const wires = interactables.filter(x => x.kind === 'wire');
   const cut = wires.filter(x => x.done).length;
-  const minesLeft = map.mine ? Array.from(map.mine).reduce((s, v) => s + v, 0) : 0;
-  if (cut >= 1 && minesLeft === 0) completeObjective('cutWire');
+  if (cut >= 1) completeObjective('cutWire');
 }
 
 function maybeFinishTut() {
@@ -4861,7 +4898,7 @@ function updateTutProgress() {
         a.onWire = false; a.hidden = false; a.wireT = 0;
         const land = nearestOpen(a.tx, a.ty, a, 4);
         if (land) { a.tx = land[0]; a.ty = land[1]; }
-        toast('팔에 힘이 빠져 떨어졌다', 'warn');
+        toast(isTut() ? '팔에 힘이 빠져 기어 나왔다' : '팔에 힘이 빠져 떨어졌다', 'warn');
         emitNoise(a.tx, a.ty, 6, '낙상', a);
       }
     }
@@ -4879,7 +4916,7 @@ function updateTutProgress() {
 }
 
 function doThrowMatches(a, tx, ty) {
-  if (!state.inv.matches) { toast('성냥갑이 없다', 'warn'); return; }
+  if (!state.inv.matches) { toast(isTut() ? '향주머니가 없다' : '성냥갑이 없다', 'warn'); return; }
   if (Math.hypot(tx - a.tx, ty - a.ty) > 8) { toast('그렇게 멀리는 못 던진다', 'warn'); return; }
   state.targetMode = null;
   state.inv.matches = false;
@@ -4888,11 +4925,11 @@ function doThrowMatches(a, tx, ty) {
   audio.tone(620, 0.16, 'sine', posVol(tx, ty, 0.06));
   const g = guards.filter(x => !x.unconscious && x.ai !== 'alert')
     .sort((p, q) => dist2(p.tx, p.ty, tx, ty) - dist2(q.tx, q.ty, tx, ty))[0];
-  if (!g || Math.hypot(g.tx - tx, g.ty - ty) > 11) { toast('아무도 성냥갑을 보지 못했다', 'warn'); return; }
+  if (!g || Math.hypot(g.tx - tx, g.ty - ty) > 11) { toast(isTut() ? '아무도 향을 보지 못했다' : '아무도 성냥갑을 보지 못했다', 'warn'); return; }
   g.ai = 'lured'; g.lured = { tx, ty, bend: true }; g.suspicion = Math.max(g.suspicion, 0.2);
   g.path = findPath(g.tx, g.ty, tx, ty, g);
   if (state.stats) state.stats.lures = (state.stats.lures || 0) + 1;
-  toast(GUARD_TYPES[g.type].name + '이(가) 성냥갑을 주우러 간다 — 숙일 때 뒤에서', 'good');
+  toast(GUARD_TYPES[g.type].name + '이(가) ' + (isTut() ? '향을' : '성냥갑을') + ' 주우러 간다 — 숙일 때 뒤에서', 'good');
 }
 
 function dropCarried(a) {
@@ -5007,7 +5044,7 @@ function useSecond(a, fromQueue) {
   if (a.id === 'haeju') {
     if (isTut() && state.inv.matches) {
       state.targetMode = { kind: 'matches', agent: a };
-      toast('성냥갑을 던질 곳을 고르세요', 'warn');
+      toast(isTut() ? '향주머니를 던질 곳을 고르세요' : '성냥갑을 던질 곳을 고르세요', 'warn');
       return;
     }
     const g = guards.filter(x => !x.unconscious && x.ai !== 'alert' && GUARD_TYPES[x.type].seeThroughDisguise < 1
@@ -5017,9 +5054,7 @@ function useSecond(a, fromQueue) {
     toast('경비를 보낼 위치를 고르세요', 'warn');
   } else if (a.id === 'mujin') {
     if (isTut()) {
-      a.detecting = !a.detecting;
-      a.coolUntil2 = state.now + 4000;
-      toast(a.detecting ? '탐지기 — 천천히 걷는다. 지뢰가 드러난다' : '탐지기를 내렸다', a.detecting ? 'good' : 'plan');
+      toast('그물 울타리 옆에서 상호작용한다. 먼저 사공 칼이 필요하다', 'plan');
       return;
     }
     const w = findAdjacentWall(a);
@@ -5189,7 +5224,7 @@ function updateWorld(dt) {
     state.fog = 0.22;
     state.lightPhase = 0.12;
     updateTutProgress();
-    if (state.timeLeft <= 0) missionFail('새벽이 밝아 초소가 깨어났다. 조사패는 숨을 곳이 없다.');
+    if (state.timeLeft <= 0) missionFail('새벽이 밝아 선창이 깨어났다. 조사패는 숨을 곳이 없다.');
   } else {
   state.tidePhase = clamp(1 - state.timeLeft / missionSeconds(), 0, 1);
   state.fog = clamp(0.18 + state.tidePhase * 0.55, 0, 0.8);
@@ -5421,16 +5456,16 @@ function gradeTut() {
   if (state.noKill) score += 10;
   score += Math.min(12, down * 2);
   let grade = 'C', title = '', body = '';
-  if (score >= 96 && !state.everAlarmed && ev >= 3) { grade = 'S'; title = '초소의 새벽'; }
-  else if (score >= 80) { grade = 'A'; title = '조용한 통과'; }
-  else if (score >= 62) { grade = 'B'; title = '흔들린 차단봉'; }
+  if (score >= 96 && !state.everAlarmed && ev >= 3) { grade = 'S'; title = '하선의 새벽'; }
+  else if (score >= 80) { grade = 'A'; title = '조용한 하선'; }
+  else if (score >= 62) { grade = 'B'; title = '흔들린 그물'; }
   else if (score >= 44) { grade = 'C'; title = '들킨 발소리'; }
-  else { grade = 'D'; title = '깨어난 초소'; }
-  if (grade === 'S') body = '해주는 전신줄 위에서 숨었고, 무진은 지뢰를 하나씩 걷었다. 통행증은 젖지 않았고, 초소는 아침이 되어서야 빈 자리를 알았다. 이제 1장 감나루가 열린다.';
-  else if (grade === 'A') body = '검문소를 넘었다. 한두 번은 숨이 가빴지만 선창 길은 아직 조사패의 것이다. 큰 밀명은 이제부터다.';
-  else if (grade === 'B') body = '울타리는 잘렸고 통행증은 손에 있다. 그러나 초소는 이미 수상히 여긴다. 감나루에서는 더 조용해야 한다.';
+  else { grade = 'D'; title = '깨어난 선창'; }
+  if (grade === 'S') body = '해주는 널빤지 밑으로 기었고, 무진은 그물을 끊었다. 상륙첩은 젖지 않았고, 선창은 아침이 되어서야 빈 자리를 알았다. 이제 1장 감나루가 열린다.';
+  else if (grade === 'A') body = '선창을 넘었다. 한두 번은 숨이 가빴지만 길은 아직 조사패의 것이다. 큰 밀명은 이제부터다.';
+  else if (grade === 'B') body = '그물은 끊겼고 상륙첩은 손에 있다. 그러나 선창은 이미 수상히 여긴다. 감나루에서는 더 조용해야 한다.';
   else if (grade === 'C') body = '조사패는 살아서 나왔다. 문법만은 몸에 남았다 — 제압, 숨김, 유인, 자물쇠.';
-  else body = '초소가 깨어났다. 같은 길을 다시 걸어야 한다.';
+  else body = '선창이 깨어났다. 같은 길을 다시 걸어야 한다.';
   return { grade, title, body, score: Math.round(score), ev, saved: 0, prisoners: 0, folk: 0, tut: true };
 }
 
@@ -5474,7 +5509,7 @@ function applyChapterChrome() {
   const cvL = $('#civLabel'); if (cvL) cvL.textContent = isTut() ? '제압' : '주민';
   const hint = $('#objHint');
   if (hint) hint.textContent = isTut()
-    ? '이 초소가 1장 감나루의 문법이다. 제압·숨김·유인·자물쇠·울타리. 들키면 일하는 신도도 달려든다.'
+    ? '이 하선이 1장 감나루의 문법이다. 제압·숨김·유인·자물쇠·그물. 들키면 일하는 신도도 달려든다.'
     : '담장·건물·닫힌 문은 시야를 끊는다. 갈대에서 웅크리면 거의 보이지 않는다. 갯벌에는 발자국이 남는다. 조수가 오르면 갯길이 사라진다.';
   const tutBox = $('#tutorial');
   if (tutBox) tutBox.style.display = isTut() ? '' : 'none';
@@ -5567,13 +5602,13 @@ function moveSquad(tx, ty) {
 const SECOND_LABEL = { haeju: '대화 유인', mujin: '밧줄 걸기', dochi: '어망 함정', wolsim: '향 연기' };
 const SECOND_ICON = { haeju: '談', mujin: '繩', dochi: '網', wolsim: '香' };
 function secondLabel(id) {
-  if (isTut() && id === 'haeju') return state && state.inv && state.inv.matches ? '성냥갑' : '대화 유인';
-  if (isTut() && id === 'mujin') return '탐지기';
+  if (isTut() && id === 'haeju') return state && state.inv && state.inv.matches ? '향주머니' : '대화 유인';
+  if (isTut() && id === 'mujin') return '그물 끊기';
   return SECOND_LABEL[id];
 }
 function secondIcon(id) {
   if (isTut() && id === 'haeju') return '匣';
-  if (isTut() && id === 'mujin') return '探';
+  if (isTut() && id === 'mujin') return '網';
   return SECOND_ICON[id];
 }
 
@@ -5676,7 +5711,7 @@ function updateHUD() {
     if (card) card.classList.toggle('down', !ag.alive);
   }
   const next = OBJECTIVES.find(o => !state.objectives[o.id]);
-  $('#miniText').textContent = next ? next.text : (isTut() ? '통행증을 들고 초소를 떠나라' : '탈출선으로 향하라');
+  $('#miniText').textContent = next ? next.text : (isTut() ? '상륙첩을 들고 안개로 들어가라' : '탈출선으로 향하라');
   $('#miniHint').textContent = next ? next.hint : '';
   const sl = $('#secondLabel');
   if (sl && a) sl.textContent = secondLabel(a.id);
@@ -7009,8 +7044,12 @@ function applySave(s) {
       o.cut = true;
       const wi = idx(Math.round(o.tx), Math.round(o.ty));
       map.solid[wi] = 0;
-      const pr = map.props.find(p => p.kind === 'wire' && Math.round(p.tx) === Math.round(o.tx) && Math.round(p.ty) === Math.round(o.ty));
+      const pr = map.props.find(p => (p.kind === 'wire' || p.kind === 'nets') && Math.round(p.tx) === Math.round(o.tx) && Math.round(p.ty) === Math.round(o.ty));
       if (pr) { pr.cut = true; pr.solid = false; }
+      for (const [dx, dy] of [[-1, 0], [1, 0]]) {
+        const x = Math.round(o.tx) + dx, y = Math.round(o.ty) + dy;
+        if (inMap(x, y)) map.solid[idx(x, y)] = 0;
+      }
     }
     if (o.kind === 'ironbox' && o.done) {
       o.locked = false;
@@ -7376,7 +7415,7 @@ function boot() {
   state.paused = true;
   window.__haemuGo = function (kind) {
     const note = $('#bootNote');
-    if (note) { note.hidden = false; note.textContent = (kind === 'ch1' ? '감나루를 펼치는 중…' : '선창 초소를 펼치는 중…'); }
+    if (note) { note.hidden = false; note.textContent = (kind === 'ch1' ? '감나루를 펼치는 중…' : '하선을 펼치는 중…'); }
     if (!window.__haemuReady) return;
     try {
       if (kind === 'continue') continueMission();
