@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="조선 말기 인천. 감나루 선창 검문소에서 시작하는 실시간 분대 잠입 전술">
+<meta name="description" content="조선 말기 인천. 감나루 하선에서 시작하는 실시간 분대 잠입 전술">
 <title>무한인천: 해무의 성가</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="무한인천: 해무의 성가">
@@ -450,7 +450,7 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
   <canvas id="game"></canvas>
 
   <header id="top">
-    <div class="brand"><strong>무한인천: 해무의 성가</strong><span id="brandSub">튜토리얼 · 감나루 선창 검문소</span></div>
+    <div class="brand"><strong>무한인천: 해무의 성가</strong><span id="brandSub">튜토리얼 · 감나루 하선</span></div>
     <div class="objMini"><b id="miniText">밀명 진행 중</b><span id="miniHint"></span></div>
     <div class="stat">
       <div class="clock" id="clock">12:00</div>
@@ -590,15 +590,15 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
     <div class="card">
       <span class="series">무한인천</span>
       <h1>해무의 성가</h1>
-      <div class="ch" id="titleCh">튜토리얼 · 감나루 선창 검문소</div>
-      <p class="lead" id="titleLead">큰 밀명 전에 조사패는 둘만 보낸다. 윤해주와 강무진. 가짜 선교단이 선창 길을 막아 둔 초소 — 초가 하나, 전신주, 가시울타리. 여기를 조용히 넘어야 1장 감나루의 문이 열린다.</p>
+      <div class="ch" id="titleCh">튜토리얼 · 감나루 하선</div>
+      <p class="lead" id="titleLead">안개 새벽, 구호선이 작은 선창에 짐을 내린다. 윤해주와 강무진. 상륙첩 한 장이면 섬으로 스며든다. 싸우지 마라.</p>
       <div class="diffRow" id="diffRow">
         <button type="button" data-diff="easy">쉬움</button>
         <button type="button" data-diff="normal" class="on">보통</button>
         <button type="button" data-diff="hard">어려움</button>
       </div>
       <div class="titleActs">
-        <button type="button" class="start" id="startBtn">초소로</button>
+        <button type="button" class="start" id="startBtn">선창으로</button>
         <button type="button" class="start ghost" id="ch1Btn">1장 · 감나루</button>
         <button type="button" class="start ghost" id="continueBtn" hidden>이어하기</button>
       </div>
@@ -661,8 +661,8 @@ const TAU = Math.PI * 2;
 
 const CHAPTERS = {
   tut01: {
-    id: 'tut01', name: '초소', brand: '튜토리얼 · 감나루 선창 검문소',
-    title: '밀명 · 선창 초소', time: 12 * 60, mapW: 32, mapH: 32,
+    id: 'tut01', name: '하선', brand: '튜토리얼 · 감나루 하선',
+    title: '밀명 · 감나루 하선', time: 12 * 60, mapW: 32, mapH: 32,
     zoom: 0.78, zoomPhone: 0.64
   },
   ch1: {
@@ -1981,6 +1981,7 @@ function drawTile(g, x, y) {
 /* ---------- 물 ---------- */
 const WATER_BUCKETS = 7;
 function drawWater(g) {
+  if (isTut() && TUT_VISUAL.ok) return;
   const wl = waterLevel(), t = state.now * 0.001;
   const b = visibleTileBounds();
   const paths = new Array(WATER_BUCKETS);
@@ -2093,6 +2094,7 @@ function drawTileFar(g, x, y) {
 }
 
 function drawTerrain(g) {
+  if (isTut() && drawTutVisual(g)) return;
   if (cam.zoom < FAR_ZOOM) {
     if (!farCanvas) buildFarMap();
     g.drawImage(farCanvas, farBox.minX, farBox.minY,
@@ -2798,6 +2800,31 @@ const ART = {
   has(id) { return !!this.img[id]; },
   hasTex(t) { return !!this.tex[t]; }
 };
+
+/* 튜토리얼 바닥 그림 — 칸을 조립하지 않고 한 장을 깐다. 길·가림은 아직 그림과 안 맞음 */
+const TUT_VISUAL = { img: null, ok: false };
+function loadTutVisual() {
+  if (TUT_VISUAL.img) return;
+  const im = new Image();
+  im.onload = () => { TUT_VISUAL.ok = true; };
+  im.onerror = () => { TUT_VISUAL.ok = false; };
+  im.src = 'assets/maps/tut01_visual.png';
+  TUT_VISUAL.img = im;
+}
+function drawTutVisual(g) {
+  if (!TUT_VISUAL.ok || !TUT_VISUAL.img || !TUT_VISUAL.img.naturalWidth) return false;
+  const padX = 140, padY = 90;
+  const minX = isoX(0, MAP_H) - padX;
+  const maxX = isoX(MAP_W, 0) + padX;
+  const minY = isoY(0, 0, 2) - padY * 2;
+  const maxY = isoY(MAP_W, MAP_H, 0) + padY;
+  g.save();
+  g.imageSmoothingEnabled = true;
+  if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'high';
+  g.drawImage(TUT_VISUAL.img, minX, minY, maxX - minX, maxY - minY);
+  g.restore();
+  return true;
+}
 
 const TERR_ASSET = {
   [T.SEA]: 'terr_sea', [T.MUD]: 'terr_mud', [T.SAND]: 'terr_sand', [T.GRASS]: 'terr_grass',
@@ -7111,7 +7138,7 @@ function beginMission(opts) {
   audio.ensure(); audio.resume(); audio.startAmbient();
   if (!(opts && opts.quiet)) {
     if (isTut()) {
-      toast('초소 — 해주와 무진, 둘만 선창 검문소로 간다', 'plan');
+      toast('하선 — 해주와 무진, 둘만 구호선 선창으로 간다', 'plan');
       toast('순찰이 비울 때 담배 피우는 신도를 뒤에서 제압하라', 'plan');
     } else {
       toast('밀명 개시 — 해가 지기 전에 감나루로 들어간다', 'plan');
@@ -7159,6 +7186,7 @@ function bindArt() {
 function boot() {
   canvas = $('#game');
   if (typeof initArt === 'function') initArt();
+  loadTutVisual();
   ctx = canvas.getContext('2d', { alpha: false });
   state = newState();
   buildMap(); buildCorners(); buildBlockHeights(); buildTerrainColors(); prepBuildings(); bindArt();
