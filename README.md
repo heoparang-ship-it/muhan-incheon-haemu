@@ -10,6 +10,7 @@ https://github.com/heoparang-ship-it/muhan-incheon-haemu
 - 인수인계: [`HANDOFF.md`](HANDOFF.md)
 - 현황: [`STATUS.md`](STATUS.md)
 - 설계: [`docs/DESIGN.md`](docs/DESIGN.md)
+- 튜토리얼: [`docs/TUTORIAL.md`](docs/TUTORIAL.md)
 - 백서: [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md)
 - 다음 작업: [`docs/NEXT.md`](docs/NEXT.md)
 
@@ -30,6 +31,7 @@ assets/refs/          초상 레퍼런스
 ## 한 줄 상태 (2026-08-19)
 
 1·2차 시스템 + 코만도스 프리렌더 + 마젠타 제거.  
+타이틀에서 튜토리얼(해주·무진)과 **1장 감나루**를 고른다. 튜토리얼 이야기는 하선. 게임은 아직 초소 판.  
 걷기 4×4 시트와 백서 3차가 남음.
 
 ## 실행
