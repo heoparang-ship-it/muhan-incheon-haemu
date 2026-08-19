@@ -1277,8 +1277,13 @@ function addSolidHouse(m, x0, y0, w, h, roof, name) {
   const b = {
     id: 'h' + bi, name: name || '집', x: x0, y: y0, w, h, kind: 'solid', roof,
     wallH: 1.34 + rnd() * 0.30,
-    tone: roof === 'tile' ? '#463c30' : '#4a3f2c',
-    roofTone: roof === 'tile' ? '#303639' : '#413822',
+    tone: roof === 'tile'
+      ? ['#463c30', '#3e3830', '#4a4034', '#403830'][(x0 * 3 + y0) % 4]
+      : ['#4a3f2c', '#453828', '#4c4230', '#3e3628', '#524636'][(x0 * 5 + y0 * 3) % 5],
+    roofTone: roof === 'tile'
+      ? ['#303639', '#3a3330', '#2c3438', '#38302c', '#2a3230'][(x0 + y0 * 2) % 5]
+      : ['#413822', '#4a3a20', '#3a3220', '#4c4228', '#383018', '#463c22'][(x0 * 7 + y0) % 6],
+    moss: ((x0 * 13 + y0 * 17) % 5) >= 3,
     tiles: [], roofAlpha: 1
   };
   let sum = 0, n = 0;
@@ -1534,6 +1539,34 @@ function addProps(m) {
     }
   });
 
+  /* 전신주+전선 — 코만도스 BAS의 POSTE/CABLE. 길을 따라 이어진 런 */
+  const poleRuns = [
+    [[14, 44], [20, 48], [26, 52], [32, 56], [39, 58], [46, 59]],
+    [[23, 38], [29, 35], [35, 32], [41, 28], [47, 24]],
+    [[57, 46], [59, 40], [61, 34], [63, 28], [65, 22]],
+    [[10, 56], [16, 62], [22, 64]]
+  ];
+  m.wireRuns = [];
+  poleRuns.forEach(run => {
+    const placed = [];
+    run.forEach(([x, y]) => {
+      if (!inMap(x, y)) return;
+      let px = x, py = y, ok = false;
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (!inMap(nx, ny)) continue;
+        const i = idx(nx, ny);
+        if (m.solid[i] || m.propAt[i] || (m.lane && m.lane[i] >= 2)) continue;
+        if (m.zone[i] === Z.SEA || m.terr[i] === T.PIER) continue;
+        px = nx; py = ny; ok = true; break;
+      }
+      if (!ok) return;
+      const p = addProp(m, { kind: 'pole', tx: px, ty: py, solid: false, cover: 1, s: 0.88 + ((px + py) % 3) * 0.06 });
+      if (p) placed.push(p);
+    });
+    for (let k = 0; k < placed.length - 1; k++) m.wireRuns.push([placed[k], placed[k + 1]]);
+  });
+
   /* 갯벌 갈대 — 횡단로를 피해 타일 자체를 메움 */
   for (let y = 4; y < MAP_H - 3; y++) {
     for (let x = 4; x < MAP_W - 3; x++) {
@@ -1613,6 +1646,28 @@ function addProps(m) {
       });
     }
   });
+
+  /* 숲 군집 밑 공통 그늘 — 소나무 3그루 이상이 붙으면 한 덩어리 */
+  const trees = m.props.filter(p => p.kind === 'pine' || p.kind === 'tree');
+  const used = new Uint8Array(trees.length);
+  m.canopy = [];
+  for (let i = 0; i < trees.length; i++) {
+    if (used[i]) continue;
+    const group = [trees[i]];
+    used[i] = 1;
+    for (let pass = 0; pass < 3; pass++) {
+      for (let j = 0; j < trees.length; j++) {
+        if (used[j]) continue;
+        if (group.some(g => Math.hypot(trees[j].tx - g.tx, trees[j].ty - g.ty) < 3.6)) {
+          group.push(trees[j]); used[j] = 1;
+        }
+      }
+    }
+    if (group.length < 3) continue;
+    let cx = 0, cy = 0;
+    group.forEach(p => { cx += p.tx + 0.5; cy += p.ty + 0.5; });
+    m.canopy.push({ x: cx / group.length, y: cy / group.length, r: 1.5 + group.length * 0.52 });
+  }
 }
 
 /* ===== c_nav.js ===== */
@@ -1957,12 +2012,27 @@ function buildChunk(cx, cy) {
   g.translate(-minX + pad, -minY + pad);
   for (let s = x0 + y0; s <= x1 + y1; s++)
     for (let x = x0; x < x1; x++) { const y = s - x; if (y >= y0 && y < y1) drawTile(g, x, y); }
+  drawCanopyShadows(g, x0, y0, x1, y1);
   drawRoadRuts(g);
   const rec = { canvas: c, ox: minX - pad, oy: minY - pad };
   chunkCache.set(chunkKey(cx, cy), rec);
   chunkLRU.push(chunkKey(cx, cy));
   while (chunkLRU.length > CHUNK_CAP) { const k = chunkLRU.shift(); if (k !== chunkKey(cx, cy)) chunkCache.delete(k); }
   return rec;
+}
+
+function drawCanopyShadows(g, x0, y0, x1, y1) {
+  if (!map.canopy) return;
+  g.save();
+  for (const c of map.canopy) {
+    if (c.x < x0 - 3 || c.x > x1 + 3 || c.y < y0 - 3 || c.y > y1 + 3) continue;
+    const wx = isoX(c.x, c.y), wy = isoY(c.x, c.y, groundZ(c.x, c.y));
+    g.fillStyle = 'rgba(6,10,8,.20)';
+    g.beginPath();
+    g.ellipse(wx + 12, wy + 7, c.r * 24, c.r * 11, 0, 0, TAU);
+    g.fill();
+  }
+  g.restore();
 }
 
 /* 바퀴 자국 — 흙길 폴리라인을 따라 두 줄. 가운데는 풀이 듬성듬성 자란다.
@@ -2484,6 +2554,17 @@ function drawRoof(g, b, alpha) {
         g.stroke();
       }
     }
+    if (b.moss) {
+      g.fillStyle = 'rgba(62,78,48,.16)';
+      const [p0, p1] = [fc.p[0], fc.p[fc.p.length - 1]];
+      const q0 = fc.p[1], q1 = fc.p[fc.p.length - 2] || fc.p[1];
+      for (let k = 0; k < 5; k++) {
+        const t = 0.15 + k * 0.16;
+        const sx = lerp(p0.x, p1.x, t), sy = lerp(p0.y, p1.y, t);
+        const ex = lerp(q0.x, q1.x, t), ey = lerp(q0.y, q1.y, t);
+        g.beginPath(); g.ellipse(lerp(sx, ex, 0.72), lerp(sy, ey, 0.72), 7, 3.2, 0, 0, TAU); g.fill();
+      }
+    }
     g.restore();
     g.strokeStyle = 'rgba(0,0,0,.30)'; g.lineWidth = 0.9;
     g.beginPath();
@@ -2552,6 +2633,21 @@ function drawCaveCeiling(g, b, alpha) {
 /* ---------- 소품 (스프라이트 캐시) ---------- */
 const PROP_W = 112, PROP_H = 148, PROP_OX = 56, PROP_OY = 128;
 const propSprites = new Map();
+
+function drawWire(g, a, b) {
+  const za = groundZ(a.tx, a.ty) + 2.45;
+  const zb = groundZ(b.tx, b.ty) + 2.45;
+  const x0 = isoX(a.tx + .5, a.ty + .5), y0 = isoY(a.tx + .5, a.ty + .5, za);
+  const x1 = isoX(b.tx + .5, b.ty + .5), y1 = isoY(b.tx + .5, b.ty + .5, zb);
+  const sag = 12 + Math.hypot(x1 - x0, y1 - y0) * 0.06;
+  g.save();
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(16,14,12,.52)'; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 + sag, x1, y1); g.stroke();
+  g.strokeStyle = 'rgba(22,18,14,.38)'; g.lineWidth = 1.0;
+  g.beginPath(); g.moveTo(x0 + 4, y0 + 1); g.quadraticCurveTo((x0 + x1) / 2 + 4, (y0 + y1) / 2 + sag + 3, x1 + 4, y1 + 1); g.stroke();
+  g.restore();
+}
 
 function propKey(p) {
   let k = p.kind + '|' + Math.round((p.s || 1) * 8);
@@ -2731,6 +2827,20 @@ function drawPropShape(g, p) {
       }
       g.fillStyle = 'rgba(96,116,84,.30)';
       g.beginPath(); g.ellipse(x0 * 0.5, y0 * 0.5 - 12, 3.2, 1.8, 0, 0, TAU); g.fill();
+      break;
+    }
+    case 'pole': {
+      g.fillStyle = 'rgba(0,0,0,.28)';
+      g.beginPath(); g.ellipse(2 * s, 2, 7 * s, 3.4 * s, 0, 0, TAU); g.fill();
+      g.strokeStyle = '#2c2418'; g.lineWidth = 3.6 * s; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(0, 2); g.lineTo(-1.2 * s, -52 * s); g.stroke();
+      g.strokeStyle = '#3a3022'; g.lineWidth = 2.4 * s;
+      g.beginPath(); g.moveTo(-11 * s, -46 * s); g.lineTo(11 * s, -48 * s); g.stroke();
+      g.fillStyle = '#c8b48a';
+      g.beginPath(); g.arc(-9 * s, -47 * s, 1.6 * s, 0, TAU); g.fill();
+      g.beginPath(); g.arc(9 * s, -49 * s, 1.6 * s, 0, TAU); g.fill();
+      g.fillStyle = '#8a7a52';
+      g.beginPath(); g.arc(-1 * s, -53 * s, 1.3 * s, 0, TAU); g.fill();
       break;
     }
     case 'stone_pile': {
@@ -5979,6 +6089,13 @@ function drawSorted(g2) {
   for (const p of map.props) {
     if (!inView(p.tx, p.ty)) continue;
     items.push({ d: p.tx + p.ty, z: 1, f: () => drawProp(g2, p) });
+  }
+  /* 전선 — 두 전신주 사이 늘어진 곡선. 높이 때문에 소품보다 위에 정렬 */
+  if (map.wireRuns) {
+    for (const [a, b] of map.wireRuns) {
+      if (!inView(a.tx, a.ty) && !inView(b.tx, b.ty)) continue;
+      items.push({ d: (a.tx + b.tx + a.ty + b.ty) / 2, z: 1.6, f: () => drawWire(g2, a, b) });
+    }
   }
 
   /* 유닛 */
