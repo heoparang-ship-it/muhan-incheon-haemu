@@ -50,6 +50,14 @@ assets/
 
 건물 id 예: `chapel` `clinic` `office` `store` `tavern` `shrine` `smugStore` `sanctum` `cell` `tideRoom`
 
+같은 크기의 반복을 줄이기 위해 `_v1`, `_v2` 변형도 자동 선택한다.
+현재 초가 2×2·3×2, 기와 2×2, 초가 5×4 등에 8개 변형이 있다.
+
+### macro detail
+- `decal_*`: 지면을 가로지르는 바퀴 자국·물웅덩이·염분·짚 등 16종
+- `scene_*`: 소나무 군락·갈대 둑·해안 바위·어업 작업장 4종
+- 데칼은 충돌 없이 지면 레이어에, 군집은 기존 충돌 소품을 유지한 채 전경에 그린다.
+
 ### portraits (현재 파일)
 - `haeju.jpg` 윤해주
 - `mujin.jpg` 강무진

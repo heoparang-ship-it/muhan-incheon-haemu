@@ -113,6 +113,46 @@ BUILDING_B = (
     ("bld_west_8x6", 896, 604),
 )
 
+BUILDING_VARIANTS_A = (
+    ("bld_thatch_2x2_v1", 256, 260),
+    ("bld_thatch_2x2_v2", 256, 260),
+    ("bld_thatch_3x2_v1", 320, 292),
+    ("bld_thatch_3x2_v2", 320, 292),
+)
+
+BUILDING_VARIANTS_B = (
+    ("bld_tile_2x2_v1", 256, 262),
+    ("bld_tile_2x2_v2", 256, 262),
+    ("bld_tile_3x2_v1", 320, 294),
+    ("bld_thatch_5x4_v1", 576, 422),
+)
+
+DECALS = (
+    ("decal_cart_ruts", 192, 96),
+    ("decal_puddle", 144, 80),
+    ("decal_trampled_grass", 144, 72),
+    ("decal_courtyard", 192, 96),
+    ("decal_salt_crust", 144, 72),
+    ("decal_reed_trail", 160, 80),
+    ("decal_shore_wrack", 160, 72),
+    ("decal_moss_stain", 128, 64),
+    ("decal_footprints", 128, 64),
+    ("decal_cart_turn", 160, 80),
+    ("decal_kiln_ash", 128, 64),
+    ("decal_straw", 144, 72),
+    ("decal_fish_scales", 128, 64),
+    ("decal_drainage", 160, 72),
+    ("decal_pebbles", 128, 64),
+    ("decal_tide_pool", 144, 72),
+)
+
+SCENERY = (
+    ("scene_pine_mass", 280, 220),
+    ("scene_reed_bank", 260, 140),
+    ("scene_rock_shelf", 260, 140),
+    ("scene_fishing_yard", 260, 180),
+)
+
 
 def dilate(mask: np.ndarray, count: int = 1) -> np.ndarray:
     out = mask
@@ -220,6 +260,16 @@ def fit_bottom(
     im = im.resize(size, Image.Resampling.LANCZOS)
     canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     canvas.alpha_composite(im, ((width - im.width) // 2, height - im.height))
+    return canvas
+
+
+def fit_center(im: Image.Image, width: int, height: int, pad: int = 3) -> Image.Image:
+    im = trim(im)
+    scale = min((width - pad * 2) / max(1, im.width), (height - pad * 2) / max(1, im.height))
+    size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
+    im = im.resize(size, Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    canvas.alpha_composite(im, ((width - im.width) // 2, (height - im.height) // 2))
     return canvas
 
 
@@ -335,6 +385,39 @@ def process_buildings(source: Path) -> None:
     wall = chroma(Image.open(source / "gpt_building_wall.png"))
     fit_bottom(wall, 96, 108, pad=2).save(OUT_BLD / "bld_wall.png", optimize=True)
 
+    variant_a = split_grid(
+        chroma(Image.open(source / "gpt_building_variants_a.png")), 2, 2
+    )
+    variant_b = split_grid(
+        chroma(Image.open(source / "gpt_building_variants_b.png")), 2, 2
+    )
+    for cell, (asset_id, width, height) in zip(variant_a, BUILDING_VARIANTS_A):
+        fit_bottom(cell, width, height, pad=6).save(
+            OUT_BLD / f"{asset_id}.png", optimize=True
+        )
+    for cell, (asset_id, width, height) in zip(variant_b, BUILDING_VARIANTS_B):
+        fit_bottom(cell, width, height, pad=6).save(
+            OUT_BLD / f"{asset_id}.png", optimize=True
+        )
+
+
+def process_world_details(source: Path) -> None:
+    decal_cells = split_grid(
+        chroma(Image.open(source / "gpt_ground_decals.png")), 4, 4
+    )
+    for cell, (asset_id, width, height) in zip(decal_cells, DECALS):
+        fit_center(cell, width, height, pad=2).save(
+            OUT_PROP / f"{asset_id}.png", optimize=True
+        )
+
+    scenery_cells = split_grid(
+        chroma(Image.open(source / "gpt_scenery_clusters.png")), 2, 2
+    )
+    for cell, (asset_id, width, height) in zip(scenery_cells, SCENERY):
+        fit_bottom(cell, width, height, pad=3).save(
+            OUT_PROP / f"{asset_id}.png", optimize=True
+        )
+
 
 def process_ui(source: Path) -> None:
     for key in ("haeju", "mujin", "dochi", "wolsim"):
@@ -399,6 +482,7 @@ def main() -> None:
     process_props(args.source)
     process_terrain(args.source)
     process_buildings(args.source)
+    process_world_details(args.source)
     process_ui(args.source)
     write_preview()
     print("Baked original GPT art into", GAME / "assets")

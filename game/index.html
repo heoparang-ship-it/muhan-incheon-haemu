@@ -1651,6 +1651,7 @@ function addProps(m) {
   const trees = m.props.filter(p => p.kind === 'pine' || p.kind === 'tree');
   const used = new Uint8Array(trees.length);
   m.canopy = [];
+  m.artScenery = [];
   for (let i = 0; i < trees.length; i++) {
     if (used[i]) continue;
     const group = [trees[i]];
@@ -1666,8 +1667,53 @@ function addProps(m) {
     if (group.length < 3) continue;
     let cx = 0, cy = 0;
     group.forEach(p => { cx += p.tx + 0.5; cy += p.ty + 0.5; });
-    m.canopy.push({ x: cx / group.length, y: cy / group.length, r: 1.5 + group.length * 0.52 });
+    const canopy = { x: cx / group.length, y: cy / group.length, r: 1.5 + group.length * 0.52, members: group };
+    m.canopy.push(canopy);
+    const pineCount = group.filter(p => p.kind === 'pine').length;
+    if (group.length >= 5 && pineCount / group.length >= 0.7) {
+      group.forEach(p => { p.massHidden = true; });
+      m.artScenery.push({
+        asset: 'scene_pine_mass', tx: canopy.x - 0.5, ty: canopy.y - 0.5,
+        scale: clamp(canopy.r / 5.6, 0.78, 1.32), flip: ((Math.round(canopy.x) + Math.round(canopy.y)) & 1) === 1
+      });
+    }
   }
+
+  /* 장소 단위 군집 — 반복 소품 대신 하나의 큰 실루엣으로 읽힌다 */
+  [
+    ['scene_reed_bank', 42, 76, 0.78, 0], ['scene_reed_bank', 57, 80, 0.92, 1],
+    ['scene_reed_bank', 67, 74, 0.82, 0], ['scene_rock_shelf', 35, 85, 0.76, 0],
+    ['scene_rock_shelf', 54, 89, 0.90, 1], ['scene_rock_shelf', 79, 76, 0.72, 0],
+    ['scene_fishing_yard', 10, 53, 0.72, 0], ['scene_fishing_yard', 29, 54, 0.70, 1],
+    ['scene_fishing_yard', 58, 49, 0.68, 0]
+  ].forEach(([asset, tx, ty, scale, flip]) => m.artScenery.push({ asset, tx, ty, scale, flip: !!flip }));
+
+  /* 손그림 지면 흔적 — 타일 경계를 가로지르는 큰 얼룩으로 지면의 이야기를 만든다 */
+  m.artDecals = [];
+  const decals = [
+    ['decal_cart_ruts', [[19, 52], [32, 58], [38, 33], [59, 40]], 0.86, 0.72],
+    ['decal_puddle', [[28, 60], [44, 62], [52, 75]], 0.80, 0.66],
+    ['decal_trampled_grass', [[22, 60], [38, 52], [49, 47]], 0.84, 0.72],
+    ['decal_courtyard', [[16, 50], [29, 45], [43, 38]], 0.88, 0.62],
+    ['decal_salt_crust', [[58, 25], [68, 22], [75, 29]], 0.78, 0.62],
+    ['decal_reed_trail', [[42, 70], [64, 77]], 0.84, 0.70],
+    ['decal_shore_wrack', [[38, 84], [55, 88], [73, 75]], 0.82, 0.74],
+    ['decal_moss_stain', [[43, 36], [47, 40], [13, 61]], 0.76, 0.58],
+    ['decal_footprints', [[45, 36], [72, 82]], 0.78, 0.66],
+    ['decal_cart_turn', [[26, 52], [63, 33]], 0.82, 0.66],
+    ['decal_kiln_ash', [[58, 28], [67, 20], [76, 18]], 0.74, 0.66],
+    ['decal_straw', [[12, 53], [25, 50]], 0.76, 0.72],
+    ['decal_fish_scales', [[8, 58], [31, 55]], 0.74, 0.56],
+    ['decal_drainage', [[61, 31], [70, 26]], 0.82, 0.58],
+    ['decal_pebbles', [[25, 15], [50, 12]], 0.80, 0.64],
+    ['decal_tide_pool', [[50, 75], [59, 81]], 0.82, 0.70]
+  ];
+  decals.forEach(([asset, spots, scale, alpha], ai) => {
+    spots.forEach(([tx, ty], si) => m.artDecals.push({
+      asset, tx, ty, scale: scale * (0.94 + ((tx * 3 + ty) % 5) * 0.025),
+      alpha, flip: ((ai + si) & 1) === 1
+    }));
+  });
 }
 
 /* ===== c_nav.js ===== */
@@ -5832,7 +5878,35 @@ function drawVisionCones(g2) {
 }
 
 /* ---------- 지면 장식 ---------- */
+function drawWorldArt(g, id, tx, ty, opt, centered) {
+  if (typeof ART === 'undefined') return false;
+  const rec = ART.img[id];
+  if (!rec) return false;
+  const im = rec.sheets.idle || rec.sheets[Object.keys(rec.sheets)[0]];
+  if (!im || !im.complete || !im.naturalWidth) return false;
+  const z = groundZ(tx, ty);
+  const x = isoX(tx + .5, ty + .5), y = isoY(tx + .5, ty + .5, z);
+  const sc = (opt && opt.scale) || 1;
+  g.save();
+  g.translate(x, y);
+  if (opt && opt.flip) g.scale(-1, 1);
+  g.globalAlpha = opt && opt.alpha != null ? opt.alpha : 1;
+  const dy = centered ? -rec.meta.cellH / 2 : -rec.meta.anchorY;
+  g.drawImage(im, 0, 0, rec.meta.cellW, rec.meta.cellH,
+    -rec.meta.cellW * sc / 2, dy * sc, rec.meta.cellW * sc, rec.meta.cellH * sc);
+  g.restore();
+  return true;
+}
+
 function drawDecals(g2) {
+  // 장소별 손그림 얼룩 — 타일 위에 걸쳐 지면 반복을 끊는다
+  if (map.artDecals) {
+    const vb = visibleTileBounds();
+    for (const d of map.artDecals) {
+      if (d.tx < vb.xMin - 4 || d.tx > vb.xMax + 4 || d.ty < vb.yMin - 4 || d.ty > vb.yMax + 4) continue;
+      drawWorldArt(g2, d.asset, d.tx, d.ty, d, true);
+    }
+  }
   // 발자국
   for (const p of state.prints) {
     const z = groundZ(p.tx, p.ty);
@@ -6092,8 +6166,14 @@ function drawSorted(g2) {
   }
 
   /* 소품 */
+  if (map.artScenery) {
+    for (const s of map.artScenery) {
+      if (!inView(s.tx, s.ty)) continue;
+      items.push({ d: s.tx + s.ty, z: 0.8, f: () => drawWorldArt(g2, s.asset, s.tx, s.ty, s, false) });
+    }
+  }
   for (const p of map.props) {
-    if (!inView(p.tx, p.ty)) continue;
+    if (p.massHidden || !inView(p.tx, p.ty)) continue;
     items.push({ d: p.tx + p.ty, z: 1, f: () => drawProp(g2, p) });
   }
   /* 전선 — 두 전신주 사이 늘어진 곡선. 높이 때문에 소품보다 위에 정렬 */
@@ -6993,15 +7073,18 @@ function restart() {
 
 /* 건물마다 쓸 그림이 있는지 연결 — 통짜 스프라이트 또는 body/roof */
 function closestBldArt(b) {
-  let best = null, bestScore = 1e9;
+  let best = [], bestScore = 1e9;
   for (const id in ART.img) {
-    const m = id.match(/^bld_(west|tile|thatch)_(\d+)x(\d+)$/);
+    const m = id.match(/^bld_(west|tile|thatch)_(\d+)x(\d+)(?:_v\d+)?$/);
     if (!m) continue;
     const roofPen = m[1] === b.roof ? 0 : 28;
     const score = Math.abs(+m[2] - b.w) + Math.abs(+m[3] - b.h) + roofPen;
-    if (score < bestScore) { bestScore = score; best = id; }
+    if (score < bestScore) { bestScore = score; best = [id]; }
+    else if (score === bestScore) best.push(id);
   }
-  return best;
+  if (!best.length) return null;
+  best.sort();
+  return best[Math.abs(b.x * 17 + b.y * 31 + b.w * 7 + b.h * 11) % best.length];
 }
 
 function bindArt() {
@@ -7009,7 +7092,12 @@ function bindArt() {
   for (const b of map.buildings) {
     if (b.kind === 'wall' || b.kind === 'cave') continue;
     const fp = b.w + 'x' + b.h;
-    const cand = ['bld_' + b.id, 'bld_' + b.roof + '_' + fp];
+    const base = 'bld_' + b.roof + '_' + fp;
+    const exact = Object.keys(ART.img)
+      .filter(id => id === base || id.startsWith(base + '_v'))
+      .sort();
+    const cand = ['bld_' + b.id];
+    if (exact.length) cand.push(exact[Math.abs(b.x * 17 + b.y * 31) % exact.length]);
     const near = closestBldArt(b);
     if (near) cand.push(near);
     for (const c of cand) {
