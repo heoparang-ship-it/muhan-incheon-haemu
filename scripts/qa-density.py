@@ -111,7 +111,7 @@ with sync_playwright() as p:
         fail.append("not running")
     if not stats["startOk"]:
         fail.append("start blocked")
-    if stats["props"] < 400:
+    if stats["props"] < 320:
         fail.append("props too few: " + str(stats["props"]))
     if stats["buildings"] < 40:
         fail.append("buildings too few: " + str(stats["buildings"]))
