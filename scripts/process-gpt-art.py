@@ -233,6 +233,22 @@ def chroma(im: Image.Image) -> Image.Image:
     return Image.fromarray(arr.astype(np.uint8), "RGBA")
 
 
+def neutralize_purple_spill(im: Image.Image) -> Image.Image:
+    """Turn chroma-contaminated purple edge pixels into bark/foliage neutrals."""
+    arr = np.asarray(im.convert("RGBA")).astype(np.float32)
+    r, g, b, a = (arr[..., index] for index in range(4))
+    spill = (
+        (a > 8)
+        & (r > g * 1.08)
+        & (b > g * 1.08)
+        & ((r + b) > g * 2.35 + 16)
+    )
+    arr[..., 0] = np.where(spill, np.maximum(g * 1.06, r * 0.58), r)
+    arr[..., 1] = np.where(spill, np.maximum(g, (r + g + b) / 4.2), g)
+    arr[..., 2] = np.where(spill, np.minimum(g * 0.82, b), b)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
+
+
 def trim(im: Image.Image, pad: int = 3) -> Image.Image:
     alpha = np.asarray(im.getchannel("A"))
     ys, xs = np.where(alpha > 12)
@@ -414,9 +430,10 @@ def process_world_details(source: Path) -> None:
         chroma(Image.open(source / "gpt_scenery_clusters.png")), 2, 2
     )
     for cell, (asset_id, width, height) in zip(scenery_cells, SCENERY):
-        fit_bottom(cell, width, height, pad=3).save(
-            OUT_PROP / f"{asset_id}.png", optimize=True
-        )
+        fitted = fit_bottom(cell, width, height, pad=3)
+        if asset_id == "scene_pine_mass":
+            fitted = neutralize_purple_spill(fitted)
+        fitted.save(OUT_PROP / f"{asset_id}.png", optimize=True)
 
 
 def process_ui(source: Path) -> None:
