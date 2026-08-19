@@ -1,0 +1,15 @@
+{
+  "name": "muhan-incheon-haemu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "무한인천: 해무의 성가 — QA/dev tooling for the single-file HTML5 canvas game in game/",
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8080 --directory game",
+    "qa:play": "node scripts/qa-play.mjs",
+    "qa:haemu": "node scripts/qa-haemu.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
