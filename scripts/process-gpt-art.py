@@ -249,6 +249,26 @@ def neutralize_purple_spill(im: Image.Image) -> Image.Image:
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
 
 
+def roughen_decal_edge(im: Image.Image, seed: int) -> Image.Image:
+    """Break the generated oval silhouette with a deterministic ragged fade."""
+    arr = np.asarray(im.convert("RGBA")).astype(np.float32)
+    height, width = arr.shape[:2]
+    yy, xx = np.mgrid[0:height, 0:width]
+    nx = (xx - (width - 1) / 2) / max(1.0, width * 0.48)
+    ny = (yy - (height - 1) / 2) / max(1.0, height * 0.48)
+    radius = np.sqrt(nx * nx + ny * ny)
+    noise = (
+        np.sin(xx * 0.17 + seed * 1.7)
+        + np.sin(yy * 0.29 + seed * 0.9)
+        + np.sin((xx + yy) * 0.11 + seed * 2.3)
+    ) / 3.0
+    boundary = 0.78 + noise * 0.13
+    ragged = np.clip((boundary - radius) / 0.16, 0.0, 1.0)
+    arr[..., 3] *= ragged
+    arr[..., 3] = np.where(arr[..., 3] < 10, 0, arr[..., 3])
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
+
+
 def trim(im: Image.Image, pad: int = 3) -> Image.Image:
     alpha = np.asarray(im.getchannel("A"))
     ys, xs = np.where(alpha > 12)
@@ -421,8 +441,9 @@ def process_world_details(source: Path) -> None:
     decal_cells = split_grid(
         chroma(Image.open(source / "gpt_ground_decals.png")), 4, 4
     )
-    for cell, (asset_id, width, height) in zip(decal_cells, DECALS):
-        fit_center(cell, width, height, pad=2).save(
+    for index, (cell, (asset_id, width, height)) in enumerate(zip(decal_cells, DECALS)):
+        fitted = fit_center(cell, width, height, pad=2)
+        roughen_decal_edge(fitted, index + 1).save(
             OUT_PROP / f"{asset_id}.png", optimize=True
         )
 
