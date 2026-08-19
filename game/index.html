@@ -1905,9 +1905,10 @@ function buildTerrainColors() {
       if (mead > 0.54) mix(36, 74, 38, (mead - 0.54) * 1.5);
       if (dry > 0.58) mix(96, 86, 50, (dry - 0.58) * 1.6);
     } else if (t === T.SAND) {
-      if (dry < 0.45) mix(58, 54, 44, (0.45 - dry) * 1.2);
+      mix(62, 58, 46, 0.20);
+      if (dry < 0.45) mix(58, 54, 44, (0.45 - dry) * 0.8);
     } else if (t === T.MUD) {
-      if (mead > 0.56) mix(72, 78, 62, (mead - 0.56) * 1.0);
+      if (mead > 0.56) mix(64, 66, 52, (mead - 0.56) * 0.55);
     } else if (t === T.DIRT) {
       if (dry > 0.55) mix(88, 76, 54, (dry - 0.55) * 0.9);
     }
@@ -2027,7 +2028,7 @@ function drawTile(g, x, y) {
       drawTileTexture(g, x, y, [[ax, ay], [bx, by], [cx2, cy2], [dx2, dy2]])) {
     blendTileEdges(g, x, y, [[ax, ay], [bx, by], [cx2, cy2], [dx2, dy2]]);
     quad();
-    g.fillStyle = 'rgba(' + (r | 0) + ',' + (gg | 0) + ',' + (bb | 0) + ',0.32)';
+    g.fillStyle = 'rgba(' + (r | 0) + ',' + (gg | 0) + ',' + (bb | 0) + ',' + (t === T.SAND ? 0.46 : 0.32) + ')';
     g.fill();
     /* 손그림 디테일 — 풀잎·갈대·들꽃을 청크 구울 때 심는다 */
     const mx0 = (ax + cx2) / 2, my0 = (ay + cy2) / 2;
@@ -2153,7 +2154,8 @@ function drawWater(g) {
   const b = visibleTileBounds();
   const paths = new Array(WATER_BUCKETS);
   const edge = new Path2D();
-  const wet = new Path2D();
+  const wetBands = [new Path2D(), new Path2D(), new Path2D()];
+  const WET_A = [0.16, 0.10, 0.05];
   const foamDots = [];
   let any = false, anyEdge = false, anyWet = false;
   for (let y = b.yMin; y <= b.yMax; y++) {
@@ -2161,10 +2163,12 @@ function drawWater(g) {
       const i = idx(x, y);
       const dep = wl - map.elev[i];
       if (map.solid[i]) continue;
-      // 물이 물러간 젖은 모래 띠 — 조수를 따라온다
+      // 물이 물러간 젖은 띠 — 조수를 따라오고, 마를수록 옅어진다
       if (dep <= 0.004) {
-        if (dep > -0.13 && map.zone[i] !== Z.CAVE && map.terr[i] !== T.FLOOR) {
+        if (dep > -0.20 && map.zone[i] !== Z.CAVE && map.terr[i] !== T.FLOOR) {
+          const wb = dep > -0.06 ? 0 : dep > -0.13 ? 1 : 2;
           const z = map.elev[i];
+          const wet = wetBands[wb];
           wet.moveTo(isoX(x, y), isoY(x, y, z));
           wet.lineTo(isoX(x + 1, y), isoY(x + 1, y, z));
           wet.lineTo(isoX(x + 1, y + 1), isoY(x + 1, y + 1, z));
@@ -2183,19 +2187,33 @@ function drawWater(g) {
       pth.lineTo(isoX(x, y + 1), isoY(x, y + 1, wl));
       pth.closePath();
       any = true;
-      if (dep < 0.13) {
-        edge.moveTo(isoX(x, y), isoY(x, y, wl));
-        edge.lineTo(isoX(x + 1, y), isoY(x + 1, y, wl));
-        anyEdge = true;
-        if (vnoise(x * 3, y * 5, 1) > 0.35 && Math.sin(t * 1.8 + (x * 3 + y * 5) * 0.7) > 0.4) {
-          foamDots.push([x, y, dep]);
+      if (dep < 0.16) {
+        // 진짜 물가에만 — 이웃 중 마른 칸이 있는 경우
+        let dry = false;
+        if (inMap(x + 1, y) && wl - map.elev[idx(x + 1, y)] <= 0.004) dry = true;
+        else if (inMap(x - 1, y) && wl - map.elev[idx(x - 1, y)] <= 0.004) dry = true;
+        else if (inMap(x, y + 1) && wl - map.elev[idx(x, y + 1)] <= 0.004) dry = true;
+        else if (inMap(x, y - 1) && wl - map.elev[idx(x, y - 1)] <= 0.004) dry = true;
+        if (dry) {
+          edge.moveTo(isoX(x, y), isoY(x, y, wl));
+          edge.lineTo(isoX(x + 1, y), isoY(x + 1, y, wl));
+          edge.lineTo(isoX(x + 1, y + 1), isoY(x + 1, y + 1, wl));
+          anyEdge = true;
+          if (vnoise(x * 3, y * 5, 1) > 0.4 && Math.sin(t * 1.8 + (x * 3 + y * 5) * 0.7) > 0.4) {
+            foamDots.push([x, y, dep]);
+          }
         }
       }
     }
   }
   if (!any && !anyWet) return;
   const wave = Math.sin(t * 1.1) * 0.5 + Math.sin(t * 0.62) * 0.5;
-  if (anyWet) { g.fillStyle = 'rgba(16,22,24,.16)'; g.fill(wet); }
+  if (anyWet) {
+    for (let wb = 0; wb < 3; wb++) {
+      g.fillStyle = 'rgba(16,22,24,' + WET_A[wb] + ')';
+      g.fill(wetBands[wb]);
+    }
+  }
   for (let k = 0; k < WATER_BUCKETS; k++) {
     if (!paths[k]) continue;
     const deep = (k + 0.5) / WATER_BUCKETS;
