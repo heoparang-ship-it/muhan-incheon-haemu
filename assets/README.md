@@ -1,7 +1,17 @@
 # 에셋 슬롯
 
 게임은 `ASSET_DATA`가 있으면 그림을 쓰고, 없으면 코드로 그린다.  
-지금 플레이 묶음은 `game/asset-data.js`에 슬롯이 들어 있다. 유닛은 idle 4방향만, walk 시트는 아직 없다.
+지금 플레이 묶음은 `game/asset-data.js`에 슬롯이 들어 있다. 유닛 14종은
+idle 4방향 + walk 4방향 4프레임을 사용한다.
+
+2026-08-19 GPT 이미지 생성으로 조선 해안·해무 콘셉트의 원본 세트를
+전면 재제작했다. 코만도스 2의 그림이나 파일은 포함하지 않고, 레이어 구조와
+가독성 원칙만 참고했다. 생성 원화를 엔진 규격으로 굽는 명령은 다음과 같다.
+
+```bash
+python3 scripts/process-gpt-art.py --source /opt/cursor/artifacts/assets
+python3 scripts/write-asset-data.py
+```
 
 드라이브 폴더 [무한인천-에셋](https://drive.google.com/drive/folders/1q6VNkSSV1IjQa0sqZsPXrXd7ia-A__xH)와 같은 구조다. 2026-08-18 기준 드라이브 안은 비어 있었다.
 
@@ -32,7 +42,7 @@ assets/
 `civil_villager` `civil_believer` `civil_patient` `civil_child` `civil_prisoner`
 
 ### props
-`prop_pine` `prop_tree` `prop_bush` `prop_rock` `prop_jar` `prop_net` `prop_rack` `prop_cart` `prop_well` `prop_boat` `prop_wreck` `prop_crate` `prop_kiln` `prop_altar` `prop_belltower` `prop_stalag` `prop_stone_pile`
+`prop_pine` `prop_tree` `prop_bush` `prop_rock` `prop_jar` `prop_net` `prop_rack` `prop_cart` `prop_well` `prop_boat` `prop_wreck` `prop_crate` `prop_kiln` `prop_altar` `prop_belltower` `prop_stalag` `prop_stone_pile` `prop_lamp_off` `prop_lamp_on` `prop_pole` `prop_fence`
 
 ### buildings
 `bld_{id}_body` / `bld_{id}_roof`  
@@ -48,5 +58,8 @@ assets/
 
 HTML 안에도 같은 초상이 base64로 박혀 있다.
 
-### anim/loop
-코드는 방향·프레임 클립을 찾는다. 시트 규격은 `initArt` / `drawSprite`를 볼 것.
+### 캐릭터 시트
+- idle: `56×304` (1프레임 × 4방향)
+- walk: `224×304` (4프레임 × 4방향)
+- 방향 행: `+tx(SE)`, `+ty(SW)`, `-tx(NW)`, `-ty(NE)`
+- 발 앵커: `(28, 72)`

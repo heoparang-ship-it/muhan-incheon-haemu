@@ -4,6 +4,7 @@ from PIL import Image
 import json
 
 PUB = Path("/workspace/game")
+CACHE_VERSION = 6
 chars = sorted((PUB / "assets/chars").glob("*.png"))
 props = sorted((PUB / "assets/props").glob("*.png"))
 texs = sorted((PUB / "assets/tex").glob("*.jpg"))
@@ -15,7 +16,7 @@ FRAMES = {
 
 assets = {}
 for p in texs:
-    assets[p.stem] = {"kind": "texture", "data": f"assets/tex/{p.name}?v=5"}
+    assets[p.stem] = {"kind": "texture", "data": f"assets/tex/{p.name}?v={CACHE_VERSION}"}
 
 def sprite_rec(p: Path, rel: str) -> dict:
     im = Image.open(p)
@@ -40,7 +41,10 @@ def sprite_rec(p: Path, rel: str) -> dict:
         "anchorX": cell_w // 2,
         "anchorY": cell_h - 4 if any(k in p.stem for k in ("agent", "guard", "civil")) else cell_h - 2,
         "clips": [{"key": "idle" if not p.stem.endswith("_walk") else "walk", "frames": frames}],
-        "sheets": {("walk" if p.stem.endswith("_walk") else "idle"): f"{rel}?v=5"},
+        "sheets": {
+            ("walk" if p.stem.endswith("_walk") else "idle"):
+            f"{rel}?v={CACHE_VERSION}"
+        },
     }
 
 for p in chars:
