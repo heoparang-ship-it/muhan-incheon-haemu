@@ -6287,6 +6287,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    showLabels: !!state.showLabels,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6421,6 +6422,7 @@ function applySave(s) {
   state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
   state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
   state.showSoundFx = s.showSoundFx !== false;
+  state.showLabels = !!s.showLabels;
   for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
   state.queued = 0;
   if (s.secretPathOpen) {
