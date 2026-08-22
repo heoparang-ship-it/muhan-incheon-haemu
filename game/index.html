@@ -6304,7 +6304,8 @@ function snapshotSave() {
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
-      patrol: g.patrol, pi: g.pi || 0
+      patrol: g.patrol, pi: g.pi || 0,
+      found: !!g.found
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -6465,6 +6466,7 @@ function applySave(s) {
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
     u.lastSeen = rec.lastSeen || null;
+    u.found = !!rec.found;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
   const cc = byId(civilians);
@@ -6854,7 +6856,7 @@ function boot() {
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
-    startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
+    startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps, checkTraces,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
 }
