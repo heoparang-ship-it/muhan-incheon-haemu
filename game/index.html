@@ -6312,8 +6312,8 @@ function snapshotSave() {
       dead: !!c.dead, panic: c.panic || 0
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
-    doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
-    lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
+    doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked, noticed: !!d.noticed })),
+    lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on, noticed: !!l.noticed })),
     vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
   };
 }
@@ -6482,11 +6482,15 @@ function applySave(s) {
   for (const rec of s.doors || []) di.set(rec.i, rec);
   for (const d of map.doors) {
     const rec = di.get(d.i);
-    if (rec) { d.open = rec.open; d.broken = rec.broken; if (rec.locked != null) d.locked = rec.locked; }
+    if (rec) {
+      d.open = rec.open; d.broken = rec.broken;
+      if (rec.locked != null) d.locked = rec.locked;
+      d.noticed = !!rec.noticed;
+    }
   }
   for (const rec of s.lamps || []) {
     const l = map.lamps.find(x => x.tx === rec.tx && x.ty === rec.ty);
-    if (l) { l.on = rec.on; l.noticed = false; }
+    if (l) { l.on = rec.on; l.noticed = !!rec.noticed; }
   }
   state.ropes = new Set(s.ropes || []);
   for (const i of state.ropes) { if (i >= 0 && i < map.solid.length) map.solid[i] = 0; }
@@ -6854,7 +6858,7 @@ function boot() {
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
-    startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
+    startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps, checkTraces,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
 }
