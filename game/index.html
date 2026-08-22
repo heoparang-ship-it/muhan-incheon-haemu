@@ -5101,6 +5101,10 @@ function updateHUD() {
   if (way) way.classList.toggle('active', !!state.waypointMode);
   const sq = $('#squadBtn');
   if (sq) sq.classList.toggle('active', !!state.boxMode);
+  if (!agents.some(x => x.checkHold > 0)) {
+    const ban = $('#checkBanner');
+    if (ban) ban.classList.remove('show');
+  }
   $('#execBtn').disabled = !state.queued;
   $('#clearBtn').disabled = !state.queued;
   $('#queueCount').textContent = state.queued ? state.queued : '';
