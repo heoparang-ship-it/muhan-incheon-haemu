@@ -6133,7 +6133,11 @@ function onKeyDown(e) {
   if (e.target.matches && e.target.matches('input,textarea')) return;
   if (e.key === 'Escape') {
     e.preventDefault();
-    state.targetMode = null;
+    if (state && state.targetMode) {
+      state.targetMode = null;
+      toast('지정을 취소했다', 'plan');
+      return;
+    }
     const help = $('#help');
     if (help && help.classList.contains('show')) { help.classList.remove('show'); return; }
     const ts = $('#titleScreen');
