@@ -6308,7 +6308,8 @@ function snapshotSave() {
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
-      freed: !!c.freed, rescued: !!c.rescued, following: !!c.following,
+      freed: !!c.freed, rescued: !!c.rescued,
+      following: c.following && c.following.id ? c.following.id : null,
       dead: !!c.dead, panic: c.panic || 0
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
@@ -6471,7 +6472,10 @@ function applySave(s) {
   for (const rec of s.civilians || []) {
     const u = cc.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.freed = rec.freed; u.rescued = rec.rescued;
-    u.following = rec.following; u.dead = rec.dead; u.panic = rec.panic; u.path = [];
+    u.dead = rec.dead; u.panic = rec.panic; u.path = [];
+    if (!rec.following) u.following = null;
+    else if (typeof rec.following === 'string') u.following = agents.find(a => a.id === rec.following) || null;
+    else u.following = (typeof selectedAgent === 'function' && selectedAgent()) || agents.find(a => a.alive) || null;
   }
   const ii = byId(interactables);
   for (const rec of s.interactables || []) {
