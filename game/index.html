@@ -6779,6 +6779,7 @@ function boot() {
       chosenDiff = btn.getAttribute('data-diff') || 'normal';
       try { localStorage.setItem('haemu-diff', chosenDiff); } catch (err) { /* ignore */ }
       $$('#diffRow button').forEach(b => b.classList.toggle('on', b === btn));
+      toast('난이도 · ' + (btn.textContent || chosenDiff));
     };
   });
   try {
