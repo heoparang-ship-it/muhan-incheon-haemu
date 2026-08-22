@@ -6733,14 +6733,22 @@ function boot() {
     { name: '낮음', auto: false, q: 0.6 }
   ];
   let qIdx = 0;
+  function syncQualityBtn() {
+    const m = QMODES[qIdx] || QMODES[0];
+    const btn = $('#qualityBtn');
+    if (!btn) return;
+    btn.classList.toggle('active', !m.auto);
+    btn.title = '그래픽 품질 · ' + m.name;
+  }
   $('#qualityBtn').onclick = () => {
     qIdx = (qIdx + 1) % QMODES.length;
     const m = QMODES[qIdx];
     cam.qualityAuto = m.auto;
     if (!m.auto) { cam.quality = clamp(m.q, cam.qMin, Math.max(cam.qMax, m.q)); resize(); }
-    $('#qualityBtn').classList.toggle('active', !m.auto);
+    syncQualityBtn();
     toast('그래픽 품질 · ' + m.name + (m.auto ? ' (프레임에 맞춰 조절)' : ''), 'plan');
   };
+  syncQualityBtn();
   $('#muteBtn').onclick = () => { audio.setMuted(!audio.muted); $('#muteBtn').textContent = audio.muted ? '🔇' : '🔊'; };
   const setFollow = (on) => {
     state.followSel = on;
@@ -6853,7 +6861,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, syncQualityBtn,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
