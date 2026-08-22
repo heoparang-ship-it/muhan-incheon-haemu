@@ -48,8 +48,6 @@ const info = await page.evaluate(() => {
   const old = H.snapshotSave();
   const oldRec = (old.civilians || []).find((x) => x.id === cid);
   delete oldRec.angle;
-  const midOld = H.civilians.find((x) => x.id === cid);
-  midOld.angle = face;
   H.applySave(old);
   const oldAfter = H.civilians.find((x) => x.id === cid);
   const afterOld = oldAfter.angle;
@@ -129,7 +127,7 @@ if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + in
 if (!near(info.snapAng, Math.PI)) fail.push("snap " + info.snapAng);
 if (near(info.afterRebuild, Math.PI)) fail.push("rebuild still pi " + info.afterRebuild);
 if (!near(info.afterApply, Math.PI)) fail.push("apply " + info.afterApply);
-if (near(info.afterOld, Math.PI)) fail.push("old kept pi " + info.afterOld);
+if (!near(info.afterOld, info.def)) fail.push("old " + info.afterOld);
 if (!near(info.afterCont, Math.PI)) fail.push("continue " + info.afterCont);
 for (const t of info.phases) {
   if (Math.abs(t.wl - t.expect) > 1e-12) fail.push("tide " + t.p + " " + t.wl);
