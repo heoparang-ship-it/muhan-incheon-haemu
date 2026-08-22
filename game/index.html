@@ -1668,7 +1668,8 @@ function buildBlockHeights() {
   map.blockH = new Float32Array(N);
   for (let i = 0; i < N; i++) map.blockH[i] = 1.55;
   for (const b of map.buildings) {
-    const h = b.kind === 'wall' ? 1.5 : (b.wallH || 1.4);
+    /* 담장은 wallH(1.6). 단층 건물도 눈높이 1.6 아래에서 새지 않게 1.7을 하한으로. */
+    const h = b.kind === 'wall' ? (b.wallH || 1.6) : Math.max(b.wallH || 1.4, 1.7);
     for (const i of b.tiles) map.blockH[i] = h;
   }
   for (const p of map.props) {
@@ -1691,7 +1692,8 @@ function hasSight(ax, ay, bx, by, eyeUp, targUp, aLv, bLv) {
   if (n <= 1) return true;
   for (let i = 1; i < n; i++) {
     const t = i / n;
-    const x = Math.round(lerp(ax, bx, t)), y = Math.round(lerp(ay, by, t));
+    /* 칸 소속은 floor. round(n.5)는 창문을 옆 벽에 붙여 벽을 뚫거나 창을 막는다. */
+    const x = Math.floor(lerp(ax, bx, t)), y = Math.floor(lerp(ay, by, t));
     if (!inMap(x, y)) return false;
     const ii = idx(x, y);
     const rayZ = lerp(az, bz, t);
@@ -1700,7 +1702,7 @@ function hasSight(ax, ay, bx, by, eyeUp, targUp, aLv, bLv) {
         const sill = map.elev[ii] + 0.88;
         const lintel = map.elev[ii] + 1.75;
         if (rayZ < sill || rayZ > lintel) return false;
-      } else if (map.elev[ii] + map.blockH[ii] > rayZ) return false;
+      } else if (map.elev[ii] + map.blockH[ii] + 0.02 >= rayZ) return false;
     } else {
       const dr = map.doorAt.get(ii);
       if (dr && !dr.open && !dr.broken && map.elev[ii] + 1.5 > rayZ) return false;
@@ -2901,7 +2903,8 @@ function baseUnit(o) {
     tx: 0, ty: 0, angle: 0.8, path: [], speed: 2.1, alive: true,
     crouch: false, carrying: null, carriedBy: null, unconscious: false,
     hidden: false, moveT: 0, bob: rnd() * TAU, wait: 0, action: null,
-    footT: 0, lastPrint: 0, tied: false, wakeAt: 0, hidingAwake: false, level: 0
+    footT: 0, lastPrint: 0, tied: false, wakeAt: 0, hidingAwake: false, level: 0,
+    pendingLevel: null
   }, o);
 }
 
@@ -3031,6 +3034,10 @@ function moveUnit(u, dt) {
   u.angle = Math.atan2(dy, dx);
   u.bob += dt * sp * 3.4;
   u.moveT = 0.12;
+  if (u.pendingLevel != null && map.stair[tileAt(u.tx, u.ty)]) {
+    u.level = u.pendingLevel;
+    u.pendingLevel = null;
+  }
 
   /* 발소리와 발자국 */
   u.footT -= dt;
@@ -3079,6 +3086,7 @@ function setPath(u, tx, ty) {
     failStewardCheck(g, u, '문답 중에 발을 옮겼다');
     return false;
   }
+  if (u) u.pendingLevel = null;
   const p = findPath(u.tx, u.ty, tx, ty, u);
   u.path = p;
   if (p.length && u.kind === 'agent' && !u.crouch) pulseSound(u.tx, u.ty, footstepRadius(u.tx, u.ty, u), '발소리');
@@ -4283,15 +4291,18 @@ function interact(a, fromQueue) {
     }
     case 'stairs': {
       const dest = 1 - unitLevel(a);
-      const go = () => {
-        a.level = dest;
-        a.path = [];
-        toast(dest ? '2층으로 올랐다' : '아래층으로 내려왔다', 'plan');
-      };
-      if (Math.hypot(a.tx - o.tx, a.ty - o.ty) > 0.85) {
-        setPath(a, o.tx, o.ty);
-        startAction(a, 0.2, go, '계단을 오르는 중');
-      } else go();
+      const dist = Math.hypot(a.tx - o.tx, a.ty - o.ty);
+      if (dist > 0.85) {
+        if (setPath(a, o.tx, o.ty)) {
+          a.pendingLevel = dest;
+          toast('계단으로 간다', 'plan');
+        } else toast('계단으로 갈 수 없다', 'warn');
+        break;
+      }
+      a.level = dest;
+      a.path = [];
+      a.pendingLevel = null;
+      toast(dest ? '2층으로 올랐다' : '아래층으로 내려왔다', 'plan');
       break;
     }
     case 'well': {
