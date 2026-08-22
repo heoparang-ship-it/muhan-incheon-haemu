@@ -49,18 +49,28 @@ const info = await page.evaluate(() => {
     eul: H.eulReul(s)
   }));
 
+  const lastToast = () => {
+    const lines = document.querySelectorAll("#toast .toastLine");
+    return lines.length ? lines[lines.length - 1].textContent : "";
+  };
+  const clearToast = () => {
+    const box = document.getElementById("toast");
+    if (box) box.innerHTML = "";
+  };
+
   const a = H.agents.find((x) => x.id === "haeju");
+  if (a) { a.tx = 16; a.ty = 46; a.path = []; a.action = null; }
   const pris = H.civilians.find((x) => x.type === "prisoner");
-  if (pris) {
+  if (pris && a) {
     pris.freed = true;
     pris.following = null;
     pris.tx = a.tx;
     pris.ty = a.ty;
   }
   H.selectAgent("haeju");
+  clearToast();
   H.interact(a);
-  const leadToast = document.querySelector("#toast .toastLine");
-  const leadText = leadToast ? leadToast.textContent : "";
+  const leadText = lastToast();
 
   H.state.evidence.smugLedger = true;
   const boat = H.interactables.find((x) => x.id === "escapeBoat");
@@ -73,9 +83,9 @@ const info = await page.evaluate(() => {
       ag.ty = boat.ty;
     }
   }
+  clearToast();
   H.tryEscape();
-  const escapeToast = document.querySelector("#toast .toastLine");
-  const escapeText = escapeToast ? escapeToast.textContent : "";
+  const escapeText = lastToast();
 
   const ev = H.interactables.find((x) => x.id === "tideChart") || H.interactables.find((x) => x.kind === "evidence");
   if (ev && a) {
@@ -90,14 +100,16 @@ const info = await page.evaluate(() => {
   const clinic = (H.map.doors || []).find((d) => d.label === "무료 진료소");
   let doorText = "";
   if (clinic && a) {
-    a.tx = clinic.tx;
-    a.ty = clinic.ty;
+    a.tx = clinic.tx + 0.5;
+    a.ty = clinic.ty + 0.5;
+    a.action = null;
+    a.path = [];
     clinic.open = false;
     clinic.locked = false;
     clinic.broken = false;
+    clearToast();
     H.interact(a);
-    const doorToast = document.querySelector("#toast .toastLine");
-    doorText = doorToast ? doorToast.textContent : "";
+    doorText = lastToast();
   }
 
   const leftover = [];
@@ -145,9 +157,11 @@ const cam = await page.evaluate(() => {
       if (boat) { ag.tx = boat.tx; ag.ty = boat.ty; }
     }
   }
-  H.tryEscape();
   const box = document.getElementById("toast");
-  const text = box && box.querySelector(".toastLine") ? box.querySelector(".toastLine").textContent : "";
+  if (box) box.innerHTML = "";
+  H.tryEscape();
+  const lines = document.querySelectorAll("#toast .toastLine");
+  const text = lines.length ? lines[lines.length - 1].textContent : "";
   return { text };
 });
 await page.waitForTimeout(400);
