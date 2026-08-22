@@ -6211,6 +6211,14 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
+function setBoxMode(on, opts) {
+  if (state) state.boxMode = !!on;
+  if (typeof updateHUD === 'function') updateHUD();
+  if (!(opts && opts.quiet)) {
+    toast(state && state.boxMode ? '부대 — 끌어 여러 명을 고른다' : '부대 해제', 'plan');
+  }
+}
+
 const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
 const SAVE_VERSION = 3;
@@ -6287,6 +6295,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    boxMode: !!state.boxMode,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6421,6 +6430,7 @@ function applySave(s) {
   state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
   state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
   state.showSoundFx = s.showSoundFx !== false;
+  state.boxMode = !!s.boxMode;
   for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
   state.queued = 0;
   if (s.secretPathOpen) {
@@ -6579,6 +6589,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setBoxMode(false, { quiet: true });
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6694,11 +6705,7 @@ function boot() {
     toast(state.waypointMode ? '경유 — 땅을 누르면 경로가 쌓인다' : '경유 해제', 'plan');
   };
   const squadBtn = $('#squadBtn');
-  if (squadBtn) squadBtn.onclick = () => {
-    state.boxMode = !state.boxMode;
-    updateHUD();
-    toast(state.boxMode ? '부대 — 끌어 여러 명을 고른다' : '부대 해제', 'plan');
-  };
+  if (squadBtn) squadBtn.onclick = () => setBoxMode(!state.boxMode);
   $('#execBtn').onclick = () => executePlan();
   $('#clearBtn').onclick = () => clearPlan();
   const toggleObj = () => {
@@ -6852,6 +6859,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setBoxMode,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
