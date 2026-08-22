@@ -6304,7 +6304,8 @@ function snapshotSave() {
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
-      patrol: g.patrol, pi: g.pi || 0
+      patrol: g.patrol, pi: g.pi || 0,
+      relightLamp: g.relightLamp ? { tx: g.relightLamp.tx, ty: g.relightLamp.ty } : null
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -6487,6 +6488,15 @@ function applySave(s) {
   for (const rec of s.lamps || []) {
     const l = map.lamps.find(x => x.tx === rec.tx && x.ty === rec.ty);
     if (l) { l.on = rec.on; l.noticed = false; }
+  }
+  for (const rec of s.guards || []) {
+    const u = gg.get(rec.id);
+    if (!u || !rec.relightLamp) continue;
+    const l = map.lamps.find(x => x.tx === rec.relightLamp.tx && x.ty === rec.relightLamp.ty);
+    if (!l || l.on) continue;
+    u.relightLamp = l;
+    l.relighter = u.id;
+    if (u.ai === 'relight') u.path = findPath(u.tx, u.ty, l.tx, l.ty, u);
   }
   state.ropes = new Set(s.ropes || []);
   for (const i of state.ropes) { if (i >= 0 && i < map.solid.length) map.solid[i] = 0; }
