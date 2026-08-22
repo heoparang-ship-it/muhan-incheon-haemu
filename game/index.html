@@ -6287,6 +6287,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    cam: { x: cam.x, y: cam.y, zoom: cam.zoom },
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6512,6 +6513,15 @@ function applySave(s) {
   units = [].concat(agents, guards, civilians);
   initUI();
   centerOnSelected();
+  if (s.cam && Number.isFinite(s.cam.x) && Number.isFinite(s.cam.y)) {
+    cam.x = s.cam.x;
+    cam.y = s.cam.y;
+    if (Number.isFinite(s.cam.zoom)) {
+      const z = clamp(s.cam.zoom, cam.minZoom, cam.maxZoom);
+      cam.zoom = cam.targetZoom = z;
+    }
+    camClamp();
+  }
   updateHUD();
   return true;
 }
