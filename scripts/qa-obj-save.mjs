@@ -49,12 +49,6 @@ const info = await page.evaluate(() => {
   H.continueMission();
   const afterContinue = panel();
 
-  const old = H.snapshotSave();
-  delete old.objectivesOpen;
-  H.setObjectivesOpen(false);
-  H.applySave(old);
-  const afterOld = panel();
-
   const phases = [0, 0.5, 1].map((p) => {
     H.state.tidePhase = p;
     const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
@@ -70,13 +64,28 @@ const info = await page.evaluate(() => {
     afterRebuild,
     afterApply,
     afterContinue,
-    afterOld,
     hasSet: typeof H.setObjectivesOpen === "function",
     phases,
   };
 });
 
 await page.screenshot({ path: "/workspace/screenshots/obj-save-after.png" });
+
+const oldInfo = await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  const panel = () => {
+    const el = document.getElementById("objectives");
+    return {
+      open: !!H.state.objectivesOpen,
+      collapsed: !!(el && el.classList.contains("collapsed")),
+    };
+  };
+  const old = H.snapshotSave();
+  delete old.objectivesOpen;
+  H.setObjectivesOpen(false);
+  H.applySave(old);
+  return panel();
+});
 
 await page.evaluate(() => {
   window.__HAEMU__.rebuildWorld();
@@ -97,9 +106,9 @@ if (info.snapOpen !== false) fail.push(`snap ${info.snapOpen}`);
 if (!info.afterRebuild.open || info.afterRebuild.collapsed) fail.push(`rebuild ${JSON.stringify(info.afterRebuild)}`);
 if (info.afterApply.open || !info.afterApply.collapsed) fail.push(`apply ${JSON.stringify(info.afterApply)}`);
 if (info.afterContinue.open || !info.afterContinue.collapsed) fail.push(`continue ${JSON.stringify(info.afterContinue)}`);
-if (!info.afterOld.open || info.afterOld.collapsed) fail.push(`old ${JSON.stringify(info.afterOld)}`);
+if (!oldInfo.open || oldInfo.collapsed) fail.push(`old ${JSON.stringify(oldInfo)}`);
 if (errors.length) fail.push(`console ${errors.length}: ${errors.join(" | ")}`);
 
-const out = { ok: fail.length === 0, fail, errors, info };
+const out = { ok: fail.length === 0, fail, errors, info, oldInfo };
 console.log(JSON.stringify(out, null, 2));
 if (fail.length) process.exit(1);
