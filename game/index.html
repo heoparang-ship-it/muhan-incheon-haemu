@@ -6605,6 +6605,8 @@ function beginMission(opts) {
     } catch (e) {}
   }
   const pm = $('#pauseMenu'); if (pm) pm.classList.remove('show');
+  const tut = $('#tutorial');
+  if (tut) tut.hidden = !!(opts && opts.quiet);
   audio.ensure(); audio.resume(); audio.startAmbient();
   if (!(opts && opts.quiet)) {
     toast('밀명 개시 — 해가 지기 전에 감나루로 들어간다', 'plan');
