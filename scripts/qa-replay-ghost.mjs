@@ -25,12 +25,23 @@ await page.waitForFunction(() => window.__HAEMU__?.ART && window.__HAEMU__.ART.p
 
 const moved = await page.evaluate(() => {
   const H = window.__HAEMU__;
-  const a = H.agents[0];
+  const a = H.agents.find((x) => x.id === "haeju");
   const from = [a.tx, a.ty];
   const ok = H.setPath(a, a.tx + 8, a.ty - 2);
-  return { ok, from, pathLen: a.path && a.path.length };
+  const path = [
+    [23, 65], [26, 62], [30, 58], [34, 54], [38, 50], [42, 46]
+  ];
+  for (const [tx, ty] of path) {
+    a.tx = tx; a.ty = ty;
+    H.state.timeLeft -= 3;
+    H.recordReplay();
+  }
+  const b = H.agents.find((x) => x.id === "mujin");
+  b.tx += 4; b.ty -= 2;
+  H.state.timeLeft -= 2;
+  H.recordReplay();
+  return { ok, from, pathLen: a.path && a.path.length, info: H.replayInfo() };
 });
-await page.waitForTimeout(2800);
 
 const beforeEnd = await page.evaluate(() => {
   const H = window.__HAEMU__;
@@ -71,11 +82,12 @@ const after = await page.evaluate(() => {
 await page.screenshot({ path: "/workspace/screenshots/replay-result.png" });
 
 const fail = [];
-if (!moved.ok || moved.pathLen < 2) fail.push("path failed " + JSON.stringify(moved));
+if (!moved.ok) fail.push("path failed " + JSON.stringify(moved));
 if (beforeEnd.map[0] !== 96 || beforeEnd.map[1] !== 96) fail.push("map " + beforeEnd.map);
 if (beforeEnd.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + beforeEnd.roles);
-if (!beforeEnd.info.counts.haeju || beforeEnd.info.counts.haeju < 3) fail.push("haeju pts " + (beforeEnd.info.counts && beforeEnd.info.counts.haeju));
-if (!beforeEnd.saveHasReplay || beforeEnd.savePts < 3) fail.push("save replay " + beforeEnd.savePts);
+if (!beforeEnd.info.counts.haeju || beforeEnd.info.counts.haeju < 6) fail.push("haeju pts " + (beforeEnd.info.counts && beforeEnd.info.counts.haeju));
+if (!beforeEnd.info.counts.mujin || beforeEnd.info.counts.mujin < 2) fail.push("mujin pts " + (beforeEnd.info.counts && beforeEnd.info.counts.mujin));
+if (!beforeEnd.saveHasReplay || beforeEnd.savePts < 6) fail.push("save replay " + beforeEnd.savePts);
 if (after.boxHidden) fail.push("replay box hidden");
 if (!after.info.boxOpen) fail.push("box not open");
 if (after.canvasW !== 472 || after.canvasH !== 264) fail.push("canvas " + after.canvasW + "x" + after.canvasH);
