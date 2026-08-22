@@ -4175,52 +4175,59 @@ function buildInteractables() {
 /* ---------- 유틸 ---------- */
 function agentAt(a) { return { tx: a.tx, ty: a.ty }; }
 
-function nearestInteract(a, maxD) {
-  const R = maxD || 2.2;
-  let best = null, bd = R;
+function nearestInteract(a, maxD, at) {
+  const R = maxD || (at ? 2.6 : 2.2);
+  const hits = [];
+  const add = (type, o, ox, oy) => {
+    const d = Math.hypot(ox - a.tx, oy - a.ty);
+    if (d < R) hits.push({ type, o, d });
+  };
   for (const o of interactables) {
     if (o.done && o.kind !== 'escape') continue;
     if (o.hidden && !state.secretPathOpen) continue;
     if (o.kind === 'evidence' && o.taken) continue;
-    const d = Math.hypot(o.tx - a.tx, o.ty - a.ty);
-    if (d < bd) { bd = d; best = { type: 'obj', o, d }; }
+    add('obj', o, o.tx, o.ty);
   }
-  for (const d of map.doors) {
-    const dd = Math.hypot(d.tx + 0.5 - a.tx, d.ty + 0.5 - a.ty);
-    if (dd < bd) { bd = dd; best = { type: 'door', o: d, d: dd }; }
-  }
+  for (const d of map.doors) add('door', d, d.tx + 0.5, d.ty + 0.5);
   for (const l of map.lamps) {
     if (!l.on) continue;
-    const dd = Math.hypot(l.tx + .5 - a.tx, l.ty + .5 - a.ty);
-    if (dd < bd) { bd = dd; best = { type: 'lamp', o: l, d: dd }; }
+    add('lamp', l, l.tx + .5, l.ty + .5);
   }
   for (const g of guards) {
     if (!g.unconscious) continue;
-    const dd = Math.hypot(g.tx - a.tx, g.ty - a.ty);
-    if (dd < bd) { bd = dd; best = { type: 'body', o: g, d: dd }; }
+    add('body', g, g.tx, g.ty);
   }
   for (const c of civilians) {
     const dd = Math.hypot(c.tx - a.tx, c.ty - a.ty);
-    if (dd >= bd) continue;
-    if (c.type === 'patient' && !c.healed) { bd = dd; best = { type: 'heal', o: c, d: dd }; }
-    else if (c.panic > 0.3) { bd = dd; best = { type: 'calm', o: c, d: dd }; }
-    else if (c.type === 'prisoner' && c.freed && !c.following) { bd = dd; best = { type: 'lead', o: c, d: dd }; }
+    if (dd >= R) continue;
+    if (c.type === 'patient' && !c.healed) hits.push({ type: 'heal', o: c, d: dd });
+    else if (c.panic > 0.3) hits.push({ type: 'calm', o: c, d: dd });
+    else if (c.type === 'prisoner' && c.freed && !c.following) hits.push({ type: 'lead', o: c, d: dd });
   }
-  if (vale && !vale.caught && !state.valeEscaped) {
-    const dd = Math.hypot(vale.tx - a.tx, vale.ty - a.ty);
-    if (dd < bd && a.id === 'mujin') { bd = dd; best = { type: 'vale', o: vale, d: dd }; }
+  if (vale && !vale.caught && !state.valeEscaped && a.id === 'mujin') add('vale', vale, vale.tx, vale.ty);
+  if (!hits.length) return null;
+  if (at) {
+    const tx = Math.round(at.tx), ty = Math.round(at.ty);
+    const on = hits.filter(h => Math.round(h.o.tx) === tx && Math.round(h.o.ty) === ty);
+    if (on.length) {
+      let best = on[0];
+      for (const h of on) if (h.d < best.d) best = h;
+      return best;
+    }
   }
+  let best = hits[0];
+  for (const h of hits) if (h.d < best.d) best = h;
   return best;
 }
 
 /* ---------- 상호작용 ---------- */
-function interact(a, fromQueue) {
+function interact(a, fromQueue, at) {
   a = a || selectedAgent();
   if (!a || !a.alive) return;
-  if (state.planning && !fromQueue) { queueCmd(a, { type: 'interact' }, '상호작용 예약'); return; }
+  if (state.planning && !fromQueue) { queueCmd(a, { type: 'interact', at: at || null }, '상호작용 예약'); return; }
   if (a.carrying) { dropCarried(a); return; }
 
-  const n = nearestInteract(a);
+  const n = nearestInteract(a, null, at);
   if (!n) { toast('가까이에 상호작용할 것이 없습니다', 'warn'); return; }
   const o = n.o;
 
@@ -4643,7 +4650,7 @@ function nextQueued(a) {
   if (c.type === 'move') { setPath(a, c.tx, c.ty); }
   else if (c.type === 'ability') useAbility(a, true);
   else if (c.type === 'second') useSecond(a, true);
-  else if (c.type === 'interact') interact(a, true);
+  else if (c.type === 'interact') interact(a, true, c.at);
   else if (c.type === 'wait') { a.wait = c.time || 1.5; }
   else if (c.type === 'crouch') { a.crouch = !a.crouch; }
 }
@@ -6088,10 +6095,10 @@ function doInteractAt(px, py) {
   if (!a || !a.alive) return;
   const p = screenToTile(px, py);
   const d = Math.hypot(a.tx - p.tx, a.ty - p.ty);
-  if (d < 2.6) { interact(a); return; }
-  // 멀면: 그곳으로 이동한 뒤 상호작용
+  if (d < 2.6) { interact(a, false, p); return; }
+  // 멀면: 그곳으로 이동한 뒤 누른 칸을 조사
   if (setPath(a, p.tx, p.ty)) {
-    a.queue.unshift({ type: 'interact' });
+    a.queue.unshift({ type: 'interact', at: { tx: p.tx, ty: p.ty } });
     state.queued++;
     toast('이동 후 상호작용', 'plan');
   }
