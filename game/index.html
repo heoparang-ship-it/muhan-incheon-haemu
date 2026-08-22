@@ -6296,6 +6296,7 @@ function snapshotSave() {
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
+      coolUntil2: a.coolUntil2 || 0, incenseUntil: a.incenseUntil || 0,
       waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
     })),
     guards: guards.map(g => ({
@@ -6442,6 +6443,8 @@ function applySave(s) {
     u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
     u.queue = []; u.action = null;
     u.coolUntil = rec.coolUntil || 0;
+    u.coolUntil2 = rec.coolUntil2 || 0;
+    u.incenseUntil = rec.incenseUntil || 0;
     u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
     u.carrying = null;
   }
