@@ -6296,7 +6296,9 @@ function snapshotSave() {
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
-      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
+      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0,
+      checkHold: a.checkHold || 0, checkGuard: a.checkGuard || null,
+      checkFrom: a.checkFrom ? { tx: a.checkFrom.tx, ty: a.checkFrom.ty } : null
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
@@ -6304,7 +6306,10 @@ function snapshotSave() {
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
-      patrol: g.patrol, pi: g.pi || 0
+      patrol: g.patrol, pi: g.pi || 0,
+      checkTarget: g.checkTarget || null, checkLine: g.checkLine || null,
+      talkT: g.talkT || 0,
+      checkCd: Math.max(0, (g.checkCd || 0) - (state.now || 0))
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -6444,6 +6449,9 @@ function applySave(s) {
     u.coolUntil = rec.coolUntil || 0;
     u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
     u.carrying = null;
+    u.checkHold = rec.checkHold || 0;
+    u.checkGuard = rec.checkGuard || null;
+    u.checkFrom = rec.checkFrom ? { tx: rec.checkFrom.tx, ty: rec.checkFrom.ty } : null;
   }
   const gg = byId(guards);
   for (const rec of s.guards || []) {
@@ -6465,6 +6473,11 @@ function applySave(s) {
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
     u.lastSeen = rec.lastSeen || null;
+    u.checkTarget = rec.checkTarget || null;
+    u.checkLine = rec.checkLine || null;
+    u.talkT = rec.talkT || 0;
+    const clock = typeof performance !== 'undefined' ? performance.now() : (state.now || 0);
+    u.checkCd = rec.checkCd > 0 ? clock + rec.checkCd : 0;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
   const cc = byId(civilians);
@@ -6513,6 +6526,17 @@ function applySave(s) {
   initUI();
   centerOnSelected();
   updateHUD();
+  const held = agents.find(a => a.checkHold > 0);
+  const ban = $('#checkBanner');
+  if (ban) {
+    if (held) {
+      const g = guards.find(x => x.id === held.checkGuard);
+      ban.textContent = '교리 문답 — ' + ((g && g.checkLine) || '');
+      ban.classList.add('show');
+    } else {
+      ban.classList.remove('show');
+    }
+  }
   return true;
 }
 
