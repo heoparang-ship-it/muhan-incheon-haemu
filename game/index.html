@@ -6741,7 +6741,11 @@ function boot() {
     $('#qualityBtn').classList.toggle('active', !m.auto);
     toast('그래픽 품질 · ' + m.name + (m.auto ? ' (프레임에 맞춰 조절)' : ''), 'plan');
   };
-  $('#muteBtn').onclick = () => { audio.setMuted(!audio.muted); $('#muteBtn').textContent = audio.muted ? '🔇' : '🔊'; };
+  $('#muteBtn').onclick = () => {
+    audio.setMuted(!audio.muted);
+    $('#muteBtn').textContent = audio.muted ? '🔇' : '🔊';
+    toast(audio.muted ? '음소거' : '소리 켜짐');
+  };
   const setFollow = (on) => {
     state.followSel = on;
     $('#followBtn')?.classList.toggle('active', on);
