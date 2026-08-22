@@ -6709,6 +6709,7 @@ function boot() {
     obj.dataset.userOpen = open ? '1' : '';
     const mask = $('#sheetMask');
     if (mask) mask.classList.toggle('show', isPhone() && open);
+    toast(open ? '목표를 펼쳤다' : '목표를 접었다');
   };
   $('#objBtn').onclick = toggleObj;
   $('#collapseObj').onclick = () => {
