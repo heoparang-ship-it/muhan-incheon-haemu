@@ -6175,7 +6175,7 @@ function onKeyDown(e) {
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
   else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
-  else if (e.key === 'F9') { state.debug = !state.debug; }
+  else if (e.key === 'F9') { e.preventDefault(); state.debug = !state.debug; toast(state.debug ? '깔개를 켰다' : '깔개를 껐다', 'plan'); }
 }
 function onKeyUp(e) {
   keys.delete(e.code);
