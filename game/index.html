@@ -6252,6 +6252,15 @@ function serializeFolklore() {
   return out;
 }
 
+function persistIncenseRemainingMs(a) {
+  return Math.max(0, ((a && a.incenseUntil) || 0) - (state.now || 0));
+}
+function restoreIncenseUntil(remaining) {
+  if (!(remaining > 0)) return 0;
+  const clock = typeof performance !== 'undefined' ? performance.now() : (state.now || 0);
+  return clock + remaining;
+}
+
 function snapshotSave() {
   return {
     version: SAVE_VERSION,
@@ -6296,7 +6305,8 @@ function snapshotSave() {
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
-      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
+      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0,
+      incenseUntil: persistIncenseRemainingMs(a)
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
@@ -6443,6 +6453,7 @@ function applySave(s) {
     u.queue = []; u.action = null;
     u.coolUntil = rec.coolUntil || 0;
     u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
+    u.incenseUntil = restoreIncenseUntil(rec.incenseUntil);
     u.carrying = null;
   }
   const gg = byId(guards);
@@ -6854,6 +6865,7 @@ function boot() {
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    persistIncenseRemainingMs, restoreIncenseUntil, concealment,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
