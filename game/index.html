@@ -6302,7 +6302,9 @@ function snapshotSave() {
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
       unconscious: !!g.unconscious, hidden: !!g.hidden, ai: g.ai,
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
-      tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
+      tied: !!g.tied,
+      wakeAt: (g.wakeAt || 0) > 1e14 ? g.wakeAt : Math.max(0, (g.wakeAt || 0) - (state.now || 0)),
+      hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
       patrol: g.patrol, pi: g.pi || 0
     })),
@@ -6463,7 +6465,12 @@ function applySave(s) {
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle;
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
-    u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
+    u.tied = !!rec.tied; u.hidingAwake = !!rec.hidingAwake;
+    if ((rec.wakeAt || 0) > 1e14) u.wakeAt = 1e15;
+    else if (rec.wakeAt > 0) {
+      const clock = typeof performance !== 'undefined' ? performance.now() : (state.now || 0);
+      u.wakeAt = clock + rec.wakeAt;
+    } else u.wakeAt = 0;
     u.lastSeen = rec.lastSeen || null;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
