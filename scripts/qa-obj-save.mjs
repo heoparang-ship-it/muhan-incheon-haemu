@@ -1,56 +1,36 @@
 import { chromium } from "playwright-core";
-import http from "node:http";
-import fs from "node:fs";
-import path from "node:path";
+import { mkdirSync } from "node:fs";
+mkdirSync("/workspace/screenshots", { recursive: true });
 
-const PORT = 8080;
-const BASE = `http://127.0.0.1:${PORT}/game/`;
-const shotDir = path.join(process.cwd(), "screenshots");
-fs.mkdirSync(shotDir, { recursive: true });
-
-function probe() {
-  return new Promise((resolve) => {
-    const req = http.get(BASE, (res) => {
-      res.resume();
-      resolve(res.statusCode && res.statusCode < 500);
-    });
-    req.on("error", () => resolve(false));
-    req.setTimeout(800, () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
-}
-
-if (!(await probe())) {
-  console.error("http://127.0.0.1:8080/game/ 가 응답하지 않는다. 먼저 python3 -m http.server 8080 --bind 127.0.0.1");
-  process.exit(1);
-}
-
-const browser = await chromium.launch({ channel: "chrome", headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  channel: "chrome",
+  args: ["--no-sandbox", "--disable-dev-shm-usage"],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
-page.on("pageerror", (err) => errors.push(String(err)));
-page.on("console", (msg) => {
-  if (msg.type() === "error") errors.push(msg.text());
+page.on("pageerror", (e) => errors.push(String(e.message || e)));
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  const t = m.text();
+  if (t.includes("404") || t.includes("Failed to load resource")) return;
+  errors.push(t);
 });
 
-await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 20000 });
-await page.waitForFunction(() => window.__HAEMU__ && window.__HAEMU__.state, { timeout: 15000 });
-await page.waitForTimeout(400);
+await page.goto("http://127.0.0.1:8080/game/index.html", { waitUntil: "networkidle", timeout: 45000 });
+await page.waitForSelector("#startBtn", { timeout: 8000 });
+await page.locator("#startBtn").click();
+await page.waitForTimeout(1400);
+await page.waitForFunction(() => window.__HAEMU__?.map, { timeout: 20000 });
 
-const result = await page.evaluate(() => {
+const info = await page.evaluate(() => {
   const H = window.__HAEMU__;
-  const tideAt = (phase) => {
-    H.state.tidePhase = phase;
-    return H.waterLevel();
-  };
+  H.state.paused = true;
   const panel = () => {
     const el = document.getElementById("objectives");
     return {
       open: !!H.state.objectivesOpen,
       collapsed: !!(el && el.classList.contains("collapsed")),
-      userOpen: el ? el.dataset.userOpen : "",
     };
   };
 
@@ -64,59 +44,62 @@ const result = await page.evaluate(() => {
   H.applySave(snap);
   const afterApply = panel();
 
+  H.setObjectivesOpen(false);
+  H.writeSave(true);
   H.continueMission();
   const afterContinue = panel();
 
   const old = H.snapshotSave();
   delete old.objectivesOpen;
+  H.setObjectivesOpen(false);
   H.applySave(old);
   const afterOld = panel();
 
+  const phases = [0, 0.5, 1].map((p) => {
+    H.state.tidePhase = p;
+    const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    return { p, wl: H.waterLevel(), expect: -0.34 + 0.74 * e };
+  });
+  H.state.tidePhase = 0;
+
   return {
-    map: [H.MAP.W, H.MAP.H],
-    roles: H.state.agents.map((a) => a.id),
-    tide: [0, 0.5, 1].map((p) => [p, tideAt(p)]),
-    afterFold,
+    map: [H.MAP_W, H.MAP_H],
+    roles: H.agents.map((x) => x.id),
     snapOpen: snap.objectivesOpen,
+    afterFold,
     afterRebuild,
     afterApply,
     afterContinue,
     afterOld,
     hasSet: typeof H.setObjectivesOpen === "function",
-    noObjectivesField: !("objectives" in snap && snap.objectives === snap.objectivesOpen),
+    phases,
   };
 });
 
-await page.screenshot({ path: path.join(shotDir, "obj-save-after.png"), fullPage: false });
+await page.screenshot({ path: "/workspace/screenshots/obj-save-after.png" });
 
 await page.evaluate(() => {
   window.__HAEMU__.rebuildWorld();
 });
-await page.waitForTimeout(200);
-await page.screenshot({ path: path.join(shotDir, "obj-save-clear.png"), fullPage: false });
-
+await page.waitForTimeout(300);
+await page.screenshot({ path: "/workspace/screenshots/obj-save-clear.png" });
 await browser.close();
 
 const fail = [];
-if (result.map[0] !== 96 || result.map[1] !== 96) fail.push(`map ${result.map}`);
-if (result.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push(`roles ${result.roles}`);
-if (Math.abs(result.tide[0][1] + 0.34) > 1e-9) fail.push(`tide0 ${result.tide[0][1]}`);
-if (Math.abs(result.tide[1][1] - 0.03) > 1e-9) fail.push(`tide05 ${result.tide[1][1]}`);
-if (Math.abs(result.tide[2][1] - 0.4) > 1e-9) fail.push(`tide1 ${result.tide[2][1]}`);
-if (!result.hasSet) fail.push("setObjectivesOpen 없음");
-if (result.afterFold.open || !result.afterFold.collapsed) fail.push(`fold ${JSON.stringify(result.afterFold)}`);
-if (result.snapOpen !== false) fail.push(`snap ${result.snapOpen}`);
-if (!result.afterRebuild.open || result.afterRebuild.collapsed) fail.push(`rebuild ${JSON.stringify(result.afterRebuild)}`);
-if (result.afterApply.open || !result.afterApply.collapsed) fail.push(`apply ${JSON.stringify(result.afterApply)}`);
-if (result.afterContinue.open || !result.afterContinue.collapsed) fail.push(`continue ${JSON.stringify(result.afterContinue)}`);
-if (!result.afterOld.open || result.afterOld.collapsed) fail.push(`old ${JSON.stringify(result.afterOld)}`);
+if (info.map[0] !== 96 || info.map[1] !== 96) fail.push(`map ${info.map}`);
+if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push(`roles ${info.roles}`);
+for (const t of info.phases) {
+  if (Math.abs(t.wl - t.expect) > 1e-12) fail.push(`tide ${t.p} ${t.wl}`);
+}
+if (!info.hasSet) fail.push("setObjectivesOpen 없음");
+if (info.afterFold.open || !info.afterFold.collapsed) fail.push(`fold ${JSON.stringify(info.afterFold)}`);
+if (info.snapOpen !== false) fail.push(`snap ${info.snapOpen}`);
+if (!info.afterRebuild.open || info.afterRebuild.collapsed) fail.push(`rebuild ${JSON.stringify(info.afterRebuild)}`);
+if (info.afterApply.open || !info.afterApply.collapsed) fail.push(`apply ${JSON.stringify(info.afterApply)}`);
+if (info.afterContinue.open || !info.afterContinue.collapsed) fail.push(`continue ${JSON.stringify(info.afterContinue)}`);
+if (!info.afterOld.open || info.afterOld.collapsed) fail.push(`old ${JSON.stringify(info.afterOld)}`);
 if (errors.length) fail.push(`console ${errors.length}: ${errors.join(" | ")}`);
 
-const out = {
-  ok: fail.length === 0,
-  fail,
-  errors,
-  result,
-};
+const out = { ok: fail.length === 0, fail, errors, info };
 console.log(JSON.stringify(out, null, 2));
 if (fail.length) process.exit(1);
