@@ -6314,7 +6314,7 @@ function snapshotSave() {
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
     lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
-    vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
+    vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden, angle: Number.isFinite(vale.angle) ? vale.angle : 0.8 } : null
   };
 }
 
@@ -6503,6 +6503,7 @@ function applySave(s) {
     if (vale && s.vale) {
       vale.tx = s.vale.tx; vale.ty = s.vale.ty;
       vale.caught = s.vale.caught; vale.hidden = s.vale.hidden; vale.path = [];
+      if (Number.isFinite(+s.vale.angle)) vale.angle = +s.vale.angle;
     }
   }
   if (s.selected) state.selected = s.selected;

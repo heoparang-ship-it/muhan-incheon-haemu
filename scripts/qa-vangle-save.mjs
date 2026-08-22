@@ -1,0 +1,141 @@
+import { chromium } from "playwright-core";
+import { mkdirSync } from "node:fs";
+mkdirSync("/workspace/screenshots", { recursive: true });
+
+const browser = await chromium.launch({
+  headless: true,
+  channel: "chrome",
+  args: ["--no-sandbox", "--disable-dev-shm-usage"],
+});
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const errors = [];
+page.on("pageerror", (e) => errors.push(String(e.message || e)));
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  const t = m.text();
+  if (t.includes("404") || t.includes("Failed to load resource")) return;
+  errors.push(t);
+});
+
+await page.goto("http://127.0.0.1:8080/game/index.html", { waitUntil: "networkidle", timeout: 45000 });
+await page.waitForSelector("#startBtn", { timeout: 8000 });
+await page.locator("#startBtn").click();
+await page.waitForTimeout(1400);
+await page.waitForFunction(() => window.__HAEMU__?.map, { timeout: 20000 });
+
+const info = await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  H.state.paused = true;
+  H.spawnVale();
+  const v = H.vale;
+  v.angle = 2.4;
+  v.tx = 86;
+  v.ty = 84;
+  v.path = [{ tx: 90, ty: 88 }];
+
+  const snap = H.snapshotSave();
+  const rec = snap.vale;
+
+  H.rebuildWorld();
+  const wiped = !!H.vale;
+
+  H.applySave(snap);
+  const after = H.vale;
+  const afterPathN = after && after.path ? after.path.length : -1;
+
+  H.rebuildWorld();
+  H.spawnVale();
+  const old = H.snapshotSave();
+  if (old.vale) delete old.vale.angle;
+  H.applySave(old);
+  const oldA = H.vale && H.vale.angle;
+
+  H.rebuildWorld();
+  H.spawnVale();
+  H.vale.angle = 2.4;
+  H.vale.tx = 86;
+  H.vale.ty = 84;
+  H.vale.path = [];
+  H.writeSave(true);
+  H.continueMission();
+  const cont = H.vale;
+
+  const phases = [0, 0.5, 1].map((p) => {
+    H.state.tidePhase = p;
+    const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    return { p, wl: H.waterLevel(), expect: -0.34 + 0.74 * e };
+  });
+  H.state.tidePhase = 0;
+
+  return {
+    map: [H.MAP_W, H.MAP_H],
+    roles: H.agents.map((x) => x.id),
+    snap: rec && { tx: rec.tx, ty: rec.ty, angle: rec.angle, path: rec.path },
+    wiped,
+    after: after && { tx: after.tx, ty: after.ty, angle: after.angle },
+    afterPathN,
+    oldA,
+    cont: cont && { tx: cont.tx, ty: cont.ty, angle: cont.angle },
+    phases,
+  };
+});
+
+await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  H.state.paused = true;
+  const v = H.vale;
+  const a = H.agents.find((x) => x.id === "haeju");
+  if (v && a) {
+    a.tx = v.tx;
+    a.ty = v.ty;
+    H.selectAgent("haeju");
+    H.centerOnSelected();
+  }
+  H.cam.targetZoom = H.cam.zoom = 1.15;
+  const box = document.getElementById("toast");
+  if (box) {
+    box.innerHTML = "";
+    const el = document.createElement("div");
+    el.className = "toastLine good";
+    el.textContent = "불러온 뒤에도 베일이 바라보던 각이 남았다";
+    box.appendChild(el);
+  }
+});
+await page.waitForTimeout(400);
+await page.screenshot({ path: "/workspace/screenshots/vangle-save-after.png" });
+
+await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  H.rebuildWorld();
+  H.state.paused = true;
+  const a = H.agents.find((x) => x.id === "haeju");
+  if (a) {
+    H.selectAgent("haeju");
+    H.centerOnSelected();
+  }
+  H.cam.targetZoom = H.cam.zoom = 1.15;
+  const box = document.getElementById("toast");
+  if (box) box.innerHTML = "";
+});
+await page.waitForTimeout(280);
+await page.screenshot({ path: "/workspace/screenshots/vangle-save-clear.png" });
+
+const fail = [];
+if (info.map[0] !== 96 || info.map[1] !== 96) fail.push("map " + info.map);
+if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + info.roles);
+if (!info.snap || info.snap.tx !== 86 || Math.abs(info.snap.angle - 2.4) > 1e-9) fail.push("snap " + JSON.stringify(info.snap));
+if (info.snap && info.snap.path != null) fail.push("path leaked");
+if (info.wiped) fail.push("rebuild still has vale");
+if (!info.after || info.after.tx !== 86 || Math.abs(info.after.angle - 2.4) > 1e-9) fail.push("after " + JSON.stringify(info.after));
+if (info.afterPathN !== 0) fail.push("path restored " + info.afterPathN);
+if (!(Math.abs(info.oldA - 0.8) < 1e-9)) fail.push("old " + info.oldA);
+if (!info.cont || info.cont.tx !== 86 || Math.abs(info.cont.angle - 2.4) > 1e-9) fail.push("continue " + JSON.stringify(info.cont));
+for (const t of info.phases) {
+  if (Math.abs(t.wl - t.expect) > 1e-12) fail.push("tide " + t.p + " " + t.wl);
+}
+if (errors.length) fail.push("console " + errors.join(" | "));
+
+const out = { ok: fail.length === 0, fail, errors, info };
+console.log(JSON.stringify(out, null, 2));
+await browser.close();
+process.exit(fail.length ? 1 : 0);
