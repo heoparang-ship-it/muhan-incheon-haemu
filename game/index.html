@@ -6293,10 +6293,13 @@ function snapshotSave() {
     nets: (state.nets || []).map(n => ({ tx: n.tx, ty: n.ty, life: n.life, armed: n.armed })),
     agents: agents.map(a => ({
       id: a.id, tx: a.tx, ty: a.ty, angle: a.angle, alive: a.alive,
-      crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
+      crouch: !!a.crouch, exposure: a.exposure || 0,
+      disguise: Math.max(0, (a.disguise || 0) - (state.now || 0)),
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
-      carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
-      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
+      carrying: a.carrying && a.carrying.id,
+      coolUntil: Math.max(0, (a.coolUntil || 0) - (state.now || 0)),
+      waterWalk: !!a.waterWalk,
+      waterUntil: Math.max(0, (a.waterUntil || 0) - (state.now || 0))
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
@@ -6438,11 +6441,14 @@ function applySave(s) {
   for (const rec of s.agents || []) {
     const u = ag.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle; u.alive = rec.alive;
-    u.crouch = rec.crouch; u.exposure = rec.exposure; u.disguise = rec.disguise;
+    u.crouch = rec.crouch; u.exposure = rec.exposure;
     u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
     u.queue = []; u.action = null;
-    u.coolUntil = rec.coolUntil || 0;
-    u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
+    const clock = typeof performance !== 'undefined' ? performance.now() : (state.now || 0);
+    u.coolUntil = rec.coolUntil > 0 ? clock + rec.coolUntil : 0;
+    u.disguise = rec.disguise > 0 ? clock + rec.disguise : 0;
+    u.waterUntil = rec.waterUntil > 0 ? clock + rec.waterUntil : 0;
+    u.waterWalk = !!rec.waterWalk && u.waterUntil > clock;
     u.carrying = null;
   }
   const gg = byId(guards);
