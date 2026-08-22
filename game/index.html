@@ -6303,6 +6303,7 @@ function snapshotSave() {
       unconscious: !!g.unconscious, hidden: !!g.hidden, ai: g.ai,
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
+      netted: g.netted || 0,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
       patrol: g.patrol, pi: g.pi || 0
     })),
@@ -6464,6 +6465,7 @@ function applySave(s) {
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
+    u.netted = rec.netted || 0;
     u.lastSeen = rec.lastSeen || null;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
