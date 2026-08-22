@@ -6304,7 +6304,8 @@ function snapshotSave() {
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
-      patrol: g.patrol, pi: g.pi || 0
+      patrol: g.patrol, pi: g.pi || 0,
+      lured: g.lured ? { tx: g.lured.tx, ty: g.lured.ty } : null
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -6465,6 +6466,11 @@ function applySave(s) {
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
     u.lastSeen = rec.lastSeen || null;
+    u.lured = rec.lured && rec.lured.tx != null && rec.lured.ty != null
+      ? { tx: rec.lured.tx, ty: rec.lured.ty } : null;
+    if (u.ai === 'lured' && u.lured) {
+      u.path = findPath(u.tx, u.ty, u.lured.tx, u.lured.ty, u);
+    }
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
   const cc = byId(civilians);
