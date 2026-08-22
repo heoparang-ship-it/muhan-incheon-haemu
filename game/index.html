@@ -6252,6 +6252,21 @@ function serializeFolklore() {
   return out;
 }
 
+function copyValePath(p) {
+  if (!Array.isArray(p)) return [];
+  const out = [];
+  for (let i = 0; i < p.length && out.length < 400; i++) {
+    const n = p[i];
+    if (!n) continue;
+    const tx = +n.tx, ty = +n.ty;
+    if (!Number.isFinite(tx) || !Number.isFinite(ty)) continue;
+    const node = { tx, ty };
+    if (n.lv === 0 || n.lv === 1) node.lv = n.lv;
+    out.push(node);
+  }
+  return out;
+}
+
 function snapshotSave() {
   return {
     version: SAVE_VERSION,
@@ -6314,7 +6329,7 @@ function snapshotSave() {
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
     lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
-    vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
+    vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden, path: copyValePath(vale.path) } : null
   };
 }
 
@@ -6502,7 +6517,8 @@ function applySave(s) {
     if (!vale) spawnVale();
     if (vale && s.vale) {
       vale.tx = s.vale.tx; vale.ty = s.vale.ty;
-      vale.caught = s.vale.caught; vale.hidden = s.vale.hidden; vale.path = [];
+      vale.caught = s.vale.caught; vale.hidden = s.vale.hidden;
+      vale.path = copyValePath(s.vale.path);
     }
   }
   if (s.selected) state.selected = s.selected;
@@ -6853,7 +6869,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, copyValePath, moveUnit,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
