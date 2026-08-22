@@ -6296,7 +6296,14 @@ function snapshotSave() {
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
-      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
+      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0,
+      queue: (a.queue || []).map(c => {
+        const o = { type: c.type };
+        if (c.tx != null) o.tx = c.tx;
+        if (c.ty != null) o.ty = c.ty;
+        if (c.time != null) o.time = c.time;
+        return o;
+      })
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
@@ -6440,11 +6447,13 @@ function applySave(s) {
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle; u.alive = rec.alive;
     u.crouch = rec.crouch; u.exposure = rec.exposure; u.disguise = rec.disguise;
     u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
-    u.queue = []; u.action = null;
+    u.queue = Array.isArray(rec.queue) ? rec.queue.map(c => Object.assign({}, c)) : [];
+    u.action = null;
     u.coolUntil = rec.coolUntil || 0;
     u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
     u.carrying = null;
   }
+  state.queued = agents.reduce((n, a) => n + ((a.queue && a.queue.length) || 0), 0);
   const gg = byId(guards);
   for (const rec of s.guards || []) {
     let u = gg.get(rec.id);
