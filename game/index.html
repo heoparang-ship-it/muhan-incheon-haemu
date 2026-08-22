@@ -6252,6 +6252,20 @@ function serializeFolklore() {
   return out;
 }
 
+function copyGuardPatrol(p) {
+  if (!Array.isArray(p)) return null;
+  const out = [];
+  for (let i = 0; i < p.length && out.length < 32; i++) {
+    const n = p[i];
+    if (!n) continue;
+    const tx = Array.isArray(n) ? +n[0] : +n.tx;
+    const ty = Array.isArray(n) ? +n[1] : +n.ty;
+    if (!Number.isFinite(tx) || !Number.isFinite(ty)) continue;
+    out.push([tx, ty]);
+  }
+  return out.length ? out : null;
+}
+
 function snapshotSave() {
   return {
     version: SAVE_VERSION,
@@ -6304,7 +6318,7 @@ function snapshotSave() {
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
-      patrol: g.patrol, pi: g.pi || 0
+      patrol: copyGuardPatrol(g.patrol), pi: g.pi || 0
     })),
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
@@ -6452,7 +6466,7 @@ function applySave(s) {
       const t = GUARD_TYPES[rec.type] || GUARD_TYPES.soldier;
       u = baseUnit({
         kind: 'guard', id: rec.id, type: rec.type, tx: rec.tx, ty: rec.ty,
-        patrol: rec.patrol || [[rec.tx, rec.ty]], pi: rec.pi || 0,
+        patrol: copyGuardPatrol(rec.patrol) || [[rec.tx, rec.ty]], pi: rec.pi || 0,
         speed: t.speed, ai: rec.ai || 'patrol', suspicion: rec.suspicion || 0,
         netted: 0, home: [rec.tx, rec.ty], lured: null, talkT: 0,
         reinforce: !!rec.reinforce
@@ -6463,6 +6477,11 @@ function applySave(s) {
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle;
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
+    const pat = copyGuardPatrol(rec.patrol);
+    if (pat) {
+      u.patrol = pat;
+      u.pi = Number.isFinite(+rec.pi) ? Math.max(0, rec.pi | 0) : 0;
+    }
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
     u.lastSeen = rec.lastSeen || null;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
@@ -6853,7 +6872,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, copyGuardPatrol,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
