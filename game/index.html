@@ -6748,7 +6748,7 @@ function boot() {
     $('#followBtnM')?.classList.toggle('active', on);
   };
   $('#followBtn').onclick = () => { setFollow(!state.followSel); toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); };
-  const zm = (k) => { cam.targetZoom = clamp(cam.targetZoom * k, cam.minZoom, cam.maxZoom); };
+  const zm = (k) => { cam.targetZoom = clamp(cam.targetZoom * k, cam.minZoom, cam.maxZoom); toast(k > 1 ? '확대했다' : '축소했다'); };
   $('#zoomIn').onclick = () => zm(1.2);
   $('#zoomOut').onclick = () => zm(1 / 1.2);
   const zi = $('#zoomInM'), zo = $('#zoomOutM'), fm = $('#followBtnM');
