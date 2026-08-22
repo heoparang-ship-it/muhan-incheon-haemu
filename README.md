@@ -17,12 +17,13 @@ https://github.com/heoparang-ship-it/muhan-incheon-haemu
 
 ```
 game/                 플레이 묶음 (엔진+에셋)
-  index.html          단일 파일 엔진
-  asset-data.js
-  assets/             bld chars props tex ui
+    index.html          단일 파일 엔진
+    asset-data.js
+    assets/             bld chars props tex ui
 scripts/              크로마·에셋 베이크·QA
 docs/                 설계·백서·다음 작업
 assets/refs/          초상 레퍼런스
+haemu-unity/          tut01 포교선 · 문화재청 돛 이식 (로컬 Unity에 복사)
 ```
 
 현재 엔진은 예전 모듈형 `docs/archive/HAEMU-modular.html`이 아니다. `game/index.html`이다.
