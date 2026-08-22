@@ -53,9 +53,9 @@ const info = await page.evaluate(() => {
   const doorReachSeal = H.interactReachable(53, 40, seal.tx, seal.ty);
 
   office.open = true;
-  place(53, 41);
+  place(53, 42);
   const inside = H.nearestInteract(a);
-  const insideReach = H.interactReachable(53, 41, seal.tx, seal.ty);
+  const insideReach = H.interactReachable(53, 42, seal.tx, seal.ty);
   H.interact(a);
   const insideTook = !!(a.action && /인장/.test(a.action.label || ""));
   if (a.action && a.action.done) a.action.done();
