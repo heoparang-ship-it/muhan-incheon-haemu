@@ -3640,7 +3640,11 @@ function raiseAlarm(g, tx, ty, kind) {
     }
     return;
   }
-  if (mode === 'global') { globalAlarm(tx, ty, '사제가 종을 울렸다'); return; }
+  if (mode === 'global') {
+    if (bellRopeCut()) { localAlarm(g, tx, ty); return; }
+    globalAlarm(tx, ty, '사제가 종을 울렸다');
+    return;
+  }
   localAlarm(g, tx, ty);
 }
 
@@ -3779,7 +3783,14 @@ function tieGuard(a, g) {
   return true;
 }
 
+function bellRopeCut() {
+  if (state.bellDisabled) return true;
+  const o = interactables.find(x => x.id === 'bellTower');
+  return !!(o && o.done);
+}
+
 function ringBell(dur) {
+  if (bellRopeCut()) return;
   state.bellRinging = dur || 1.6;
   audio.tone(660, 1.5, 'sine', 0.09);
   audio.tone(990, 1.1, 'sine', 0.05);
@@ -4090,7 +4101,7 @@ function newState() {
     noKill: true, civilianDeaths: 0, publicMood: 0.5,
     noises: [], prints: [], smoke: [], nets: [], ropes: new Set(),
     particles: [], markers: [], fires: [], floats: [],
-    bellRinging: 0, waveMaskT: 0, waveMaskCycle: 0, waveMaskUnlocked: false,
+    bellRinging: 0, bellDisabled: false, waveMaskT: 0, waveMaskCycle: 0, waveMaskUnlocked: false,
     evidence: {}, objectives: {}, folklore: {},
     queued: 0, targetMode: null, showLabels: false, debug: false,
     processionStarted: false, valeSpawned: false, valeEscaped: false, valeCaught: false,
@@ -4822,7 +4833,7 @@ function onTideChange(st) {
 /* ---------- 흰옷의 행렬 ---------- */
 function startProcession() {
   state.processionStarted = true;
-  toast('종이 울린다 — 흰옷의 행렬이 해변으로 향한다', 'warn');
+  toast(bellRopeCut() ? '흰옷의 행렬이 해변으로 향한다' : '종이 울린다 — 흰옷의 행렬이 해변으로 향한다', 'warn');
   ringBell(2.0);
   const route = [[45, 46], [47, 52], [50, 58], [52, 62]];
   let k = 0;
@@ -6478,6 +6489,11 @@ function applySave(s) {
     const o = ii.get(rec.id); if (!o) continue;
     o.taken = rec.taken; o.done = rec.done;
   }
+  const bell = ii.get('bellTower');
+  if (bell && bell.done) {
+    state.bellDisabled = true;
+    for (const g of guards) if (g.type === 'priest') g.bellBroken = true;
+  } else state.bellDisabled = false;
   const di = new Map();
   for (const rec of s.doors || []) di.set(rec.i, rec);
   for (const d of map.doors) {
@@ -6854,6 +6870,7 @@ function boot() {
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    raiseAlarm, ringBell, bellRopeCut,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
