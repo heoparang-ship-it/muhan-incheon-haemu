@@ -5287,7 +5287,7 @@ const HELP_HTML = `
   <ul>
     <li><b>저조</b> 갯길이 열려 백석섬까지 걸어간다.</li>
     <li><b>들물</b> 갯길이 잠기고 발이 느려진다. 파도가 소리를 가린다.</li>
-    <li><b>만조</b> 육상 퇴로가 끊긴다. 동굴이 잠기고 갇힌 주민이 위험해진다.</li>
+    <li><b>만조</b> 육상 퇴로가 끊긴다. 동굴이 잠긴다.</li>
   </ul>
   <h4>등급</h4>
   <ul>
@@ -6853,7 +6853,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, waterDepth,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
