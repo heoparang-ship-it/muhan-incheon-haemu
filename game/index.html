@@ -6276,6 +6276,7 @@ function snapshotSave() {
     valeCaught: state.valeCaught,
     waveMaskUnlocked: state.waveMaskUnlocked,
     waveMaskCycle: state.waveMaskCycle,
+    bellRinging: state.bellRinging > 0 ? state.bellRinging : 0,
     boatRepaired: state.boatRepaired,
     secretPathOpen: state.secretPathOpen,
     islandGuardsRemoved: state.islandGuardsRemoved,
@@ -6407,6 +6408,7 @@ function applySave(s) {
   state.valeCaught = !!s.valeCaught;
   state.waveMaskUnlocked = !!s.waveMaskUnlocked;
   state.waveMaskCycle = s.waveMaskCycle || 0;
+  state.bellRinging = s.bellRinging > 0 ? s.bellRinging : 0;
   state.boatRepaired = !!s.boatRepaired;
   state.sluiceOpen = !!s.sluiceOpen;
   state.hasHairpin = !!s.hasHairpin;
