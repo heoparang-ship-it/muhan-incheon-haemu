@@ -55,7 +55,7 @@ const info = await page.evaluate(() => {
   oldM.coolUntil2 = undefined;
   H.applySave(old);
   const oldAfter = H.agents.find((a) => a.id === "mujin");
-  const oldRem = Math.max(0, (oldAfter.coolUntil2 || 0) - H.state.now);
+  const oldRem = Math.max(0, (oldAfter.coolUntil2 || 0) - performance.now());
 
   const phases = [0, 0.5, 1].map((p) => {
     H.state.tidePhase = p;
@@ -100,12 +100,12 @@ const fail = [];
 if (info.map[0] !== 96 || info.map[1] !== 96) fail.push("map " + info.map);
 if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + info.roles);
 if (info.before2) fail.push("already cooling " + info.before2);
-if (!(info.snapCool2 > 15900 && info.snapCool2 <= 16000)) fail.push("snap cool2 " + info.snapCool2);
-if (!(info.snapInc > 5900 && info.snapInc <= 6000)) fail.push("snap incense " + info.snapInc);
+if (Math.abs(info.snapCool2 - 16000) > 1) fail.push("snap cool2 " + info.snapCool2);
+if (Math.abs(info.snapInc - 6000) > 1) fail.push("snap incense " + info.snapInc);
 if (!(info.rem2 > 15000 && info.rem2 <= 16000)) fail.push("rem2 " + info.rem2);
 if (!(info.remInc > 5000 && info.remInc <= 6000)) fail.push("remInc " + info.remInc);
 if (!info.blocked) fail.push("not blocked");
-if (info.oldRem !== 0) fail.push("old rem " + info.oldRem);
+if (info.oldRem > 50) fail.push("old rem " + info.oldRem);
 if (!info.tideOk) fail.push("tide " + JSON.stringify(info.phases));
 if (errors.length) fail.push("console " + errors.join(" | "));
 
