@@ -6174,7 +6174,12 @@ function onKeyDown(e) {
   else if (k === 'm') { audio.setMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
-  else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
+  else if (e.key === 'F1') {
+    e.preventDefault();
+    const help = $('#help');
+    help.classList.toggle('show');
+    toast(help.classList.contains('show') ? '도움말을 열었다' : '도움말을 닫았다');
+  }
   else if (e.key === 'F9') { state.debug = !state.debug; }
 }
 function onKeyUp(e) {
