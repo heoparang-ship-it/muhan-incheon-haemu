@@ -6582,6 +6582,7 @@ function rebuildWorld() {
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
+  const help = $('#help'); if (help) help.classList.remove('show');
   setMenuPause(false);
 }
 
