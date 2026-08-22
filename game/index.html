@@ -6813,7 +6813,7 @@ function boot() {
     };
   });
   const toTitleBtn = $('#toTitleBtn');
-  if (toTitleBtn) toTitleBtn.onclick = () => goTitle();
+  if (toTitleBtn) toTitleBtn.onclick = () => { toast('타이틀로 돌아간다'); goTitle(); };
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) autosave('force');
