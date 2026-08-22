@@ -6252,6 +6252,21 @@ function serializeFolklore() {
   return out;
 }
 
+function copyPath(p) {
+  if (!Array.isArray(p)) return [];
+  const out = [];
+  for (let i = 0; i < p.length && out.length < 400; i++) {
+    const n = p[i];
+    if (!n) continue;
+    const tx = +n.tx, ty = +n.ty;
+    if (!Number.isFinite(tx) || !Number.isFinite(ty)) continue;
+    const node = { tx, ty };
+    if (n.lv === 0 || n.lv === 1) node.lv = n.lv;
+    out.push(node);
+  }
+  return out;
+}
+
 function snapshotSave() {
   return {
     version: SAVE_VERSION,
@@ -6296,7 +6311,8 @@ function snapshotSave() {
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
-      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0
+      waterWalk: !!a.waterWalk, waterUntil: a.waterUntil || 0,
+      path: copyPath(a.path)
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
@@ -6439,7 +6455,8 @@ function applySave(s) {
     const u = ag.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle; u.alive = rec.alive;
     u.crouch = rec.crouch; u.exposure = rec.exposure; u.disguise = rec.disguise;
-    u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
+    u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious;
+    u.path = copyPath(rec.path);
     u.queue = []; u.action = null;
     u.coolUntil = rec.coolUntil || 0;
     u.waterWalk = !!rec.waterWalk; u.waterUntil = rec.waterUntil || 0;
@@ -6853,7 +6870,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, moveUnit,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
