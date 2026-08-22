@@ -6525,6 +6525,14 @@ function autosave(reason) {
   writeSave(true, 'auto');
 }
 
+function syncDiffButtons(d) {
+  if (!d || !DIFFICULTY[d]) return false;
+  chosenDiff = d;
+  try { localStorage.setItem('haemu-diff', chosenDiff); } catch (err) { /* ignore */ }
+  $$('#diffRow button').forEach(b => b.classList.toggle('on', b.getAttribute('data-diff') === chosenDiff));
+  return true;
+}
+
 function refreshTitleMeta() {
   const s = readSave();
   const cont = $('#continueBtn');
@@ -6532,6 +6540,7 @@ function refreshTitleMeta() {
     cont.hidden = !s;
     if (s) cont.textContent = '이어하기 · ' + fmtTime(s.timeLeft);
   }
+  if (s && s.difficulty) syncDiffButtons(s.difficulty);
   const best = readBest();
   const el = $('#bestHint');
   if (el) {
@@ -6776,17 +6785,12 @@ function boot() {
   $$('#diffRow button').forEach(btn => {
     btn.onclick = (ev) => {
       ev.preventDefault(); ev.stopPropagation();
-      chosenDiff = btn.getAttribute('data-diff') || 'normal';
-      try { localStorage.setItem('haemu-diff', chosenDiff); } catch (err) { /* ignore */ }
-      $$('#diffRow button').forEach(b => b.classList.toggle('on', b === btn));
+      syncDiffButtons(btn.getAttribute('data-diff') || 'normal');
     };
   });
   try {
     const savedD = localStorage.getItem('haemu-diff');
-    if (savedD && DIFFICULTY[savedD]) {
-      chosenDiff = savedD;
-      $$('#diffRow button').forEach(b => b.classList.toggle('on', b.getAttribute('data-diff') === chosenDiff));
-    }
+    if (savedD && DIFFICULTY[savedD]) syncDiffButtons(savedD);
   } catch (err) { /* ignore */ }
 
   const tut = $('#tutorial'); if (tut) $('#tutClose').onclick = () => tut.remove();
@@ -6851,11 +6855,12 @@ function boot() {
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
-    beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, goTitle, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
-    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; },
+    syncDiffButtons, refreshTitleMeta
   };
 }
 
