@@ -6723,7 +6723,7 @@ function boot() {
     sheetMask.classList.remove('show');
   };
   $('#helpBtn').onclick = () => $('#help').classList.add('show');
-  $('#helpClose').onclick = () => $('#help').classList.remove('show');
+  $('#helpClose').onclick = () => { $('#help').classList.remove('show'); toast('도움말을 닫았다'); };
   $('#restartTop').onclick = () => restart();
   $('#restartBtn').onclick = () => restart();
   const QMODES = [
