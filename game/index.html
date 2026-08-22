@@ -2894,6 +2894,21 @@ const CIVIL_TYPES = {
   prisoner: { name: '갇힌 주민', color: '#a89880', coat: '#3b342a' }
 };
 
+function hangulCode(s) {
+  const t = String(s || '');
+  for (let i = t.length - 1; i >= 0; i--) {
+    const c = t.charCodeAt(i);
+    if (c >= 0xAC00 && c <= 0xD7A3) return c;
+  }
+  return 0;
+}
+function hasBatchim(s) {
+  const c = hangulCode(s);
+  return !!c && ((c - 0xAC00) % 28) !== 0;
+}
+function iGa(s) { return String(s || '') + (hasBatchim(s) ? '이' : '가'); }
+function eulReul(s) { return String(s || '') + (hasBatchim(s) ? '을' : '를'); }
+
 let agents = [], guards = [], civilians = [], units = [];
 
 function baseUnit(o) {
@@ -3735,7 +3750,7 @@ function updateWakes() {
       .sort((p, q) => dist2(p.tx, p.ty, g.tx, g.ty) - dist2(q.tx, q.ty, g.tx, g.ty))[0];
     if (boss) { g.reportTo = boss; g.path = findPath(g.tx, g.ty, boss.tx, boss.ty, g); }
     else raiseAlarm(g, g.tx, g.ty, 'local');
-    toast(GUARD_TYPES[g.type].name + '이(가) 깨어났다', 'warn');
+    toast(iGa(GUARD_TYPES[g.type].name) + ' 깨어났다', 'warn');
   }
 }
 
@@ -4262,7 +4277,7 @@ function interact(a, fromQueue) {
     return;
   }
   if (n.type === 'lead') {
-    o.following = a; toast(CIVIL_TYPES[o.type].name + '이(가) 따라온다', 'good');
+    o.following = a; toast(iGa(CIVIL_TYPES[o.type].name) + ' 따라온다', 'good');
     return;
   }
   if (n.type === 'vale') {
@@ -4278,7 +4293,7 @@ function interact(a, fromQueue) {
   /* 오브젝트별 */
   switch (o.kind) {
     case 'evidence': {
-      startAction(a, o.time, () => takeEvidence(o), o.name + '을(를) 살피는 중');
+      startAction(a, o.time, () => takeEvidence(o), eulReul(o.name) + ' 살피는 중');
       break;
     }
     case 'stairs': {
@@ -4397,7 +4412,7 @@ function interact(a, fromQueue) {
       break;
     }
     case 'pipe': {
-      startAction(a, o.time, () => { o.done = true; folkStep('blowhole', o.id); toast(o.name + '을 반대로 연결했다', 'good'); }, '구리관을 돌리는 중');
+      startAction(a, o.time, () => { o.done = true; folkStep('blowhole', o.id); toast(eulReul(o.name) + ' 반대로 연결했다', 'good'); }, '구리관을 돌리는 중');
       break;
     }
     case 'secretPath': {
@@ -4413,8 +4428,8 @@ function interact(a, fromQueue) {
 
 function doorAction(a, d) {
   if (d.broken) { toast('이미 부서진 문이다', 'warn'); return; }
-  if (d.open) { d.open = false; d.noticed = false; toast(d.label + '을 닫았다'); audio.door(false, a.tx, a.ty); return; }
-  if (!d.locked) { d.open = true; toast(d.label + '을 열었다'); audio.door(true, a.tx, a.ty); return; }
+  if (d.open) { d.open = false; d.noticed = false; toast(eulReul(d.label) + ' 닫았다'); audio.door(false, a.tx, a.ty); return; }
+  if (!d.locked) { d.open = true; toast(eulReul(d.label) + ' 열었다'); audio.door(true, a.tx, a.ty); return; }
   if (a.id === 'haeju' && a.disguise > state.now) {
     d.open = true; toast(d.label + ' — 봉사자 행세로 통과했다', 'good'); audio.door(true, a.tx, a.ty); return;
   }
@@ -4880,7 +4895,7 @@ function tryEscape() {
     toast('밀수 장부 없이는 사건을 덮을 수 없다', 'warn'); return;
   }
   if (away.length) {
-    toast(away.map(a => AGENT_DEFS[a.id].name).join(', ') + '이(가) 아직 배에서 멀다', 'warn');
+    toast(iGa(away.map(a => AGENT_DEFS[a.id].name).join(', ')) + ' 아직 배에서 멀다', 'warn');
     return;
   }
   // 구출한 주민 태우기
@@ -6853,7 +6868,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, iGa, eulReul, hasBatchim,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
