@@ -6211,6 +6211,12 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
+function setAudioVol(v) {
+  audio.setVolume(v);
+  const el = document.getElementById('volSlider');
+  if (el) el.value = String(Math.round(audio.vol * 100));
+}
+
 const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
 const SAVE_VERSION = 3;
@@ -6287,6 +6293,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    audioVol: audio.vol,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6511,6 +6518,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  setAudioVol(s.audioVol != null ? s.audioVol : 0.55);
   centerOnSelected();
   updateHUD();
   return true;
@@ -6579,6 +6587,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setAudioVol(0.55);
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6766,7 +6775,7 @@ function boot() {
   if (vol) {
     vol.value = String(Math.round((audio.vol || 0.55) * 100));
     vol.oninput = () => {
-      audio.setVolume((+vol.value) / 100);
+      setAudioVol((+vol.value) / 100);
       if (audio.muted && +vol.value > 0) {
         audio.setMuted(false);
         $('#muteBtn').textContent = '🔊';
@@ -6852,6 +6861,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setAudioVol, audio,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
