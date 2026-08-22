@@ -180,6 +180,12 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touc
 .rGrid div{padding:10px 6px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03)}
 .rGrid b{display:block;font-size:16px;color:var(--gold2);font-family:"Nanum Myeongjo",serif}
 .rGrid span{display:block;font-size:9.5px;color:var(--muted);margin-top:3px}
+.replayBox{margin:14px 0 2px;text-align:left}
+.replayHead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}
+.replayHead b{font-size:11px;color:var(--gold);letter-spacing:.04em}
+.replayHead span{font-size:10px;color:var(--muted)}
+.replayHead i{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px 0 7px;vertical-align:middle}
+#replayMap{display:block;width:100%;height:168px;border:1px solid var(--line2);border-radius:10px;background:#050b0f}
 .modalBtns{margin-top:20px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
 .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 4px}
 .slots button{padding:10px 8px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.04);
@@ -546,6 +552,10 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
       <div class="seal" id="resultSeal">密</div>
       <h2 id="resultTitle">밀명 완료</h2>
       <div id="resultText"></div>
+      <div class="replayBox" id="replayBox" hidden>
+        <div class="replayHead"><b>조사패 궤적</b><span id="replayLegend"></span></div>
+        <canvas id="replayMap" width="472" height="264"></canvas>
+      </div>
       <div class="modalBtns"><button id="restartBtn">다시 시도</button></div>
     </div>
   </div>
@@ -4100,8 +4110,79 @@ function newState() {
     sluiceOpen: false, escaped: false, cameraLock: false,
     reinforcements: false, reinforceCount: 0, waypointMode: false, showSoundFx: true,
     boxMode: false, squad: ['haeju'], difficulty: chosenDiff,
-    stats: { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] }
+    stats: { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
+    replay: null
   };
+}
+
+const REPLAY_MAX = 1600;
+const REPLAY_MIN_DIST = 0.42;
+const REPLAY_IDS = ['haeju', 'mujin', 'dochi', 'wolsim'];
+
+function missionElapsed() {
+  return Math.max(0, MISSION_SECONDS - (state && state.timeLeft != null ? state.timeLeft : MISSION_SECONDS));
+}
+
+function ensureReplay() {
+  if (!state) return;
+  if (!state.replay || !state.replay.trails) state.replay = { trails: {} };
+  for (const a of agents) {
+    if (!state.replay.trails[a.id] || !state.replay.trails[a.id].length)
+      state.replay.trails[a.id] = [{ t: missionElapsed(), tx: +a.tx.toFixed(2), ty: +a.ty.toFixed(2) }];
+  }
+}
+
+function recordReplay() {
+  if (!state || state.ended || !agents.length) return;
+  ensureReplay();
+  const t = +missionElapsed().toFixed(2);
+  for (const a of agents) {
+    let trail = state.replay.trails[a.id];
+    if (!trail) {
+      trail = state.replay.trails[a.id] = [{ t, tx: +a.tx.toFixed(2), ty: +a.ty.toFixed(2) }];
+      continue;
+    }
+    const last = trail[trail.length - 1];
+    if (Math.hypot(a.tx - last.tx, a.ty - last.ty) < REPLAY_MIN_DIST) continue;
+    trail.push({ t, tx: +a.tx.toFixed(2), ty: +a.ty.toFixed(2) });
+    if (trail.length > REPLAY_MAX) trail.splice(0, trail.length - REPLAY_MAX);
+  }
+}
+
+function replayTrailAt(trail, t) {
+  if (!trail || !trail.length) return null;
+  if (t <= trail[0].t) return trail[0];
+  const last = trail[trail.length - 1];
+  if (t >= last.t) return last;
+  let lo = 0, hi = trail.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (trail[mid].t <= t) lo = mid; else hi = mid;
+  }
+  const a = trail[lo], b = trail[hi];
+  const u = (t - a.t) / Math.max(0.001, b.t - a.t);
+  return { tx: lerp(a.tx, b.tx, u), ty: lerp(a.ty, b.ty, u) };
+}
+
+function serializeReplay() {
+  if (!state || !state.replay || !state.replay.trails) return null;
+  const trails = {};
+  for (const id of REPLAY_IDS) {
+    const tr = state.replay.trails[id];
+    if (tr && tr.length) trails[id] = tr.map(p => ({ t: p.t, tx: p.tx, ty: p.ty }));
+  }
+  return { trails };
+}
+
+function applyReplay(rec) {
+  if (!state) return;
+  if (!rec || !rec.trails) { ensureReplay(); return; }
+  state.replay = { trails: {} };
+  for (const id of REPLAY_IDS) {
+    const tr = rec.trails[id];
+    state.replay.trails[id] = Array.isArray(tr) ? tr.map(p => ({ t: +p.t, tx: +p.tx, ty: +p.ty })) : [];
+  }
+  ensureReplay();
 }
 
 /* ---------- 증거 ---------- */
@@ -5252,6 +5333,109 @@ function showResult(win, r) {
   }
   $('#resultText').innerHTML = detail + '<p>' + r.body + '</p>';
   $('#result').classList.add('show');
+  startReplayGhosts();
+}
+
+let replayRaf = 0;
+function stopReplayGhosts() {
+  if (replayRaf) cancelAnimationFrame(replayRaf);
+  replayRaf = 0;
+}
+
+function replayInfo() {
+  const trails = state && state.replay && state.replay.trails;
+  const counts = {};
+  let total = 0, maxT = 0;
+  if (trails) {
+    for (const id of REPLAY_IDS) {
+      const n = (trails[id] && trails[id].length) || 0;
+      counts[id] = n;
+      total += n;
+      if (n) maxT = Math.max(maxT, trails[id][n - 1].t);
+    }
+  }
+  return {
+    counts, total, maxT,
+    hasCanvas: !!document.getElementById('replayMap'),
+    boxOpen: !!(document.getElementById('replayBox') && !document.getElementById('replayBox').hidden)
+  };
+}
+
+function startReplayGhosts() {
+  stopReplayGhosts();
+  const box = $('#replayBox'), canvas = $('#replayMap'), legend = $('#replayLegend');
+  if (!box || !canvas) return;
+  ensureReplay();
+  const trails = state.replay.trails;
+  let maxT = 0, pts = 0;
+  for (const id of REPLAY_IDS) {
+    const tr = trails[id] || [];
+    pts += tr.length;
+    if (tr.length) maxT = Math.max(maxT, tr[tr.length - 1].t);
+  }
+  if (pts < 2) { box.hidden = true; return; }
+  box.hidden = false;
+  if (legend) {
+    legend.innerHTML = REPLAY_IDS.map(id => {
+      const d = AGENT_DEFS[id];
+      return '<i style="background:' + d.color + '"></i>' + d.name;
+    }).join('');
+  }
+  if (typeof drawMiniBase === 'function') drawMiniBase();
+  if (maxT < 0.4) maxT = 1;
+  const duration = Math.min(22, Math.max(7, maxT * 0.14));
+  const t0 = performance.now();
+  const frame = (now) => {
+    const res = $('#result');
+    if (!res || !res.classList.contains('show')) { stopReplayGhosts(); return; }
+    const u = ((now - t0) / 1000 / duration) % 1;
+    drawReplayGhosts(canvas, trails, u * maxT);
+    replayRaf = requestAnimationFrame(frame);
+  };
+  replayRaf = requestAnimationFrame(frame);
+}
+
+function drawReplayGhosts(canvas, trails, t) {
+  const g = canvas.getContext('2d');
+  g.setTransform(2, 0, 0, 2, 0, 0);
+  g.clearRect(0, 0, MINI_W, MINI_H);
+  if (miniBase) g.drawImage(miniBase, 0, 0, MINI_W, MINI_H);
+  else { g.fillStyle = '#050b0f'; g.fillRect(0, 0, MINI_W, MINI_H); }
+  const w = miniProj();
+  const P = (tx, ty) => ({
+    x: w.ox + isoX(tx + .5, ty + .5) * w.k,
+    y: w.oy + isoY(tx + .5, ty + .5, groundZ(tx, ty)) * w.k
+  });
+  for (const id of REPLAY_IDS) {
+    const tr = trails[id];
+    if (!tr || tr.length < 2) continue;
+    const col = AGENT_DEFS[id].color;
+    g.beginPath();
+    let started = false;
+    for (const p of tr) {
+      if (p.t > t) break;
+      const q = P(p.tx, p.ty);
+      if (!started) { g.moveTo(q.x, q.y); started = true; }
+      else g.lineTo(q.x, q.y);
+    }
+    const cur = replayTrailAt(tr, t);
+    if (cur && started) {
+      const q = P(cur.tx, cur.ty);
+      g.lineTo(q.x, q.y);
+    }
+    g.strokeStyle = col;
+    g.globalAlpha = 0.82;
+    g.lineWidth = 1.35;
+    g.lineJoin = 'round';
+    g.lineCap = 'round';
+    g.stroke();
+    g.globalAlpha = 1;
+    if (cur) {
+      const q = P(cur.tx, cur.ty);
+      g.fillStyle = col;
+      g.beginPath(); g.arc(q.x, q.y, 2.4, 0, TAU); g.fill();
+    }
+  }
 }
 
 /* ---------- 도움말 ---------- */
@@ -5264,6 +5448,7 @@ const HELP_HTML = `
     <li><b>끌기 · 두 손가락</b> 화면 이동 · 확대</li>
     <li><b>계책</b> 시간 정지 · <b>일제 실행</b> 예약 명령을 한꺼번에</li>
     <li>키보드: 1~4 대원 · C 웅크리기 · Q/X 기술 · E 조사 · Space 계책 · <b>Shift+클릭</b> 경유 · <b>Ctrl+끌기</b> 부대 선택 · <b>F5</b> 저장 · <b>F8</b> 불러오기</li>
+    <li>밀명이 끝나면 결과 화면 미니맵에 조사패 네 명의 궤적이 재생된다</li>
   </ul>
 </div>
 <div class="hcol">
@@ -5862,6 +6047,7 @@ function update(dt) {
     if (!a.path.length && !a.action && a.queue.length && !state.planning) nextQueued(a);
     if (a.waterUntil && a.waterUntil < state.now) { a.waterWalk = false; a.waterUntil = 0; }
   }
+  recordReplay();
   for (const g of guards) if (g.moveT > 0) g.moveT -= dt;
   for (const c of civilians) if (c.moveT > 0) c.moveT -= dt;
   updateGuards(dt);
@@ -6287,6 +6473,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    replay: serializeReplay(),
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6513,6 +6700,7 @@ function applySave(s) {
   initUI();
   centerOnSelected();
   updateHUD();
+  applyReplay(s.replay);
   return true;
 }
 
@@ -6576,12 +6764,14 @@ function rebuildWorld() {
   buildMap(); buildCorners(); buildBlockHeights(); buildTerrainColors(); prepBuildings(); bindArt();
   buildInteractables();
   spawnAll();
+  ensureReplay();
   vale = null;
   state.tideStage = tideStage();
   initUI();
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
+  stopReplayGhosts();
   setMenuPause(false);
 }
 
@@ -6659,6 +6849,7 @@ function boot() {
   buildMap(); buildCorners(); buildBlockHeights(); buildTerrainColors(); prepBuildings(); bindArt();
   buildInteractables();
   spawnAll();
+  ensureReplay();
   state.tideStage = tideStage();
   resize();
   applyPhoneChrome();
@@ -6725,7 +6916,7 @@ function boot() {
   $('#helpBtn').onclick = () => $('#help').classList.add('show');
   $('#helpClose').onclick = () => $('#help').classList.remove('show');
   $('#restartTop').onclick = () => restart();
-  $('#restartBtn').onclick = () => restart();
+  $('#restartBtn').onclick = () => { stopReplayGhosts(); restart(); };
   const QMODES = [
     { name: '자동', auto: true },
     { name: '높음', auto: false, q: 1.0 },
@@ -6855,7 +7046,8 @@ function boot() {
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
-    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; },
+    ensureReplay, recordReplay, replayInfo, startReplayGhosts, stopReplayGhosts, replayTrailAt, serializeReplay
   };
 }
 
