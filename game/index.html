@@ -3717,7 +3717,7 @@ function beginSearch(g, seconds) {
 
 function updateWakes() {
   for (const g of guards) {
-    if (g.boss || g.tied) continue;
+    if (g.boss || g.tied || g.left) continue;
     if (!g.unconscious) continue;
     if (!g.wakeAt) g.wakeAt = state.now + wakeMs();
     if (state.now < g.wakeAt) continue;
@@ -4195,7 +4195,7 @@ function nearestInteract(a, maxD) {
     if (dd < bd) { bd = dd; best = { type: 'lamp', o: l, d: dd }; }
   }
   for (const g of guards) {
-    if (!g.unconscious) continue;
+    if (!g.unconscious || g.left) continue;
     const dd = Math.hypot(g.tx - a.tx, g.ty - a.ty);
     if (dd < bd) { bd = dd; best = { type: 'body', o: g, d: dd }; }
   }
@@ -4689,10 +4689,16 @@ function applyFolkReward(id) {
     let removed = 0;
     for (const g of guards) {
       if (removed >= 4) break;
-      if (g.unconscious) continue;
+      if (g.unconscious || g.left) continue;
       if (map.zone[tileAt(g.tx, g.ty)] === Z.ISLAND || map.zone[tileAt(g.tx, g.ty)] === Z.CAVE) {
-        g.ai = 'return'; g.leaving = true; g.patrol = [[Math.round(g.tx), Math.round(g.ty)], [50, 60]];
-        g.path = findPath(g.tx, g.ty, 50, 60, g);
+        g.left = true;
+        g.unconscious = true;
+        g.hidden = true;
+        g.tied = true;
+        g.wakeAt = 1e15;
+        g.ai = 'down';
+        g.path = [];
+        g.suspicion = 0;
         removed++;
       }
     }
@@ -6303,6 +6309,7 @@ function snapshotSave() {
       unconscious: !!g.unconscious, hidden: !!g.hidden, ai: g.ai,
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
+      left: !!g.left,
       reinforce: !!g.reinforce, lastSeen: g.lastSeen || null,
       patrol: g.patrol, pi: g.pi || 0
     })),
@@ -6464,6 +6471,7 @@ function applySave(s) {
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
+    u.left = !!rec.left;
     u.lastSeen = rec.lastSeen || null;
     if (rec.boss) { u.boss = true; u.caught = rec.caught; }
   }
