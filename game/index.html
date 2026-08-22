@@ -569,7 +569,7 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
         <button type="button" data-slot="1">밀명 둘</button>
         <button type="button" data-slot="2">밀명 셋</button>
       </div>
-      <div class="volRow"><span>소리</span><input id="volSlider" type="range" min="0" max="100" value="55"></div>
+      <div class="volRow"><span id="volLabel">소리 55</span><input id="volSlider" type="range" min="0" max="100" value="55"></div>
       <div class="modalBtns">
         <button id="resumeBtn">계속</button>
         <button id="saveBtn">지금 저장</button>
@@ -6763,10 +6763,17 @@ function boot() {
     toast(audio.muted ? '음소거' : '소리 켜짐');
   };
   const vol = $('#volSlider');
+  function syncVolLabel() {
+    const lab = $('#volLabel');
+    const n = vol ? vol.value : String(Math.round((audio.vol || 0.55) * 100));
+    if (lab) lab.textContent = '소리 ' + n;
+  }
   if (vol) {
     vol.value = String(Math.round((audio.vol || 0.55) * 100));
+    syncVolLabel();
     vol.oninput = () => {
       audio.setVolume((+vol.value) / 100);
+      syncVolLabel();
       if (audio.muted && +vol.value > 0) {
         audio.setMuted(false);
         $('#muteBtn').textContent = '🔊';
@@ -6853,7 +6860,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, syncVolLabel,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
