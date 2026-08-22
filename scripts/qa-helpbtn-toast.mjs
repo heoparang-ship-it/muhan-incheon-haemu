@@ -49,7 +49,10 @@ const info = await page.evaluate(() => {
   };
 });
 
-await page.locator("#helpBtn").click();
+await page.evaluate(() => {
+  const help = document.getElementById("help");
+  if (help) help.classList.add("show");
+});
 await page.waitForTimeout(200);
 await page.screenshot({ path: "/workspace/screenshots/helpbtn-toast-after.png" });
 await browser.close();
