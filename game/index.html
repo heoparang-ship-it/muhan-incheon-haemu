@@ -5489,6 +5489,13 @@ function drawDecals(g2) {
 /* ---------- 이동 경로 ---------- */
 const hoverPath = { pts: [], hot: [], t: 0, tx: 0, ty: 0 };
 
+function clearHoverPath() {
+  hoverPath.pts = [];
+  hoverPath.hot = [];
+  hoverPath.tx = 0;
+  hoverPath.ty = 0;
+}
+
 function pathTileHot(tx, ty) {
   for (const g of guards) {
     if (g.unconscious || g.hidden || g.netted > 0) continue;
@@ -6578,6 +6585,7 @@ function rebuildWorld() {
   spawnAll();
   vale = null;
   state.tideStage = tideStage();
+  clearHoverPath();
   initUI();
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
@@ -6853,7 +6861,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, clearHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
