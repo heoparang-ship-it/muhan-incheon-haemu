@@ -1683,7 +1683,16 @@ function buildBlockHeights() {
   }
 }
 
+function smokeBlocks(x, y) {
+  if (!state || !state.smoke || !state.smoke.length) return false;
+  for (const s of state.smoke) {
+    if (s.life > 0 && Math.hypot(s.tx - x, s.ty - y) < s.r) return true;
+  }
+  return false;
+}
+
 function hasSight(ax, ay, bx, by, eyeUp, targUp, aLv, bLv) {
+  if (smokeBlocks(ax, ay) || smokeBlocks(bx, by)) return false;
   const az = groundZ(ax, ay, aLv) + (eyeUp == null ? 1.6 : eyeUp);
   const bz = groundZ(bx, by, bLv) + (targUp == null ? 0.85 : targUp);
   const d = Math.hypot(bx - ax, by - ay);
@@ -1691,8 +1700,10 @@ function hasSight(ax, ay, bx, by, eyeUp, targUp, aLv, bLv) {
   if (n <= 1) return true;
   for (let i = 1; i < n; i++) {
     const t = i / n;
-    const x = Math.round(lerp(ax, bx, t)), y = Math.round(lerp(ay, by, t));
+    const fx = lerp(ax, bx, t), fy = lerp(ay, by, t);
+    const x = Math.round(fx), y = Math.round(fy);
     if (!inMap(x, y)) return false;
+    if (smokeBlocks(fx, fy)) return false;
     const ii = idx(x, y);
     const rayZ = lerp(az, bz, t);
     if (map.solid[ii]) {
@@ -5376,9 +5387,7 @@ function guardCone(g, rangeScale, fovScale) {
       if (map.solid[i] && map.elev[i] + map.blockH[i] > map.elev[tileAt(g.tx, g.ty)] + 1.55) break;
       const dr = map.doorAt.get(i);
       if (dr && !dr.open && !dr.broken) break;
-      let blockedBySmoke = false;
-      for (const s of state.smoke) if (Math.hypot(s.tx - x, s.ty - y) < s.r) { blockedBySmoke = true; break; }
-      if (blockedBySmoke) break;
+      if (smokeBlocks(x, y)) break;
     }
     pts.push([g.tx + cs * d, g.ty + sn * d]);
   }
@@ -6846,7 +6855,7 @@ function boot() {
     get state() { return state; }, get agents() { return agents; }, get guards() { return guards; },
     get civilians() { return civilians; }, get map() { return map; }, get vale() { return vale; },
     get interactables() { return interactables; },
-    cam, findPath, passable, walkableAt, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
+    cam, findPath, passable, walkableAt, waterLevel, tideStage, hasSight, smokeBlocks, guardSees, selectAgent, useAbility, useSecond,
     interact, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
