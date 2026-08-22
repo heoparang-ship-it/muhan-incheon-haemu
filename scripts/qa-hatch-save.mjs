@@ -44,6 +44,8 @@ const info = await page.evaluate(() => {
   const rescued = !!(a.action && /정필재/.test(a.action.label || ""));
   if (a.action && a.action.done) a.action.done();
   a.action = null;
+  const freeJeong = !!H.state.objectives.freeJeong;
+  const testimony = !!H.state.evidence.testimony;
 
   /* 예전 저장(locked 필드 없음) */
   H.rebuildWorld();
@@ -65,9 +67,7 @@ const info = await page.evaluate(() => {
     freshLocked,
     snapHatch,
     after: { locked: !!after.locked, done: !!after.done },
-    blocked, rescued,
-    freeJeong: !!H.state.objectives.freeJeong,
-    testimony: !!H.state.evidence.testimony,
+    blocked, rescued, freeJeong, testimony,
     oldAfter: { locked: !!oldAfter.locked, done: !!oldAfter.done },
     tideOk: phases.every((x) => Math.abs(x.wl - x.expect) < 1e-12),
     phases
