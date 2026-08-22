@@ -4537,7 +4537,7 @@ function useAbility(a, fromQueue) {
     toast('18초 동안 갯골과 깊은 물을 지나갈 수 있다', 'good');
     audio.tone(300, 0.14, 'triangle', 0.05);
   } else if (a.id === 'wolsim') {
-    state.targetMode = { kind: 'lure', agent: a };
+    setTargetMode({ kind: 'lure', agent: a });
     toast('방울을 던질 곳을 전장에서 고르세요', 'warn');
   }
 }
@@ -4552,7 +4552,7 @@ function useSecond(a, fromQueue) {
     const g = guards.filter(x => !x.unconscious && x.ai !== 'alert' && GUARD_TYPES[x.type].seeThroughDisguise < 1
       && Math.hypot(x.tx - a.tx, x.ty - a.ty) < 6.5)[0];
     if (!g) { toast('말을 붙일 경비가 없다 (외국인 선원에게는 통하지 않는다)', 'warn'); return; }
-    state.targetMode = { kind: 'send', agent: a, guard: g };
+    setTargetMode({ kind: 'send', agent: a, guard: g });
     toast('경비를 보낼 위치를 고르세요', 'warn');
   } else if (a.id === 'mujin') {
     const w = findAdjacentWall(a);
@@ -4600,7 +4600,7 @@ function invalidateChunkAt(i) {
 function doLure(a, tx, ty) {
   if (Math.hypot(tx - a.tx, ty - a.ty) > 9) { toast('그렇게 멀리는 못 던진다', 'warn'); return; }
   a.coolUntil = state.now + AGENT_DEFS.wolsim.cool * 1000;
-  state.targetMode = null;
+  setTargetMode(null);
   state.particles.push({ kind: 'bell', tx, ty, life: 1.6, max: 1.6 });
   audio.tone(1040, 0.22, 'sine', posVol(tx, ty, 0.07));
   audio.tone(1560, 0.16, 'sine', posVol(tx, ty, 0.04));
@@ -4622,7 +4622,7 @@ function doLure(a, tx, ty) {
 }
 
 function doSend(a, g, tx, ty) {
-  state.targetMode = null;
+  setTargetMode(null);
   a.coolUntil2 = state.now + 14000;
   const p = findPath(g.tx, g.ty, tx, ty, g);
   if (!p.length) { toast('그곳으로 보낼 수 없다', 'warn'); return; }
@@ -6133,7 +6133,7 @@ function onKeyDown(e) {
   if (e.target.matches && e.target.matches('input,textarea')) return;
   if (e.key === 'Escape') {
     e.preventDefault();
-    state.targetMode = null;
+    setTargetMode(null);
     const help = $('#help');
     if (help && help.classList.contains('show')) { help.classList.remove('show'); return; }
     const ts = $('#titleScreen');
@@ -6209,6 +6209,16 @@ function cycleAgent() {
 function centerOnSelected() {
   const a = selectedAgent(); if (!a) return;
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
+}
+
+function setTargetMode(spec) {
+  if (!state) return;
+  if (!spec || !spec.kind) { state.targetMode = null; return; }
+  const agent = typeof spec.agent === 'string' ? agents.find(a => a.id === spec.agent) : spec.agent;
+  const guard = spec.guard == null ? null : (typeof spec.guard === 'string' ? guards.find(g => g.id === spec.guard) : spec.guard);
+  if (spec.kind === 'lure' && agent) state.targetMode = { kind: 'lure', agent };
+  else if (spec.kind === 'send' && agent && guard) state.targetMode = { kind: 'send', agent, guard };
+  else state.targetMode = null;
 }
 
 const SAVE_KEY = 'haemu-save-v2';
@@ -6287,6 +6297,11 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    targetMode: state.targetMode ? {
+      kind: state.targetMode.kind,
+      agent: state.targetMode.agent && state.targetMode.agent.id,
+      guard: state.targetMode.guard && state.targetMode.guard.id
+    } : null,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6511,6 +6526,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  setTargetMode(s.targetMode);
   centerOnSelected();
   updateHUD();
   return true;
@@ -6852,6 +6868,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setTargetMode,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
