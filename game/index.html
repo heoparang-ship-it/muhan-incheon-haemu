@@ -4100,6 +4100,7 @@ function newState() {
     sluiceOpen: false, escaped: false, cameraLock: false,
     reinforcements: false, reinforceCount: 0, waypointMode: false, showSoundFx: true,
     boxMode: false, squad: ['haeju'], difficulty: chosenDiff,
+    objectivesOpen: true,
     stats: { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] }
   };
 }
@@ -6211,6 +6212,16 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
+function setObjectivesOpen(open) {
+  if (state) state.objectivesOpen = !!open;
+  const obj = document.getElementById('objectives');
+  if (!obj) return;
+  obj.classList.toggle('collapsed', !open);
+  obj.dataset.userOpen = open ? '1' : '';
+  const mask = document.getElementById('sheetMask');
+  if (mask) mask.classList.toggle('show', isPhone() && !!open);
+}
+
 const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
 const SAVE_VERSION = 3;
@@ -6287,6 +6298,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    objectivesOpen: !!(document.getElementById('objectives') && !document.getElementById('objectives').classList.contains('collapsed')),
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6511,6 +6523,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  setObjectivesOpen(s.objectivesOpen !== false);
   centerOnSelected();
   updateHUD();
   return true;
@@ -6579,6 +6592,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setObjectivesOpen(true);
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6704,24 +6718,12 @@ function boot() {
   const toggleObj = () => {
     const obj = $('#objectives');
     if (!obj) return;
-    const open = obj.classList.contains('collapsed');
-    obj.classList.toggle('collapsed', !open);
-    obj.dataset.userOpen = open ? '1' : '';
-    const mask = $('#sheetMask');
-    if (mask) mask.classList.toggle('show', isPhone() && open);
+    setObjectivesOpen(obj.classList.contains('collapsed'));
   };
   $('#objBtn').onclick = toggleObj;
-  $('#collapseObj').onclick = () => {
-    $('#objectives').classList.add('collapsed');
-    $('#objectives').dataset.userOpen = '';
-    const mask = $('#sheetMask'); if (mask) mask.classList.remove('show');
-  };
+  $('#collapseObj').onclick = () => setObjectivesOpen(false);
   const sheetMask = $('#sheetMask');
-  if (sheetMask) sheetMask.onclick = () => {
-    $('#objectives').classList.add('collapsed');
-    $('#objectives').dataset.userOpen = '';
-    sheetMask.classList.remove('show');
-  };
+  if (sheetMask) sheetMask.onclick = () => setObjectivesOpen(false);
   $('#helpBtn').onclick = () => $('#help').classList.add('show');
   $('#helpClose').onclick = () => $('#help').classList.remove('show');
   $('#restartTop').onclick = () => restart();
@@ -6852,6 +6854,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setObjectivesOpen,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
