@@ -6499,7 +6499,17 @@ function applySave(s) {
   }
   if (typeof chunkCache !== 'undefined') { chunkCache.clear(); chunkLRU.length = 0; }
   if (s.valeSpawned) {
-    if (!vale) spawnVale();
+    if (!vale) {
+      vale = guards.find(g => g.id === 'vale') || null;
+      if (!vale) spawnVale();
+      else {
+        vale.boss = true;
+        vale.speed = 1.75;
+        if (!vale.caught) vale.ai = 'flee';
+        if (!state.fires.some(f => f.tx === 87 && f.ty === 82))
+          state.fires.push({ tx: 87, ty: 82, life: 999 });
+      }
+    }
     if (vale && s.vale) {
       vale.tx = s.vale.tx; vale.ty = s.vale.ty;
       vale.caught = s.vale.caught; vale.hidden = s.vale.hidden; vale.path = [];
