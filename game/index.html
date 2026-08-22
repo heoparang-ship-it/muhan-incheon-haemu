@@ -389,6 +389,18 @@ html.force-land .modalBtns button{min-height:44px;width:auto}
 .diffRow button.on{border-color:var(--gold);color:var(--gold2);background:rgba(226,192,114,.16)}
 .volRow{display:flex;align-items:center;gap:10px;justify-content:center;margin:14px 0 4px;color:var(--muted);font-size:11px}
 .volRow input[type=range]{width:min(220px,60vw);accent-color:#e3c072}
+.volRow select{min-width:120px;padding:4px 8px;border:1px solid var(--line2);border-radius:8px;
+ background:rgba(8,16,22,.9);color:var(--cream);font-size:11px}
+.a11yBox{margin:10px 0 4px;padding:10px 10px 6px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.03)}
+.a11yBox .lab{display:block;margin:0 0 6px;font-size:10.5px;color:var(--gold);letter-spacing:.04em;text-align:left}
+.bindRow{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:8px 0 4px}
+.bindRow button{padding:7px 8px;border:1px solid var(--line2);border-radius:8px;background:rgba(255,255,255,.04);
+ color:var(--cream);font-size:11px;min-height:36px;text-align:left}
+.bindRow button em{float:right;color:var(--gold2);font-style:normal}
+.bindRow button.listen{border-color:var(--gold);color:var(--gold2);background:rgba(226,192,114,.14)}
+#a11yReset{margin-top:6px;font-size:11px;color:var(--muted);text-decoration:underline}
+#top,#objectives,#unitInfo,#bottom,#tutorial,#minimapBox,#mapTools,#toast,#checkBanner,.overlay .modal{
+ zoom:var(--ui-scale,1)}
 #checkBanner{position:absolute;z-index:28;left:50%;top:calc(72px + var(--safeT));transform:translateX(-50%);
  display:none;padding:8px 16px;border:1px solid var(--amber);border-radius:999px;
  background:rgba(28,18,6,.92);color:var(--gold2);font-size:12px;letter-spacing:.02em;
@@ -510,10 +522,10 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
   <footer id="bottom">
     <div id="agents"></div>
     <div id="actions">
-      <button class="action" id="stanceBtn"><div class="ico">◒</div><span id="stanceLabel">웅크리기</span><b>C</b></button>
-      <button class="action" id="abilityBtn"><div class="ico" id="abilityIcon">偽</div><span id="abilityLabel">변장</span><b>Q</b><em class="cd" id="abilityCd"></em></button>
-      <button class="action" id="secondBtn"><div class="ico" id="secondIcon">談</div><span id="secondLabel">대화 유인</span><b>X</b><em class="cd" id="secondCd"></em></button>
-      <button class="action" id="interactBtn"><div class="ico">手</div><span>상호작용</span><b>E</b></button>
+      <button class="action" id="stanceBtn"><div class="ico">◒</div><span id="stanceLabel">웅크리기</span><b data-bind="crouch">C</b></button>
+      <button class="action" id="abilityBtn"><div class="ico" id="abilityIcon">偽</div><span id="abilityLabel">변장</span><b data-bind="ability">Q</b><em class="cd" id="abilityCd"></em></button>
+      <button class="action" id="secondBtn"><div class="ico" id="secondIcon">談</div><span id="secondLabel">대화 유인</span><b data-bind="second">X</b><em class="cd" id="secondCd"></em></button>
+      <button class="action" id="interactBtn"><div class="ico">手</div><span>상호작용</span><b data-bind="interact">E</b></button>
       <button class="action" id="waitBtn"><div class="ico">◷</div><span>대기</span><b>W</b></button>
     </div>
     <div id="planBox">
@@ -570,6 +582,22 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
         <button type="button" data-slot="2">밀명 셋</button>
       </div>
       <div class="volRow"><span>소리</span><input id="volSlider" type="range" min="0" max="100" value="55"></div>
+      <div class="a11yBox">
+        <b class="lab">보기와 조작</b>
+        <div class="volRow"><span>시야콘</span>
+          <select id="a11yColor">
+            <option value="default">기본</option>
+            <option value="cb">색맹 보조 · 무늬</option>
+          </select>
+        </div>
+        <div class="volRow"><span>글쇠 크기</span>
+          <input id="uiScale" type="range" min="90" max="130" step="5" value="100">
+          <em id="uiScaleVal">100%</em>
+        </div>
+        <div class="bindRow" id="bindRow"></div>
+        <button type="button" id="a11yReset">조작 초기화</button>
+        <p style="margin:8px 0 0;font-size:11px;color:var(--muted);text-align:left">시야콘·글쇠만 이 기기에 남긴다. 저장 슬롯과 섞지 않는다. Esc는 듣기 취소.</p>
+      </div>
       <div class="modalBtns">
         <button id="resumeBtn">계속</button>
         <button id="saveBtn">지금 저장</button>
@@ -2866,6 +2894,126 @@ const AGENT_DEFS = {
 };
 
 const VISION = { INNER_FOV: 0.45, INNER_RANGE: 0.6 };
+const A11Y_KEY = 'haemu-a11y-v1';
+const A11Y_BINDS = [
+  { id: 'ability', label: '기술', def: 'q' },
+  { id: 'second', label: '보조 기술', def: 'x' },
+  { id: 'interact', label: '조사', def: 'e' },
+  { id: 'crouch', label: '웅크리기', def: 'c' },
+  { id: 'follow', label: '따라가기', def: 'f' }
+];
+const A11Y_RESERVED = {
+  escape: 1, tab: 1, enter: 1, backspace: 1, shift: 1, control: 1, meta: 1, alt: 1,
+  ' ': 1, w: 1, a: 1, s: 1, d: 1, '1': 1, '2': 1, '3': 1, '4': 1,
+  f1: 1, f5: 1, f8: 1, f9: 1
+};
+const a11y = { color: 'default', uiScale: 1, binds: {}, listen: null };
+function defaultBinds() {
+  const o = {};
+  for (const b of A11Y_BINDS) o[b.id] = b.def;
+  return o;
+}
+a11y.binds = defaultBinds();
+
+function keyToken(e) {
+  if (e.code === 'Space' || e.key === ' ') return ' ';
+  if (e.key && e.key.length === 1) return e.key.toLowerCase();
+  return (e.key || '').toLowerCase();
+}
+function keyLabel(tok) {
+  if (tok === ' ') return 'Space';
+  if (!tok) return '—';
+  return tok.length === 1 ? tok.toUpperCase() : tok;
+}
+function actionForKey(tok) {
+  for (const id of Object.keys(a11y.binds)) if (a11y.binds[id] === tok) return id;
+  return null;
+}
+function applyUiScale(s) {
+  const v = clamp(+s || 1, 0.9, 1.3);
+  a11y.uiScale = v;
+  document.documentElement.style.setProperty('--ui-scale', String(v));
+  const lab = $('#uiScaleVal'); if (lab) lab.textContent = Math.round(v * 100) + '%';
+  const sl = $('#uiScale'); if (sl) sl.value = String(Math.round(v * 100));
+}
+function refreshBindLabels() {
+  $$('[data-bind]').forEach(el => {
+    const id = el.getAttribute('data-bind');
+    el.textContent = keyLabel(a11y.binds[id]);
+  });
+  const row = $('#bindRow');
+  if (!row) return;
+  row.innerHTML = A11Y_BINDS.map(b =>
+    '<button type="button" data-listen="' + b.id + '"' + (a11y.listen === b.id ? ' class="listen"' : '') + '>'
+    + b.label + '<em>' + (a11y.listen === b.id ? '키를 누르시오' : keyLabel(a11y.binds[b.id])) + '</em></button>'
+  ).join('');
+  row.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      a11y.listen = btn.getAttribute('data-listen');
+      refreshBindLabels();
+      toast('바꿀 키를 누르시오', 'plan');
+    };
+  });
+}
+function applyA11y() {
+  applyUiScale(a11y.uiScale);
+  const sel = $('#a11yColor'); if (sel) sel.value = a11y.color === 'cb' ? 'cb' : 'default';
+  refreshBindLabels();
+}
+function persistA11y() {
+  try { localStorage.setItem(A11Y_KEY, JSON.stringify({ color: a11y.color, uiScale: a11y.uiScale, binds: a11y.binds })); }
+  catch (err) { /* ignore */ }
+}
+function loadA11y() {
+  try {
+    const v = JSON.parse(localStorage.getItem(A11Y_KEY) || 'null');
+    if (v && typeof v === 'object') {
+      if (v.color === 'cb' || v.color === 'default') a11y.color = v.color;
+      if (v.uiScale) a11y.uiScale = clamp(+v.uiScale, 0.9, 1.3);
+      if (v.binds && typeof v.binds === 'object') {
+        const next = defaultBinds();
+        for (const b of A11Y_BINDS) if (typeof v.binds[b.id] === 'string' && v.binds[b.id]) next[b.id] = v.binds[b.id];
+        a11y.binds = next;
+      }
+    }
+  } catch (err) { /* ignore */ }
+  applyA11y();
+}
+function setA11y(partial) {
+  if (partial.color != null) a11y.color = partial.color === 'cb' ? 'cb' : 'default';
+  if (partial.uiScale != null) a11y.uiScale = clamp(+partial.uiScale, 0.9, 1.3);
+  if (partial.binds) a11y.binds = Object.assign(defaultBinds(), partial.binds);
+  applyA11y(); persistA11y();
+  return { color: a11y.color, uiScale: a11y.uiScale, binds: Object.assign({}, a11y.binds) };
+}
+function tryBindKey(tok) {
+  if (!a11y.listen) return false;
+  if (A11Y_RESERVED[tok] || /^f\d+$/.test(tok)) {
+    toast('그 키는 쓸 수 없다', 'warn');
+    a11y.listen = null; refreshBindLabels(); return true;
+  }
+  for (const id of Object.keys(a11y.binds)) {
+    if (id !== a11y.listen && a11y.binds[id] === tok) {
+      toast('이미 다른 조작에 쓰이는 키다', 'warn');
+      a11y.listen = null; refreshBindLabels(); return true;
+    }
+  }
+  a11y.binds[a11y.listen] = tok;
+  a11y.listen = null;
+  persistA11y(); applyA11y();
+  toast('키를 바꿨다', 'plan');
+  return true;
+}
+function visionStyle(hot, warm, inner) {
+  if (a11y.color === 'cb') {
+    if (hot) return { fill: inner ? 'rgba(196,64,168,.16)' : 'rgba(196,64,168,.07)', stroke: inner ? 'rgba(255,150,230,.42)' : 'rgba(255,150,230,.22)', hatch: 'x' };
+    if (warm) return { fill: inner ? 'rgba(232,188,48,.13)' : 'rgba(232,188,48,.06)', stroke: inner ? 'rgba(255,214,80,.34)' : 'rgba(255,214,80,.16)', hatch: '/' };
+    return { fill: inner ? 'rgba(48,132,210,.10)' : 'rgba(48,132,210,.045)', stroke: inner ? 'rgba(110,190,240,.28)' : 'rgba(110,190,240,.12)', hatch: '.' };
+  }
+  if (hot) return { fill: inner ? 'rgba(220,70,48,.13)' : 'rgba(220,70,48,.055)', stroke: inner ? 'rgba(255,120,88,.32)' : 'rgba(255,120,88,.16)', hatch: null };
+  if (warm) return { fill: inner ? 'rgba(214,168,72,.10)' : 'rgba(214,168,72,.045)', stroke: inner ? 'rgba(232,196,110,.20)' : 'rgba(232,196,110,.10)', hatch: null };
+  return { fill: inner ? 'rgba(214,176,92,.06)' : 'rgba(214,176,92,.028)', stroke: inner ? 'rgba(232,196,120,.12)' : 'rgba(232,196,120,.07)', hatch: null };
+}
 const WAKE_MS = 75000;
 const SAVE_SLOTS = 3;
 const DIFFICULTY = {
@@ -5264,6 +5412,7 @@ const HELP_HTML = `
     <li><b>끌기 · 두 손가락</b> 화면 이동 · 확대</li>
     <li><b>계책</b> 시간 정지 · <b>일제 실행</b> 예약 명령을 한꺼번에</li>
     <li>키보드: 1~4 대원 · C 웅크리기 · Q/X 기술 · E 조사 · Space 계책 · <b>Shift+클릭</b> 경유 · <b>Ctrl+끌기</b> 부대 선택 · <b>F5</b> 저장 · <b>F8</b> 불러오기</li>
+    <li>일시정지에서 시야콘 색맹 보조·키 재배치·글쇠 크기를 바꿀 수 있다</li>
   </ul>
 </div>
 <div class="hcol">
@@ -5386,17 +5535,47 @@ function guardCone(g, rangeScale, fovScale) {
   return pts;
 }
 
-function fillCone(g2, g, pts, fill, stroke) {
+function fillCone(g2, g, pts, fill, stroke, hatch) {
   const gz = groundZ(g.tx, g.ty);
   g2.beginPath();
   const o = { x: isoX(g.tx + .5, g.ty + .5), y: isoY(g.tx + .5, g.ty + .5, gz) };
   g2.moveTo(o.x, o.y);
+  let minX = o.x, maxX = o.x, minY = o.y, maxY = o.y;
   for (const p of pts) {
     const z = groundZ(p[0], p[1]);
-    g2.lineTo(isoX(p[0] + .5, p[1] + .5), isoY(p[0] + .5, p[1] + .5, z));
+    const x = isoX(p[0] + .5, p[1] + .5), y = isoY(p[0] + .5, p[1] + .5, z);
+    g2.lineTo(x, y);
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
   }
   g2.closePath();
   g2.fillStyle = fill; g2.fill();
+  if (hatch) {
+    g2.save();
+    g2.clip();
+    g2.strokeStyle = stroke;
+    g2.globalAlpha = 0.55;
+    g2.lineWidth = 1.1;
+    const step = hatch === 'x' ? 7 : 9;
+    const rise = Math.max(8, maxY - minY);
+    if (hatch === '/' || hatch === 'x') {
+      for (let x = minX - rise; x < maxX + rise; x += step) {
+        g2.beginPath(); g2.moveTo(x, minY); g2.lineTo(x + rise, maxY); g2.stroke();
+      }
+    }
+    if (hatch === 'x') {
+      for (let x = minX - rise; x < maxX + rise; x += step) {
+        g2.beginPath(); g2.moveTo(x, maxY); g2.lineTo(x + rise, minY); g2.stroke();
+      }
+    }
+    if (hatch === '.') {
+      g2.fillStyle = stroke;
+      for (let y = minY; y < maxY; y += 8)
+        for (let x = minX + (((y / 8) | 0) % 2) * 4; x < maxX; x += 8)
+          g2.fillRect(x, y, 1.6, 1.6);
+    }
+    g2.restore();
+  }
   g2.strokeStyle = stroke; g2.lineWidth = 1.0; g2.stroke();
 }
 
@@ -5407,14 +5586,12 @@ function drawVisionCones(g2) {
     if (g.tx < b.xMin - 14 || g.tx > b.xMax + 14 || g.ty < b.yMin - 14 || g.ty > b.yMax + 14) continue;
     const hot = g.ai === 'alert', warm = g.suspicion > 0.35;
     const outer = guardCone(g, 1, 1);
+    const so = visionStyle(hot, warm, false);
     g2.save();
-    fillCone(g2, g, outer,
-      hot ? 'rgba(220,70,48,.055)' : warm ? 'rgba(214,168,72,.045)' : 'rgba(214,176,92,.028)',
-      hot ? 'rgba(255,120,88,.16)' : warm ? 'rgba(232,196,110,.10)' : 'rgba(232,196,120,.07)');
+    fillCone(g2, g, outer, so.fill, so.stroke, so.hatch);
     const inner = guardCone(g, VISION.INNER_RANGE, VISION.INNER_FOV);
-    fillCone(g2, g, inner,
-      hot ? 'rgba(220,70,48,.13)' : warm ? 'rgba(214,168,72,.10)' : 'rgba(214,176,92,.06)',
-      hot ? 'rgba(255,120,88,.32)' : warm ? 'rgba(232,196,110,.20)' : 'rgba(232,196,120,.12)');
+    const si = visionStyle(hot, warm, true);
+    fillCone(g2, g, inner, si.fill, si.stroke, si.hatch);
     g2.restore();
   }
 }
@@ -6130,7 +6307,14 @@ function onTouchEnd(e) { for (const t of e.changedTouches) touches.delete(t.iden
 
 /* 키보드 */
 function onKeyDown(e) {
-  if (e.target.matches && e.target.matches('input,textarea')) return;
+  if (e.target.matches && e.target.matches('input,textarea,select')) return;
+  if (a11y.listen) {
+    e.preventDefault();
+    const tok = keyToken(e);
+    if (tok === 'escape') { a11y.listen = null; refreshBindLabels(); return; }
+    tryBindKey(tok);
+    return;
+  }
   if (e.key === 'Escape') {
     e.preventDefault();
     state.targetMode = null;
@@ -6165,11 +6349,12 @@ function onKeyDown(e) {
   if (e.key === 'Tab') { e.preventDefault(); cycleAgent(); return; }
   if (e.key === 'F5') { e.preventDefault(); writeSave(false, 0); return; }
   if (e.key === 'F8') { e.preventDefault(); quickLoad(0); return; }
-  if (k === 'q') useAbility();
-  else if (k === 'x') useSecond();
-  else if (k === 'e') interact();
-  else if (k === 'c') { const a = selectedAgent(); if (a) { a.crouch = !a.crouch; toast(a.crouch ? '웅크려 이동한다' : '일어섰다'); updateHUD(); } }
-  else if (k === 'f') { const a = selectedAgent(); if (a) { state.followSel = !state.followSel; toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); } }
+  const act = actionForKey(keyToken(e));
+  if (act === 'ability') useAbility();
+  else if (act === 'second') useSecond();
+  else if (act === 'interact') interact();
+  else if (act === 'crouch') { const a = selectedAgent(); if (a) { a.crouch = !a.crouch; toast(a.crouch ? '웅크려 이동한다' : '일어섰다'); updateHUD(); } }
+  else if (act === 'follow') { const a = selectedAgent(); if (a) { state.followSel = !state.followSel; toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); } }
   else if (k === 'v') { state.showLabels = !state.showLabels; }
   else if (k === 'm') { audio.setMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
   else if (k === 'r') restart();
@@ -6762,6 +6947,16 @@ function boot() {
     mutePause.textContent = audio.muted ? '소리 켜기' : '소리 끄기';
     toast(audio.muted ? '음소거' : '소리 켜짐');
   };
+  loadA11y();
+  const a11yColor = $('#a11yColor');
+  if (a11yColor) a11yColor.onchange = () => setA11y({ color: a11yColor.value });
+  const uiScale = $('#uiScale');
+  if (uiScale) uiScale.oninput = () => setA11y({ uiScale: (+uiScale.value) / 100 });
+  const a11yReset = $('#a11yReset');
+  if (a11yReset) a11yReset.onclick = () => {
+    a11y.color = 'default'; a11y.uiScale = 1; a11y.binds = defaultBinds(); a11y.listen = null;
+    applyA11y(); persistA11y(); toast('보기와 조작을 되돌렸다', 'plan');
+  };
   const vol = $('#volSlider');
   if (vol) {
     vol.value = String(Math.round((audio.vol || 0.55) * 100));
@@ -6855,7 +7050,8 @@ function boot() {
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
-    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; },
+    a11y, setA11y, loadA11y, visionStyle, actionForKey, keyToken, defaultBinds
   };
 }
 
