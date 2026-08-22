@@ -4175,6 +4175,30 @@ function buildInteractables() {
 /* ---------- 유틸 ---------- */
 function agentAt(a) { return { tx: a.tx, ty: a.ty }; }
 
+/* 한 칸 옆이 아니면 벽·닫힌 문 너머, 다른 방 안은 집지 않는다 */
+function interactReachable(ax, ay, bx, by) {
+  const sx = Math.round(ax), sy = Math.round(ay), tx = Math.round(bx), ty = Math.round(by);
+  if (!inMap(tx, ty)) return false;
+  const chess = Math.max(Math.abs(sx - tx), Math.abs(sy - ty));
+  if (chess <= 1) return true;
+  const ia = idx(sx, sy), ib = idx(tx, ty);
+  const insA = map.inside[ia], insB = map.inside[ib];
+  if (insB >= 0 && insA !== insB) return false;
+  const steps = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) * 2));
+  for (let s = 1; s < steps; s++) {
+    const t = s / steps;
+    const x = Math.round(ax + (bx - ax) * t);
+    const y = Math.round(ay + (by - ay) * t);
+    if ((x === sx && y === sy) || (x === tx && y === ty)) continue;
+    if (!inMap(x, y)) return false;
+    const i = idx(x, y);
+    if (map.solid[i]) return false;
+    const door = map.doorAt.get(i);
+    if (door && !door.open && !door.broken) return false;
+  }
+  return true;
+}
+
 function nearestInteract(a, maxD) {
   const R = maxD || 2.2;
   let best = null, bd = R;
@@ -4182,24 +4206,29 @@ function nearestInteract(a, maxD) {
     if (o.done && o.kind !== 'escape') continue;
     if (o.hidden && !state.secretPathOpen) continue;
     if (o.kind === 'evidence' && o.taken) continue;
+    if (!interactReachable(a.tx, a.ty, o.tx, o.ty)) continue;
     const d = Math.hypot(o.tx - a.tx, o.ty - a.ty);
     if (d < bd) { bd = d; best = { type: 'obj', o, d }; }
   }
   for (const d of map.doors) {
+    if (!interactReachable(a.tx, a.ty, d.tx, d.ty)) continue;
     const dd = Math.hypot(d.tx + 0.5 - a.tx, d.ty + 0.5 - a.ty);
     if (dd < bd) { bd = dd; best = { type: 'door', o: d, d: dd }; }
   }
   for (const l of map.lamps) {
     if (!l.on) continue;
+    if (!interactReachable(a.tx, a.ty, l.tx, l.ty)) continue;
     const dd = Math.hypot(l.tx + .5 - a.tx, l.ty + .5 - a.ty);
     if (dd < bd) { bd = dd; best = { type: 'lamp', o: l, d: dd }; }
   }
   for (const g of guards) {
     if (!g.unconscious) continue;
+    if (!interactReachable(a.tx, a.ty, g.tx, g.ty)) continue;
     const dd = Math.hypot(g.tx - a.tx, g.ty - a.ty);
     if (dd < bd) { bd = dd; best = { type: 'body', o: g, d: dd }; }
   }
   for (const c of civilians) {
+    if (!interactReachable(a.tx, a.ty, c.tx, c.ty)) continue;
     const dd = Math.hypot(c.tx - a.tx, c.ty - a.ty);
     if (dd >= bd) continue;
     if (c.type === 'patient' && !c.healed) { bd = dd; best = { type: 'heal', o: c, d: dd }; }
@@ -4207,8 +4236,10 @@ function nearestInteract(a, maxD) {
     else if (c.type === 'prisoner' && c.freed && !c.following) { bd = dd; best = { type: 'lead', o: c, d: dd }; }
   }
   if (vale && !vale.caught && !state.valeEscaped) {
-    const dd = Math.hypot(vale.tx - a.tx, vale.ty - a.ty);
-    if (dd < bd && a.id === 'mujin') { bd = dd; best = { type: 'vale', o: vale, d: dd }; }
+    if (interactReachable(a.tx, a.ty, vale.tx, vale.ty)) {
+      const dd = Math.hypot(vale.tx - a.tx, vale.ty - a.ty);
+      if (dd < bd && a.id === 'mujin') { bd = dd; best = { type: 'vale', o: vale, d: dd }; }
+    }
   }
   return best;
 }
@@ -6849,7 +6880,7 @@ function boot() {
     cam, findPath, passable, walkableAt, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
     interact, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
-    nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
+    nearestInteract, interactReachable, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
