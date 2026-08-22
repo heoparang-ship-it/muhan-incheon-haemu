@@ -2085,27 +2085,83 @@ function drawTerrain(g) {
   }
 }
 
-/* ---------- 벽 타일 ---------- */
-function drawWallTile(g, x, y, z0, h, tone, kind) {
+/* ---------- 담장 프리렌더 ---------- */
+/* kind==='wall' 은 매 프레임 상자 기하를 그리지 않고,
+   이웃 마스크별로 한 번 구운 아이소 스프라이트를 찍는다.
+   문·밧줄 칸은 비워 출입구가 담장 덩어리에 묻히지 않게 한다. */
+const WALL_N = 1, WALL_E = 2, WALL_S = 4, WALL_W = 8;
+const wallSpriteCache = new Map();
+const wallPrerenderStats = { blits: 0, fallback: 0, baked: 0 };
+
+function isWallSegment(bd, x, y) {
+  if (!bd || !inMap(x, y)) return false;
+  const i = idx(x, y);
+  if (!bd.tileSet) bd.tileSet = new Set(bd.tiles || []);
+  if (!bd.tileSet.has(i)) return false;
+  if (state && state.ropes && state.ropes.has(i)) return false;
+  if (map.doorAt && map.doorAt.has(i)) return false;
+  return true;
+}
+
+function wallNeighborMask(bd, x, y) {
+  let m = 0;
+  if (isWallSegment(bd, x, y - 1)) m |= WALL_N;
+  if (isWallSegment(bd, x + 1, y)) m |= WALL_E;
+  if (isWallSegment(bd, x, y + 1)) m |= WALL_S;
+  if (isWallSegment(bd, x - 1, y)) m |= WALL_W;
+  return m;
+}
+
+function wallFaceImage() {
+  if (ART._wallFace) return ART._wallFace;
+  const im = ART.img && ART.img.bld_wall && ART.img.bld_wall.sheets
+    ? ART.img.bld_wall.sheets.idle : null;
+  if (!im || !im.complete || !im.naturalWidth) return null;
+  const c = document.createElement('canvas');
+  c.width = im.naturalWidth; c.height = im.naturalHeight;
+  const g = c.getContext('2d');
+  g.drawImage(im, 0, 0);
+  const img = g.getImageData(0, 0, c.width, c.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], gv = d[i + 1], b = d[i + 2], a = d[i + 3];
+    if (a < 18) { d[i + 3] = 0; continue; }
+    const mx = r > gv ? (r > b ? r : b) : (gv > b ? gv : b);
+    const mn = r < gv ? (r < b ? r : b) : (gv < b ? gv : b);
+    const avg = (r + gv + b) / 3;
+    if (mx > 168 && (mx - mn) < 26 && avg > 158) d[i + 3] = 0;
+  }
+  g.putImageData(img, 0, 0);
+  ART._wallFace = c;
+  return c;
+}
+
+function paintWallGeometry(g, x, y, z0, h, tone, kind, mask, win) {
+  const fence = kind === 'wall';
   const zt = z0 + h;
+  const faceTop = fence ? zt + 0.16 : zt;
   const A = { x: isoX(x, y), y: isoY(x, y, zt) };
   const B = { x: isoX(x + 1, y), y: isoY(x + 1, y, zt) };
   const C = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, zt) };
   const D = { x: isoX(x, y + 1), y: isoY(x, y + 1, zt) };
-  const Bb = { x: B.x, y: isoY(x + 1, y, z0) };
-  const Cb = { x: C.x, y: isoY(x + 1, y + 1, z0) };
-  const Db = { x: D.x, y: isoY(x, y + 1, z0) };
-  const win = map.window && map.window[idx(x, y)];
-  const wallIm = (typeof ART !== 'undefined' && ART.img && ART.img.bld_wall && ART.img.bld_wall.sheets)
-    ? ART.img.bld_wall.sheets.idle : null;
-  const texOk = wallIm && wallIm.complete && wallIm.naturalWidth;
+  const Bf = { x: isoX(x + 1, y), y: isoY(x + 1, y, faceTop) };
+  const Cf = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, faceTop) };
+  const Df = { x: isoX(x, y + 1), y: isoY(x, y + 1, faceTop) };
+  const Bb = { x: isoX(x + 1, y), y: isoY(x + 1, y, z0) };
+  const Cb = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, z0) };
+  const Db = { x: isoX(x, y + 1), y: isoY(x, y + 1, z0) };
+  const wallIm = wallFaceImage();
+  const texOk = !!(wallIm && (wallIm.naturalWidth || wallIm.width));
+  const showE = !(mask & WALL_E);
+  const showS = !(mask & WALL_S);
 
   const face = (p0, p1, p2, p3, shadeF, uvFlip) => {
     if (texOk) {
       drawTexQuad(g, wallIm, [p0.x, p0.y], [p1.x, p1.y], [p2.x, p2.y], [p3.x, p3.y],
-        uvFlip ? [1, 0] : [0, 0], uvFlip ? [0, 0] : [1, 0], uvFlip ? [0, 1] : [1, 1], uvFlip ? [1, 1] : [0, 1]);
+        uvFlip ? [1, 0] : [0, 0], uvFlip ? [0, 0] : [1, 0],
+        uvFlip ? [0, 1] : [1, 1], uvFlip ? [1, 1] : [0, 1]);
       g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
-      g.fillStyle = 'rgba(0,0,0,' + (1 - shadeF) * 0.45 + ')'; g.fill();
+      g.fillStyle = 'rgba(0,0,0,' + (1 - shadeF) * 0.22 + ')'; g.fill();
     } else {
       g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
       g.fillStyle = shade(tone, shadeF); g.fill();
@@ -2115,33 +2171,103 @@ function drawWallTile(g, x, y, z0, h, tone, kind) {
   if (win) {
     const t0 = 0.42, t1 = 0.88;
     const lerpP = (p, q, t) => ({ x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t) });
-    const Be = lerpP(B, Bb, t0), Ce = lerpP(C, Cb, t0), De = lerpP(D, Db, t0);
-    const Bl = lerpP(B, Bb, t1), Cl = lerpP(C, Cb, t1), Dl = lerpP(D, Db, t1);
-    face(B, C, Ce, Be, 0.60);
-    face(D, C, Ce, De, 0.86);
-    face(Bl, Cl, Cb, Bb, 0.55);
-    face(Dl, Cl, Cb, Db, 0.80);
-    g.fillStyle = 'rgba(8,14,18,.72)';
-    g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.fill();
-    g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(210,190,140,.45)'; g.lineWidth = 1.2;
-    g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.stroke();
-    g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.stroke();
+    if (showE) {
+      const Be = lerpP(Bf, Bb, t0), Ce = lerpP(Cf, Cb, t0);
+      const Bl = lerpP(Bf, Bb, t1), Cl = lerpP(Cf, Cb, t1);
+      face(Bf, Cf, Ce, Be, 0.60);
+      face(Bl, Cl, Cb, Bb, 0.55);
+      g.fillStyle = 'rgba(8,14,18,.72)';
+      g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(210,190,140,.45)'; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(Be.x, Be.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Bl.x, Bl.y); g.closePath(); g.stroke();
+    }
+    if (showS) {
+      const De = lerpP(Df, Db, t0), Ce = lerpP(Cf, Cb, t0);
+      const Dl = lerpP(Df, Db, t1), Cl = lerpP(Cf, Cb, t1);
+      face(Df, Cf, Ce, De, 0.86);
+      face(Dl, Cl, Cb, Db, 0.80);
+      g.fillStyle = 'rgba(8,14,18,.72)';
+      g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(210,190,140,.45)'; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(De.x, De.y); g.lineTo(Ce.x, Ce.y); g.lineTo(Cl.x, Cl.y); g.lineTo(Dl.x, Dl.y); g.closePath(); g.stroke();
+    }
   } else {
-    face(B, C, Cb, Bb, 0.60);
-    face(D, C, Cb, Db, 0.86);
+    if (showE) face(Bf, Cf, Cb, Bb, 0.60);
+    if (showS) face(Df, Cf, Cb, Db, 0.86);
+    if (fence && !showE && !showS) {
+      const stub = 0.28;
+      const Es = { x: isoX(x + 1, y + 1 - stub), y: isoY(x + 1, y + 1 - stub, faceTop) };
+      const Ebs = { x: isoX(x + 1, y + 1 - stub), y: isoY(x + 1, y + 1 - stub, z0) };
+      const Ss = { x: isoX(x + 1 - stub, y + 1), y: isoY(x + 1 - stub, y + 1, faceTop) };
+      const Sbs = { x: isoX(x + 1 - stub, y + 1), y: isoY(x + 1 - stub, y + 1, z0) };
+      face(Es, Cf, Cb, Ebs, 0.60);
+      face(Ss, Cf, Cb, Sbs, 0.86);
+    }
   }
 
-  g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(D.x, D.y); g.closePath();
-  g.fillStyle = shade(tone, kind === 'wall' ? 1.30 : 1.10); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,.26)'; g.lineWidth = 0.9;
-  g.beginPath();
-  g.moveTo(D.x, D.y); g.lineTo(C.x, C.y); g.lineTo(B.x, B.y);
-  if (kind === 'wall' && !win) {
-    const t = 0.5;
-    g.moveTo(D.x, lerp(D.y, Db.y, t)); g.lineTo(C.x, lerp(C.y, Cb.y, t)); g.lineTo(B.x, lerp(B.y, Bb.y, t));
+  const ins = fence ? 0.16 : 0;
+  const At = { x: isoX(x + ins, y + ins), y: isoY(x + ins, y + ins, zt) };
+  const Bt = { x: isoX(x + 1 - ins, y + ins), y: isoY(x + 1 - ins, y + ins, zt) };
+  const Ct = { x: isoX(x + 1 - ins, y + 1 - ins), y: isoY(x + 1 - ins, y + 1 - ins, zt) };
+  const Dt = { x: isoX(x + ins, y + 1 - ins), y: isoY(x + ins, y + 1 - ins, zt) };
+  if (texOk && fence) {
+    drawTexQuad(g, wallIm, [At.x, At.y], [Bt.x, Bt.y], [Ct.x, Ct.y], [Dt.x, Dt.y],
+      [0, 0], [1, 0], [1, 0.18], [0, 0.18]);
+  } else {
+    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(D.x, D.y); g.closePath();
+    g.fillStyle = shade(tone, fence ? 1.30 : 1.10); g.fill();
   }
+  g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = 0.8;
+  g.beginPath();
+  g.moveTo((fence ? Dt : D).x, (fence ? Dt : D).y);
+  g.lineTo((fence ? Ct : C).x, (fence ? Ct : C).y);
+  g.lineTo((fence ? Bt : B).x, (fence ? Bt : B).y);
   g.stroke();
+}
+
+function wallCacheKey(mask, win, h, tone) {
+  return mask + (win ? 'w' : 's') + ':' + (h * 50 | 0) + ':' + (tone[0] | 0) + ',' + (tone[1] | 0) + ',' + (tone[2] | 0);
+}
+
+function bakeWallSprite(mask, win, h, tone, kind) {
+  const pad = 10;
+  const capPx = 8;
+  const minX = -TW / 2 - pad - capPx;
+  const maxX = TW / 2 + pad + capPx;
+  const minY = -h * ZH - pad - 14;
+  const maxY = TH + pad;
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(maxX - minX);
+  c.height = Math.ceil(maxY - minY);
+  const g = c.getContext('2d');
+  g.translate(-minX, -minY);
+  paintWallGeometry(g, 0, 0, 0, h, tone, kind, mask, win);
+  wallPrerenderStats.baked++;
+  return { canvas: c, ox: minX, oy: minY };
+}
+
+function tryDrawWallSprite(g, x, y, z0, h, tone, bd, win) {
+  if (!wallFaceImage()) return false;
+  const mask = wallNeighborMask(bd, x, y);
+  const key = wallCacheKey(mask, win, h, tone);
+  let rec = wallSpriteCache.get(key);
+  if (!rec) {
+    rec = bakeWallSprite(mask, win, h, tone, 'wall');
+    wallSpriteCache.set(key, rec);
+  }
+  g.drawImage(rec.canvas, isoX(x, y) + rec.ox, isoY(x, y, z0) + rec.oy);
+  wallPrerenderStats.blits++;
+  return true;
+}
+
+function drawWallTile(g, x, y, z0, h, tone, kind, bd) {
+  const win = !!(map.window && map.window[idx(x, y)]);
+  if (kind === 'wall') {
+    if (tryDrawWallSprite(g, x, y, z0, h, tone, bd, win)) return;
+    wallPrerenderStats.fallback++;
+  }
+  const mask = bd ? wallNeighborMask(bd, x, y) : 0;
+  paintWallGeometry(g, x, y, z0, h, tone, kind, mask, win);
 }
 
 /* 건물이 땅에 드리우는 그림자 */
@@ -2631,6 +2757,7 @@ function prepBuildings() {
   for (const b of map.buildings) {
     b.roofAlpha = 1;
     b.interiorSet = new Set(b.interiorTiles || []);
+    b.tileSet = new Set(b.tiles || []);
     if (b.kind === 'solid') b.interiorSet = new Set();
   }
 }
@@ -5675,6 +5802,8 @@ function drawSorted(g2) {
 
   /* 건물 벽 타일 */
   let wallCount = 0;
+  wallPrerenderStats.blits = 0;
+  wallPrerenderStats.fallback = 0;
   for (let bi = 0; bi < map.buildings.length; bi++) {
     const bd = map.buildings[bi];
     if (bd.x + bd.w < b.xMin - 4 || bd.x > b.xMax + 4 || bd.y + bd.h < b.yMin - 4 || bd.y > b.yMax + 4) continue;
@@ -5684,10 +5813,11 @@ function drawSorted(g2) {
       const x = i % MAP_W, y = (i / MAP_W) | 0;
       if (!inView(x, y)) continue;
       if (state.ropes.has(i)) continue;
+      if (bd.kind === 'wall' && map.doorAt && map.doorAt.has(i)) continue;
       const z = map.elev[i], h = bd.kind === 'wall' ? 1.6 : (bd.wallH || 1.4);
       const kind = bd.kind === 'wall' ? 'wall' : 'house';
       if (bd.artBody && !occupied && bd.kind !== 'wall') continue;
-      items.push({ d: x + y, z: 0, f: () => drawWallTile(g2, x, y, z, h, tone, kind) });
+      items.push({ d: x + y, z: 0, f: () => drawWallTile(g2, x, y, z, h, tone, kind, bd) });
       wallCount++;
     }
     if (bd.stair && (occupied || !bd.artBody)) {
@@ -6855,7 +6985,28 @@ function boot() {
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
-    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; },
+    wallNeighborMask, isWallSegment, wallSpriteCache, wallPrerenderStats,
+    wallPrerender: () => {
+      const compound = map.buildings.find(b => b.kind === 'wall');
+      let segs = 0, doors = 0;
+      if (compound) {
+        for (const i of compound.tiles) {
+          if (map.doorAt && map.doorAt.has(i)) doors++;
+          else segs++;
+        }
+      }
+      return {
+        ready: !!(ART._wallFace && (ART._wallFace.width || ART._wallFace.naturalWidth)),
+        cache: wallSpriteCache.size,
+        baked: wallPrerenderStats.baked,
+        blits: wallPrerenderStats.blits,
+        fallback: wallPrerenderStats.fallback,
+        compoundTiles: compound ? compound.tiles.length : 0,
+        compoundSegs: segs,
+        compoundDoors: doors
+      };
+    }
   };
 }
 
