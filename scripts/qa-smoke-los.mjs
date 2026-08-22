@@ -70,7 +70,7 @@ const info = await page.evaluate(() => {
 
   const throughClear = through ? H.hasSight(through.ax, through.ay, through.bx, through.by) : false;
   if (through) addSmoke(through.mx, through.my, 3.6, 14);
-  const throughBlocked = through ? H.hasSight(through.ax, through.ay, through.bx, through.by) : true;
+  const throughBlocked = through ? !H.hasSight(through.ax, through.ay, through.bx, through.by) : false;
   const throughMidBlocks = through ? H.smokeBlocks(through.mx, through.my) : false;
   const throughEndClear = through
     ? !H.smokeBlocks(through.ax, through.ay) && !H.smokeBlocks(through.bx, through.by)
@@ -153,27 +153,61 @@ const info = await page.evaluate(() => {
 
 const cam = await page.evaluate(() => {
   const H = window.__HAEMU__;
-  const a = H.agents.find((x) => x.id === "wolsim");
   H.state.paused = true;
-  H.state.selected = "wolsim";
-  if (H.centerOnSelected) H.centerOnSelected();
-  H.cam.targetZoom = H.cam.zoom = 1.05;
-  return { tx: a && a.tx, ty: a && a.ty, smoke: H.state.smoke.length };
-});
-await page.waitForTimeout(450);
-await page.screenshot({ path: "/workspace/screenshots/smoke-los-after.png" });
-
-await page.evaluate(() => {
-  const H = window.__HAEMU__;
   H.state.smoke = [];
   const a = H.agents.find((x) => x.id === "wolsim");
-  if (a) a.incenseUntil = 0;
-  if (H.centerOnSelected) H.centerOnSelected();
+  a.tx = 25; a.ty = 66; a.level = 0; a.incenseUntil = 0; a.path = [];
+  H.agents.filter((x) => x.id !== "wolsim").forEach((o, i) => {
+    o.tx = 28 + i * 0.4; o.ty = 70; o.path = [];
+  });
+  const g = H.guards.find((u) => u.type === "soldier" && !u.unconscious) || H.guards[0];
+  g.tx = 22; g.ty = 66; g.level = 0; g.angle = 0;
+  g.unconscious = false; g.hidden = false; g.netted = 0;
+  g.ai = "patrol"; g.path = []; g.coneT = 0;
+  H.selectAgent("wolsim");
+  H.centerOnSelected();
+  H.cam.targetZoom = H.cam.zoom = 1.2;
+  const box = document.getElementById("toast");
+  if (box) box.innerHTML = "";
+  return {
+    wolsim: [a.tx, a.ty],
+    guard: [g.tx, g.ty, g.type],
+    sight: H.hasSight(g.tx, g.ty, a.tx, a.ty, 1.6, 0.85, g.level, a.level),
+    see: H.guardSees(g, a, 0.016)
+  };
 });
-await page.waitForTimeout(350);
+await page.waitForTimeout(400);
 await page.screenshot({ path: "/workspace/screenshots/smoke-los-clear.png" });
 
+const afterCam = await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  const a = H.agents.find((x) => x.id === "wolsim");
+  const g = H.guards.find((u) => Math.round(u.tx) === 22 && Math.round(u.ty) === 66) || H.guards[0];
+  H.state.smoke = [{ tx: a.tx, ty: a.ty, r: 3.6, life: 14, max: 14 }];
+  g.coneT = 0;
+  H.centerOnSelected();
+  const box = document.getElementById("toast");
+  if (box) {
+    box.innerHTML = "";
+    const el = document.createElement("div");
+    el.className = "toastLine good";
+    el.textContent = "향 연기를 피웠다 — 시야가 끊긴다";
+    box.appendChild(el);
+  }
+  return {
+    sight: H.hasSight(g.tx, g.ty, a.tx, a.ty, 1.6, 0.85, g.level, a.level),
+    see: H.guardSees(g, a, 0.016),
+    smokeN: H.state.smoke.length
+  };
+});
+await page.waitForTimeout(400);
+await page.screenshot({ path: "/workspace/screenshots/smoke-los-after.png" });
+
 const fail = [];
+if (cam.sight !== true) fail.push("cam sight " + cam.sight);
+if (!(cam.see > 0)) fail.push("cam see " + cam.see);
+if (afterCam.sight !== false) fail.push("after sight " + afterCam.sight);
+if (afterCam.see !== 0) fail.push("after see " + afterCam.see);
 if (info.map[0] !== 96 || info.map[1] !== 96) fail.push("map " + info.map);
 if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + info.roles);
 if (!info.through) fail.push("no through pair");
@@ -194,6 +228,6 @@ if (info.seeUsed !== 0) fail.push("useSecond still seen " + info.seeUsed);
 if (!info.tideOk) fail.push("tide " + JSON.stringify(info.phases));
 if (errors.length) fail.push("console " + errors.join(" | "));
 
-console.log(JSON.stringify({ info, cam, errors, fail }, null, 2));
+console.log(JSON.stringify({ info, cam, afterCam, errors, fail }, null, 2));
 await browser.close();
 process.exit(fail.length ? 3 : 0);
