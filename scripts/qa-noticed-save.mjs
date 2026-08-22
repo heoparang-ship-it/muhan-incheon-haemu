@@ -75,6 +75,10 @@ const info = await page.evaluate(() => {
   H.applySave(old);
   const oldLamp = H.map.lamps.find((x) => x.tx === lamp.tx && x.ty === lamp.ty);
   const oldDoor = door && H.map.doors.find((x) => x.i === door.i);
+  const oldBeforeTrace = {
+    lampNoticed: !!(oldLamp && oldLamp.noticed),
+    doorNoticed: !!(oldDoor && oldDoor.noticed)
+  };
   const gOld = H.guards.find((x) => x.id === g.id) || H.guards[0];
   gOld.ai = "patrol";
   gOld.path = [];
@@ -119,8 +123,7 @@ const info = await page.evaluate(() => {
     afterDoorOpen: afterDoor && afterDoor.open,
     afterDoorNoticed: afterDoor && afterDoor.noticed,
     afterTrace,
-    oldLampNoticed: oldLamp && oldLamp.noticed,
-    oldDoorNoticed: oldDoor && oldDoor.noticed,
+    oldBeforeTrace,
     oldTrace,
     contLampOn: contLamp && contLamp.on,
     contLampNoticed: contLamp && contLamp.noticed,
@@ -175,8 +178,8 @@ if (info.afterLampOn !== false) fail.push("after lamp on " + info.afterLampOn);
 if (info.afterLampNoticed !== true) fail.push("after lamp noticed " + info.afterLampNoticed);
 if (info.afterDoorNoticed !== true) fail.push("after door noticed " + info.afterDoorNoticed);
 if (info.afterTrace.ai === "investigate") fail.push("noticed still triggered investigate " + JSON.stringify(info.afterTrace));
-if (info.oldLampNoticed) fail.push("old lamp noticed should be false");
-if (info.oldDoorNoticed) fail.push("old door noticed should be false");
+if (info.oldBeforeTrace.lampNoticed) fail.push("old lamp noticed should be false");
+if (info.oldBeforeTrace.doorNoticed) fail.push("old door noticed should be false");
 if (info.oldTrace.ai !== "investigate") fail.push("old save should investigate, got " + info.oldTrace.ai);
 if (info.contLampNoticed !== true) fail.push("continue lamp noticed " + info.contLampNoticed);
 if (info.contDoorNoticed !== true) fail.push("continue door noticed " + info.contDoorNoticed);
