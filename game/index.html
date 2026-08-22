@@ -6274,6 +6274,7 @@ function snapshotSave() {
     valeSpawned: state.valeSpawned,
     valeEscaped: state.valeEscaped,
     valeCaught: state.valeCaught,
+    processionStarted: !!state.processionStarted,
     waveMaskUnlocked: state.waveMaskUnlocked,
     waveMaskCycle: state.waveMaskCycle,
     boatRepaired: state.boatRepaired,
@@ -6309,7 +6310,7 @@ function snapshotSave() {
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
       freed: !!c.freed, rescued: !!c.rescued, following: !!c.following,
-      dead: !!c.dead, panic: c.panic || 0
+      dead: !!c.dead, panic: c.panic || 0, inProcession: !!c.inProcession
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
@@ -6405,6 +6406,7 @@ function applySave(s) {
   state.valeSpawned = !!s.valeSpawned;
   state.valeEscaped = !!s.valeEscaped;
   state.valeCaught = !!s.valeCaught;
+  state.processionStarted = !!s.processionStarted;
   state.waveMaskUnlocked = !!s.waveMaskUnlocked;
   state.waveMaskCycle = s.waveMaskCycle || 0;
   state.boatRepaired = !!s.boatRepaired;
@@ -6472,6 +6474,7 @@ function applySave(s) {
     const u = cc.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.freed = rec.freed; u.rescued = rec.rescued;
     u.following = rec.following; u.dead = rec.dead; u.panic = rec.panic; u.path = [];
+    u.inProcession = !!rec.inProcession;
   }
   const ii = byId(interactables);
   for (const rec of s.interactables || []) {
