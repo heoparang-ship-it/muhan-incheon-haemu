@@ -6211,6 +6211,14 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
+function setWaypointMode(on, opts) {
+  if (state) state.waypointMode = !!on;
+  if (typeof updateHUD === 'function') updateHUD();
+  if (!(opts && opts.quiet)) {
+    toast(state && state.waypointMode ? '경유 — 땅을 누르면 경로가 쌓인다' : '경유 해제', 'plan');
+  }
+}
+
 const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
 const SAVE_VERSION = 3;
@@ -6287,6 +6295,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    waypointMode: !!state.waypointMode,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6421,6 +6430,7 @@ function applySave(s) {
   state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
   state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
   state.showSoundFx = s.showSoundFx !== false;
+  state.waypointMode = !!s.waypointMode;
   for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
   state.queued = 0;
   if (s.secretPathOpen) {
@@ -6579,6 +6589,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setWaypointMode(false, { quiet: true });
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6688,11 +6699,7 @@ function boot() {
   $('#waitBtn').onclick = () => { const a = selectedAgent(); if (!a) return; if (state.planning) queueCmd(a, { type: 'wait', time: 1.5 }, '1.5초 대기 예약'); else { a.wait = 1.5; toast('잠시 멈춘다'); } };
   $('#planBtn').onclick = () => togglePlan();
   const wayBtn = $('#wayBtn');
-  if (wayBtn) wayBtn.onclick = () => {
-    state.waypointMode = !state.waypointMode;
-    updateHUD();
-    toast(state.waypointMode ? '경유 — 땅을 누르면 경로가 쌓인다' : '경유 해제', 'plan');
-  };
+  if (wayBtn) wayBtn.onclick = () => setWaypointMode(!state.waypointMode);
   const squadBtn = $('#squadBtn');
   if (squadBtn) squadBtn.onclick = () => {
     state.boxMode = !state.boxMode;
@@ -6852,6 +6859,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setWaypointMode,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
