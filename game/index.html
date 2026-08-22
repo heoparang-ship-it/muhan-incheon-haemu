@@ -6715,6 +6715,7 @@ function boot() {
     $('#objectives').classList.add('collapsed');
     $('#objectives').dataset.userOpen = '';
     const mask = $('#sheetMask'); if (mask) mask.classList.remove('show');
+    toast('목표를 접었다');
   };
   const sheetMask = $('#sheetMask');
   if (sheetMask) sheetMask.onclick = () => {
