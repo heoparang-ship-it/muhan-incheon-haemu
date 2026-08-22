@@ -6792,7 +6792,10 @@ function boot() {
   const tut = $('#tutorial'); if (tut) $('#tutClose').onclick = () => tut.remove();
 
   const pauseBtn = $('#pauseBtn');
-  if (pauseBtn) pauseBtn.onclick = () => setMenuPause(!state.menuPause);
+  if (pauseBtn) pauseBtn.onclick = () => {
+    setMenuPause(!state.menuPause);
+    if (state.menuPause) toast('시간을 접었다');
+  };
   const resumeBtn = $('#resumeBtn');
   if (resumeBtn) resumeBtn.onclick = () => setMenuPause(false);
   const saveBtn = $('#saveBtn');
