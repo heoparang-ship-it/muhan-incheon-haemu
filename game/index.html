@@ -5139,6 +5139,10 @@ function updateHUD() {
 
 /* ---------- 토스트 ---------- */
 let toastTimer = null;
+function clearToasts() {
+  const box = $('#toast');
+  if (box) box.innerHTML = '';
+}
 function toast(text, kind) {
   const box = $('#toast');
   const el = document.createElement('div');
@@ -6578,6 +6582,7 @@ function rebuildWorld() {
   spawnAll();
   vale = null;
   state.tideStage = tideStage();
+  clearToasts();
   initUI();
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
@@ -6853,7 +6858,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, toast, clearToasts,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
