@@ -898,6 +898,112 @@ const ZONE_NAME = {
   4: '염전과 갈대밭', 5: '선녀바위 해변', 6: '갯벌', 7: '백석섬 성소', 8: '해식동굴'
 };
 
+/* 장 1개 = 시드 + 배치표. 2장 맵은 아직 없다. 지형 공식·조수는 그대로다. */
+const CHAPTERS = {
+  gamnaru: {
+    id: 'gamnaru', index: 1, name: '감나루',
+    tag: '1장 · 감나루 · 실시간 분대 잠입 전술',
+    boot: '감나루를 펼치는 중…',
+    mapW: 96, mapH: 96, seed: 20260818,
+    compound: { x: 32, y: 26, w: 27, h: 23 },
+    rooms: [
+      { id: 'chapel', name: '예배당', x: 35, y: 29, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#59503f', roofTone: '#4a4234', doorSide: 's', stories: 2 },
+      { id: 'clinic', name: '무료 진료소', x: 47, y: 29, w: 6, h: 4, roof: 'tile', wallH: 1.35, tone: '#4c4238', roofTone: '#2f373b', doorSide: 's' },
+      { id: 'office', name: '베일 집무실', x: 50, y: 40, w: 6, h: 4, roof: 'tile', wallH: 1.5, tone: '#4b4034', roofTone: '#32363a', doorSide: 'n', locked: true },
+      { id: 'store', name: '약품 창고', x: 34, y: 41, w: 5, h: 4, roof: 'thatch', wallH: 1.25, tone: '#463b2c', roofTone: '#443a26', doorSide: 'n', locked: true },
+      { id: 'dorm', name: '조선인 봉사자 숙소', x: 44, y: 43, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#463c30', roofTone: '#303639', doorSide: 'n' },
+      { id: 'tavern', name: '주막', x: 19, y: 46, w: 5, h: 4, roof: 'thatch', wallH: 2.45, tone: '#4a3c2b', roofTone: '#463c25', doorSide: 's', stories: 2 },
+      { id: 'shrine', name: '당집', x: 11, y: 60, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#4a3232', roofTone: '#3a2e31', doorSide: 's' },
+      { id: 'beacon', name: '봉수 초소', x: 26, y: 10, w: 4, h: 4, roof: 'tile', wallH: 1.45, tone: '#463c30', roofTone: '#303639', doorSide: 's' },
+      { id: 'smugStore', name: '밀수품 창고', x: 73, y: 34, w: 5, h: 4, roof: 'thatch', wallH: 1.35, tone: '#40372a', roofTone: '#403624', doorSide: 's', locked: true },
+      { id: 'sanctum', name: '해상 예배당', x: 70, y: 70, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#655d4c', roofTone: '#544c3d', doorSide: 's', stories: 2 },
+      { id: 'cell', name: '감금실', x: 71, y: 81, w: 4, h: 4, roof: 'tile', wallH: 1.55, tone: '#3f3a35', roofTone: '#31373a', doorSide: 'n', locked: true },
+      { id: 'tideRoom', name: '조수 측정실', x: 79, y: 73, w: 4, h: 4, roof: 'tile', wallH: 1.35, tone: '#454039', roofTone: '#33383a', doorSide: 's', locked: true }
+    ],
+    houses: [[9, 43, 3, 2], [14, 42, 2, 2], [10, 49, 3, 2], [16, 47, 2, 2], [12, 54, 3, 2],
+      [20, 52, 2, 2], [8, 58, 2, 2], [17, 58, 3, 2], [24, 49, 2, 2], [25, 56, 3, 2],
+      [22, 44, 2, 2], [28, 47, 3, 2], [26, 62, 2, 2], [16, 63, 3, 2]],
+    earlyHouses: [
+      { x: 36, y: 36, w: 3, h: 2, roof: 'thatch', name: '야학' }
+    ],
+    midHouses: [
+      { x: 19, y: 18, w: 3, h: 2, roof: 'tile', name: '절벽 초소' },
+      { x: 71, y: 29, w: 3, h: 2, roof: 'thatch', name: '소금 창고' }
+    ],
+    lateHouses: [
+      { x: 66, y: 71, w: 3, h: 2, roof: 'tile', name: '신도 숙소' },
+      { x: 79, y: 67, w: 3, h: 2, roof: 'tile', name: '신도 숙소' }
+    ],
+    fieldHouses: [
+      { x: 39, y: 49, w: 2, h: 2, roof: 'thatch', name: '들막' },
+      { x: 54, y: 52, w: 3, h: 2, roof: 'thatch', name: '움막' },
+      { x: 47, y: 57, w: 2, h: 2, roof: 'thatch', name: '어망 창고' }
+    ],
+    reedBeds: [[44, 50, 15, 12], [61, 40, 13, 11], [32, 57, 12, 10], [20, 63, 11, 9], [66, 25, 9, 8], [36, 44, 8, 7]],
+    salt: { ox: 55, oy: 15, cols: 5, rows: 4, cell: 4, step: 5, zone: [52, 12, 32, 26] },
+    lamps: [
+      [45, 25, '정문 등불'], [31, 43, '뒷담 등불'], [59, 33, '옆문 등불'], [44, 36, '마당 등불'],
+      [40, 40, '마당 등불'], [48, 36, '마당 등불'], [20, 51, '주막 등불'], [13, 58, '당집 등불'],
+      [27, 60, '어촌 등불'], [67, 71, '선착장 등불'], [76, 70, '성소 등불'], [74, 86, '감금실 등불'],
+      [83, 84, '동굴 등불'], [87, 87, '계류장 등불'], [61, 21, '염전 등불'], [72, 33, '창고 등불'],
+      [23, 17, '초소 신호등'], [25, 9, '봉수 신호등'], [32, 21, '절벽 신호등']
+    ],
+    villageProps: [[12, 46, 'net'], [17, 51, 'net'], [21, 57, 'rack'], [11, 52, 'rack'],
+      [24, 46, 'jar'], [15, 45, 'jar'], [9, 55, 'jar'], [27, 54, 'cart'],
+      [18, 62, 'well'], [23, 51, 'boat'], [15, 65, 'boat'], [29, 51, 'rack']],
+    midProps: [[36, 52, 'rack'], [40, 55, 'net'], [33, 50, 'jar'], [44, 47, 'cart'],
+      [30, 44, 'jar'], [52, 50, 'rack'], [56, 44, 'net'], [49, 55, 'jar'],
+      [37, 60, 'boat'], [42, 58, 'rack'], [58, 55, 'jar'], [61, 50, 'cart'],
+      [26, 40, 'well'], [50, 20, 'jar'], [66, 45, 'net'], [63, 58, 'rack']],
+    stonePiles: [[35, 47], [47, 51], [55, 47], [39, 53], [58, 60], [29, 55], [64, 48], [43, 52]],
+    starts: [[23, 65], [25, 66], [22, 67], [26, 68]],
+    agentIds: ['haeju', 'mujin', 'dochi', 'wolsim'],
+    guards: [
+      ['soldier', [[40, 25], [52, 25], [57, 31], [57, 40]]],
+      ['soldier', [[31, 32], [31, 45], [38, 50], [48, 50]]],
+      ['steward', [[44, 30], [44, 40], [50, 44], [38, 44]]],
+      ['acolyte', [[38, 36], [44, 36], [44, 39], [38, 39]]],
+      ['sailor', [[50, 33], [54, 40], [48, 46], [45, 37]]],
+      ['priest', [[42, 34], [47, 36], [42, 41]]],
+      ['acolyte', [[28, 47], [23, 51], [19, 55], [25, 57]]],
+      ['soldier', [[31, 54], [37, 57], [43, 59], [37, 53]]],
+      ['acolyte', [[13, 45], [20, 43], [25, 41], [16, 44]]],
+      ['acolyte', [[58, 21], [65, 21], [70, 27], [61, 29]]],
+      ['soldier', [[68, 33], [75, 33], [78, 38], [70, 38]]],
+      ['sailor', [[72, 36], [76, 41], [70, 43]]],
+      ['acolyte', [[54, 29], [59, 34], [53, 38]]],
+      ['soldier', [[48, 58], [54, 61], [60, 64], [52, 59]]],
+      ['acolyte', [[46, 63], [50, 66], [44, 66]]],
+      ['steward', [[70, 70], [77, 70], [79, 76], [72, 79]]],
+      ['soldier', [[74, 67], [80, 71], [81, 78], [74, 73]]],
+      ['priest', [[73, 73], [78, 77], [72, 81]]],
+      ['sailor', [[68, 73], [72, 83], [78, 83]]],
+      ['acolyte', [[80, 80], [83, 82], [79, 84]]],
+      ['sailor', [[84, 84], [87, 86], [84, 87]]],
+      ['soldier', [[86, 82], [88, 86], [83, 85]]]
+    ],
+    civilians: [
+      ['villager', 16, 48], ['villager', 22, 51], ['villager', 13, 55], ['villager', 26, 47],
+      ['child', 19, 53], ['child', 24, 56], ['villager', 11, 58], ['villager', 28, 52],
+      ['patient', 48, 30], ['patient', 50, 31], ['villager', 45, 35],
+      ['believer', 43, 42], ['believer', 46, 42], ['believer', 40, 38], ['believer', 48, 34]
+    ],
+    prisoners: { n: 6, x: 72, y: 82 }
+  }
+};
+let currentChapter = 'gamnaru';
+function chapterOf(id) {
+  const ch = CHAPTERS[id || currentChapter];
+  if (!ch) throw new Error('없는 장');
+  if (ch.mapW !== MAP_W || ch.mapH !== MAP_H) throw new Error('장 맵 크기가 96×96이 아니다');
+  return ch;
+}
+function setChapter(id) {
+  if (!CHAPTERS[id] || CHAPTERS[id].mapW !== MAP_W || CHAPTERS[id].mapH !== MAP_H) return false;
+  currentChapter = id;
+  return true;
+}
+
 let map = null;
 
 const STORY_H = 1.82;
@@ -911,7 +1017,19 @@ function unpack3(i) {
 function unitLevel(u) { return (u && u.level) ? 1 : 0; }
 function inMap(tx, ty) { return tx >= 0 && ty >= 0 && tx < MAP_W && ty < MAP_H; }
 
+function addChapterRooms(m, ids) {
+  const ch = chapterOf();
+  for (const id of ids) {
+    const o = ch.rooms.find(r => r.id === id);
+    if (o) addRoom(m, o);
+  }
+}
+function addChapterHouses(m, list) {
+  for (const h of list) addSolidHouse(m, h.x, h.y, h.w, h.h, h.roof, h.name);
+}
+
 function buildMap() {
+  const ch = chapterOf();
   const N = MAP_W * MAP_H;
   const m = {
     terr: new Uint8Array(N),
@@ -1052,18 +1170,17 @@ function buildMap() {
   paintPath(m, [[12, 61], [14, 61]], 1.0, (i) => { if (m.zone[i] === Z.VILLAGE) m.terr[i] = T.WOOD; });
 
   // 염전
-  for (let py = 0; py < 4; py++) for (let px = 0; px < 5; px++) {
-    const bx = 55 + px * 5, by = 15 + py * 5;
-    rectEach(m, bx, by, 4, 4, (i, x, y) => {
+  for (let py = 0; py < ch.salt.rows; py++) for (let px = 0; px < ch.salt.cols; px++) {
+    const bx = ch.salt.ox + px * ch.salt.step, by = ch.salt.oy + py * ch.salt.step;
+    rectEach(m, bx, by, ch.salt.cell, ch.salt.cell, (i, x, y) => {
       if (m.zone[i] === Z.CLIFF || m.zone[i] === Z.SEA || m.terr[i] === T.DIRT) return;
       m.terr[i] = T.SALT; m.zone[i] = Z.SALT; m.elev[i] = 0.90;
     });
   }
-  rectEach(m, 52, 12, 32, 26, (i) => { if (m.zone[i] === Z.VILLAGE) m.zone[i] = Z.SALT; });
+  rectEach(m, ch.salt.zone[0], ch.salt.zone[1], ch.salt.zone[2], ch.salt.zone[3], (i) => { if (m.zone[i] === Z.VILLAGE) m.zone[i] = Z.SALT; });
 
   // 갈대밭
-  const reedBeds = [[44, 50, 15, 12], [61, 40, 13, 11], [32, 57, 12, 10], [20, 63, 11, 9], [66, 25, 9, 8], [36, 44, 8, 7]];
-  for (const [rx, ry, rw, rh] of reedBeds) {
+  for (const [rx, ry, rw, rh] of ch.reedBeds) {
     rectEach(m, rx, ry, rw, rh, (i, x, y) => {
       if (m.zone[i] === Z.SEA || m.zone[i] === Z.CLIFF) return;
       if (m.terr[i] === T.SALT) return;
@@ -1077,37 +1194,26 @@ function buildMap() {
   // 선녀바위
   paintDisc(m, 54, 62, 3.6, (i, x, y, d) => { m.terr[i] = T.ROCK; m.elev[i] = Math.max(m.elev[i], 0.5 + (3.6 - d) * 0.26); m.cover[i] = 2; });
 
-  /* ---------- 7. 건물 — 스프라이트 발자국과 칸이 1:1 ---------- */
-  compoundWall(m, 32, 26, 27, 23);
-  addRoom(m, { id: 'chapel', name: '예배당', x: 35, y: 29, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#59503f', roofTone: '#4a4234', doorSide: 's', stories: 2 });
-  addRoom(m, { id: 'clinic', name: '무료 진료소', x: 47, y: 29, w: 6, h: 4, roof: 'tile', wallH: 1.35, tone: '#4c4238', roofTone: '#2f373b', doorSide: 's' });
-  addRoom(m, { id: 'office', name: '베일 집무실', x: 50, y: 40, w: 6, h: 4, roof: 'tile', wallH: 1.5, tone: '#4b4034', roofTone: '#32363a', doorSide: 'n', locked: true });
-  addRoom(m, { id: 'store', name: '약품 창고', x: 34, y: 41, w: 5, h: 4, roof: 'thatch', wallH: 1.25, tone: '#463b2c', roofTone: '#443a26', doorSide: 'n', locked: true });
-  addRoom(m, { id: 'dorm', name: '조선인 봉사자 숙소', x: 44, y: 43, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#463c30', roofTone: '#303639', doorSide: 'n' });
-  addSolidHouse(m, 36, 36, 3, 2, 'thatch', '야학');
+  /* ---------- 7. 건물 — 스프라이트 발자국과 칸이 1:1. 순서는 장 표와 같다 ---------- */
+  compoundWall(m, ch.compound.x, ch.compound.y, ch.compound.w, ch.compound.h);
+  addChapterRooms(m, ['chapel', 'clinic', 'office', 'store', 'dorm']);
+  addChapterHouses(m, ch.earlyHouses);
 
   // 어촌 — 2×2·3×2는 통짜, 4×4 이상은 입장
-  const houses = [[9, 43, 3, 2], [14, 42, 2, 2], [10, 49, 3, 2], [16, 47, 2, 2], [12, 54, 3, 2],
-  [20, 52, 2, 2], [8, 58, 2, 2], [17, 58, 3, 2], [24, 49, 2, 2], [25, 56, 3, 2],
-  [22, 44, 2, 2], [28, 47, 3, 2], [26, 62, 2, 2], [16, 63, 3, 2]];
-  houses.forEach((h, k) => addSolidHouse(m, h[0], h[1], h[2], h[3], k % 3 === 0 ? 'tile' : 'thatch', '주민 초가'));
-  addRoom(m, { id: 'tavern', name: '주막', x: 19, y: 46, w: 5, h: 4, roof: 'thatch', wallH: 2.45, tone: '#4a3c2b', roofTone: '#463c25', doorSide: 's', stories: 2 });
-  addRoom(m, { id: 'shrine', name: '당집', x: 11, y: 60, w: 4, h: 4, roof: 'tile', wallH: 1.4, tone: '#4a3232', roofTone: '#3a2e31', doorSide: 's' });
+  ch.houses.forEach((h, k) => addSolidHouse(m, h[0], h[1], h[2], h[3], k % 3 === 0 ? 'tile' : 'thatch', '주민 초가'));
+  addChapterRooms(m, ['tavern', 'shrine']);
 
   // 절벽 초소
-  addRoom(m, { id: 'beacon', name: '봉수 초소', x: 26, y: 10, w: 4, h: 4, roof: 'tile', wallH: 1.45, tone: '#463c30', roofTone: '#303639', doorSide: 's' });
-  addSolidHouse(m, 19, 18, 3, 2, 'tile', '절벽 초소');
+  addChapterRooms(m, ['beacon']);
+  addChapterHouses(m, ch.midHouses.slice(0, 1));
 
   // 염전
-  addSolidHouse(m, 71, 29, 3, 2, 'thatch', '소금 창고');
-  addRoom(m, { id: 'smugStore', name: '밀수품 창고', x: 73, y: 34, w: 5, h: 4, roof: 'thatch', wallH: 1.35, tone: '#40372a', roofTone: '#403624', doorSide: 's', locked: true });
+  addChapterHouses(m, ch.midHouses.slice(1, 2));
+  addChapterRooms(m, ['smugStore']);
 
   // 백석섬
-  addRoom(m, { id: 'sanctum', name: '해상 예배당', x: 70, y: 70, w: 8, h: 6, roof: 'west', wallH: 2.35, tone: '#655d4c', roofTone: '#544c3d', doorSide: 's', stories: 2 });
-  addRoom(m, { id: 'cell', name: '감금실', x: 71, y: 81, w: 4, h: 4, roof: 'tile', wallH: 1.55, tone: '#3f3a35', roofTone: '#31373a', doorSide: 'n', locked: true });
-  addRoom(m, { id: 'tideRoom', name: '조수 측정실', x: 79, y: 73, w: 4, h: 4, roof: 'tile', wallH: 1.35, tone: '#454039', roofTone: '#33383a', doorSide: 's', locked: true });
-  addSolidHouse(m, 66, 71, 3, 2, 'tile', '신도 숙소');
-  addSolidHouse(m, 79, 67, 3, 2, 'tile', '신도 숙소');
+  addChapterRooms(m, ['sanctum', 'cell', 'tideRoom']);
+  addChapterHouses(m, ch.lateHouses);
 
   /* ---------- 8. 동굴 천장 ---------- */
   addCaveCeiling(m, caveTiles);
@@ -1143,6 +1249,36 @@ function buildMap() {
   map = m;
   camComputeBounds();
   return m;
+}
+
+function mapFingerprint(m0) {
+  const m = m0 || map;
+  const hashU8 = (a) => {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < a.length; i++) { h ^= a[i]; h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(16).padStart(8, '0');
+  };
+  const hashF32 = (a) => {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < a.length; i++) {
+      let n = Math.round(a[i] * 10000);
+      if (n < 0) n = (n + 0x100000000) | 0;
+      h ^= n & 255; h = Math.imul(h, 16777619);
+      h ^= (n >>> 8) & 255; h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16).padStart(8, '0');
+  };
+  return {
+    terr: hashU8(m.terr),
+    solid: hashU8(m.solid),
+    zone: hashU8(m.zone),
+    cover: hashU8(m.cover),
+    walk1: hashU8(m.walk1),
+    stair: hashU8(m.stair),
+    window: hashU8(m.window),
+    inside: hashU8(new Uint8Array(m.inside.buffer, m.inside.byteOffset, m.inside.byteLength)),
+    elev: hashF32(m.elev)
+  };
 }
 
 /* ---------- 페인트 헬퍼 ---------- */
@@ -1408,14 +1544,8 @@ function addProp(m, o) {
 }
 
 function addProps(m) {
-  const lampSpots = [
-    [45, 25, '정문 등불'], [31, 43, '뒷담 등불'], [59, 33, '옆문 등불'], [44, 36, '마당 등불'],
-    [40, 40, '마당 등불'], [48, 36, '마당 등불'], [20, 51, '주막 등불'], [13, 58, '당집 등불'],
-    [27, 60, '어촌 등불'], [67, 71, '선착장 등불'], [76, 70, '성소 등불'], [74, 86, '감금실 등불'],
-    [83, 84, '동굴 등불'], [87, 87, '계류장 등불'], [61, 21, '염전 등불'], [72, 33, '창고 등불'],
-    [23, 17, '초소 신호등'], [25, 9, '봉수 신호등'], [32, 21, '절벽 신호등']
-  ];
-  lampSpots.forEach((l, k) => addProp(m, { kind: 'lamp', tx: l[0], ty: l[1], name: l[2], on: true, radius: 5.6, signal: k >= 16 }));
+  const ch = chapterOf();
+  ch.lamps.forEach((l, k) => addProp(m, { kind: 'lamp', tx: l[0], ty: l[1], name: l[2], on: true, radius: 5.6, signal: k >= 16 }));
 
   for (let k = 0; k < 210; k++) {
     const x = ri(3, MAP_W - 4), y = ri(3, MAP_H - 4), i = idx(x, y);
@@ -1430,10 +1560,7 @@ function addProps(m) {
     else addProp(m, { kind: 'bush', tx: x, ty: y, cover: 2, s: rr(0.65, 1.1) });
   }
 
-  const villageProps = [[12, 46, 'net'], [17, 51, 'net'], [21, 57, 'rack'], [11, 52, 'rack'],
-  [24, 46, 'jar'], [15, 45, 'jar'], [9, 55, 'jar'], [27, 54, 'cart'],
-  [18, 62, 'well'], [23, 51, 'boat'], [15, 65, 'boat'], [29, 51, 'rack']];
-  villageProps.forEach(p => addProp(m, { kind: p[2], tx: p[0], ty: p[1], solid: p[2] === 'cart' || p[2] === 'boat', cover: p[2] === 'cart' ? 2 : 1 }));
+  ch.villageProps.forEach(p => addProp(m, { kind: p[2], tx: p[0], ty: p[1], solid: p[2] === 'cart' || p[2] === 'boat', cover: p[2] === 'cart' ? 2 : 1 }));
 
   addProp(m, { kind: 'kiln', tx: 58, ty: 28, solid: true, cover: 2, name: '소금가마' });
   addProp(m, { kind: 'kiln', tx: 67, ty: 20, solid: true, cover: 2, name: '소금가마' });
@@ -1449,16 +1576,10 @@ function addProps(m) {
   addProp(m, { kind: 'belltower', tx: 75, ty: 69, solid: true, cover: 1, name: '종탑', h: 3.2 });
   addProp(m, { kind: 'altar', tx: 54, ty: 65, cover: 1, name: '선녀바위 제단' });
   // 구호소와 해변 사이 — 빈 들판을 채우는 생활 흔적
-  const midProps = [[36, 52, 'rack'], [40, 55, 'net'], [33, 50, 'jar'], [44, 47, 'cart'],
-  [30, 44, 'jar'], [52, 50, 'rack'], [56, 44, 'net'], [49, 55, 'jar'],
-  [37, 60, 'boat'], [42, 58, 'rack'], [58, 55, 'jar'], [61, 50, 'cart'],
-  [26, 40, 'well'], [50, 20, 'jar'], [66, 45, 'net'], [63, 58, 'rack']];
-  midProps.forEach(q => addProp(m, { kind: q[2], tx: q[0], ty: q[1], solid: q[2] === 'cart' || q[2] === 'boat', cover: q[2] === 'cart' ? 2 : 1 }));
-  for (const q of [[35, 47], [47, 51], [55, 47], [39, 53], [58, 60], [29, 55], [64, 48], [43, 52]])
+  ch.midProps.forEach(q => addProp(m, { kind: q[2], tx: q[0], ty: q[1], solid: q[2] === 'cart' || q[2] === 'boat', cover: q[2] === 'cart' ? 2 : 1 }));
+  for (const q of ch.stonePiles)
     addProp(m, { kind: 'stone_pile', tx: q[0], ty: q[1], cover: 2, s: rr(0.8, 1.2), name: '돌탑' });
-  addSolidHouse(m, 39, 49, 2, 2, 'thatch', '들막');
-  addSolidHouse(m, 54, 52, 3, 2, 'thatch', '움막');
-  addSolidHouse(m, 47, 57, 2, 2, 'thatch', '어망 창고');
+  addChapterHouses(m, ch.fieldHouses);
   addProp(m, { kind: 'boat', tx: 67, ty: 74, solid: true, cover: 1, name: '형제의 어선' });
   addProp(m, { kind: 'wreck', tx: 87, ty: 87, cover: 2, name: '난파선 잔해' });
   addProp(m, { kind: 'wreck', tx: 84, ty: 87, cover: 2, name: '난파선 잔해' });
@@ -2907,10 +3028,11 @@ function baseUnit(o) {
 
 /* ---------- 스폰 ---------- */
 function spawnAll() {
+  const ch = chapterOf();
   agents = []; guards = []; civilians = [];
 
-  const starts = [[23, 65], [25, 66], [22, 67], [26, 68]];
-  const ids = ['haeju', 'mujin', 'dochi', 'wolsim'];
+  const starts = ch.starts;
+  const ids = ch.agentIds;
   ids.forEach((id, k) => {
     const p = nearestOpen(starts[k][0], starts[k][1], null) || starts[k];
     agents.push(baseUnit({
@@ -2922,37 +3044,7 @@ function spawnAll() {
   });
 
   /* 경비 배치 — 순찰로는 타일 좌표 목록 */
-  const G = [
-    // 백해구호소 안팎
-    ['soldier', [[40, 25], [52, 25], [57, 31], [57, 40]]],
-    ['soldier', [[31, 32], [31, 45], [38, 50], [48, 50]]],
-    ['steward', [[44, 30], [44, 40], [50, 44], [38, 44]]],
-    ['acolyte', [[38, 36], [44, 36], [44, 39], [38, 39]]],
-    ['sailor', [[50, 33], [54, 40], [48, 46], [45, 37]]],
-    ['priest', [[42, 34], [47, 36], [42, 41]]],
-    // 어촌과 길목
-    ['acolyte', [[28, 47], [23, 51], [19, 55], [25, 57]]],
-    ['soldier', [[31, 54], [37, 57], [43, 59], [37, 53]]],
-    ['acolyte', [[13, 45], [20, 43], [25, 41], [16, 44]]],
-    // 염전과 갈대밭
-    ['acolyte', [[58, 21], [65, 21], [70, 27], [61, 29]]],
-    ['soldier', [[68, 33], [75, 33], [78, 38], [70, 38]]],
-    ['sailor', [[72, 36], [76, 41], [70, 43]]],
-    ['acolyte', [[54, 29], [59, 34], [53, 38]]],
-    // 해변과 갯벌 초입
-    ['soldier', [[48, 58], [54, 61], [60, 64], [52, 59]]],
-    ['acolyte', [[46, 63], [50, 66], [44, 66]]],
-    // 백석섬
-    ['steward', [[70, 70], [77, 70], [79, 76], [72, 79]]],
-    ['soldier', [[74, 67], [80, 71], [81, 78], [74, 73]]],
-    ['priest', [[73, 73], [78, 77], [72, 81]]],
-    ['sailor', [[68, 73], [72, 83], [78, 83]]],
-    ['acolyte', [[80, 80], [83, 82], [79, 84]]],
-    // 해식동굴
-    ['sailor', [[84, 84], [87, 86], [84, 87]]],
-    ['soldier', [[86, 82], [88, 86], [83, 85]]]
-  ];
-  G.forEach((g, k) => {
+  ch.guards.forEach((g, k) => {
     const [type, patrol] = g;
     const fixed = patrol.map(p => nearestOpen(p[0], p[1], null)).filter(Boolean);
     if (!fixed.length) return;
@@ -2966,13 +3058,7 @@ function spawnAll() {
   });
 
   /* 민간인 */
-  const C = [
-    ['villager', 16, 48], ['villager', 22, 51], ['villager', 13, 55], ['villager', 26, 47],
-    ['child', 19, 53], ['child', 24, 56], ['villager', 11, 58], ['villager', 28, 52],
-    ['patient', 48, 30], ['patient', 50, 31], ['villager', 45, 35],
-    ['believer', 43, 42], ['believer', 46, 42], ['believer', 40, 38], ['believer', 48, 34]
-  ];
-  C.forEach((c, k) => {
+  ch.civilians.forEach((c, k) => {
     const p = nearestOpen(c[1], c[2], null); if (!p) return;
     civilians.push(baseUnit({
       kind: 'civil', id: 'c' + k, type: c[0], tx: p[0], ty: p[1],
@@ -2982,8 +3068,9 @@ function spawnAll() {
     }));
   });
   // 감금된 주민 6명 (백석섬 감금실)
-  for (let k = 0; k < 6; k++) {
-    const p = nearestOpen(72 + (k % 3), 82 + Math.floor(k / 3), null, 4);
+  const pris = ch.prisoners;
+  for (let k = 0; k < pris.n; k++) {
+    const p = nearestOpen(pris.x + (k % 3), pris.y + Math.floor(k / 3), null, 4);
     if (!p) continue;
     civilians.push(baseUnit({
       kind: 'civil', id: 'p' + k, type: 'prisoner', tx: p[0], ty: p[1], speed: 1.6,
@@ -6526,6 +6613,11 @@ function autosave(reason) {
 }
 
 function refreshTitleMeta() {
+  const ch = chapterOf();
+  const tag = document.querySelector('#titleScreen .ch');
+  if (tag) tag.textContent = ch.tag;
+  const brand = document.querySelector('.brand span');
+  if (brand) brand.textContent = ch.tag;
   const s = readSave();
   const cont = $('#continueBtn');
   if (cont) {
@@ -6823,7 +6915,7 @@ function boot() {
   state.paused = true;
   window.__haemuGo = function (kind) {
     const note = $('#bootNote');
-    if (note) { note.hidden = false; note.textContent = '감나루를 펼치는 중…'; }
+    if (note) { note.hidden = false; note.textContent = chapterOf().boot; }
     if (!window.__haemuReady) return;
     try {
       if (kind === 'continue') continueMission();
@@ -6855,7 +6947,8 @@ function boot() {
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
-    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
+    selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; },
+    CHAPTERS, chapterOf, setChapter, currentChapter: () => currentChapter, mapFingerprint, TIDE
   };
 }
 
