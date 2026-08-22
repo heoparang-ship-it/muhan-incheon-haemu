@@ -1,0 +1,114 @@
+import { chromium } from "playwright-core";
+import { mkdirSync } from "node:fs";
+mkdirSync("/workspace/screenshots", { recursive: true });
+
+const browser = await chromium.launch({
+  headless: true,
+  channel: "chrome",
+  args: ["--no-sandbox", "--disable-dev-shm-usage"],
+});
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const errors = [];
+page.on("pageerror", (e) => errors.push(String(e.message || e)));
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  const t = m.text();
+  if (t.includes("404") || t.includes("Failed to load resource")) return;
+  errors.push(t);
+});
+
+await page.goto("http://127.0.0.1:8080/game/index.html", { waitUntil: "networkidle", timeout: 45000 });
+await page.waitForSelector("#startBtn", { timeout: 8000 });
+await page.locator("#startBtn").click();
+await page.waitForTimeout(1400);
+await page.waitForFunction(() => window.__HAEMU__?.map, { timeout: 20000 });
+
+const info = await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  H.state.paused = true;
+  const read = () => {
+    const el = document.getElementById("help");
+    return {
+      on: !!H.state.helpOpen,
+      shown: !!(el && el.classList.contains("show")),
+    };
+  };
+
+  H.setHelpOpen(true);
+  const afterSet = read();
+  const snap = H.snapshotSave();
+
+  H.rebuildWorld();
+  const afterRebuild = read();
+
+  H.applySave(snap);
+  const afterApply = read();
+
+  H.setHelpOpen(true);
+  H.writeSave(true);
+  H.continueMission();
+  const afterContinue = read();
+
+  const phases = [0, 0.5, 1].map((p) => {
+    H.state.tidePhase = p;
+    const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    return { p, wl: H.waterLevel(), expect: -0.34 + 0.74 * e };
+  });
+  H.state.tidePhase = 0;
+
+  return {
+    map: [H.MAP_W, H.MAP_H],
+    roles: H.agents.map((x) => x.id),
+    snapOn: snap.helpOpen,
+    afterSet,
+    afterRebuild,
+    afterApply,
+    afterContinue,
+    hasSet: typeof H.setHelpOpen === "function",
+    phases,
+  };
+});
+
+await page.waitForTimeout(200);
+await page.screenshot({ path: "/workspace/screenshots/help-save-after.png" });
+
+const oldInfo = await page.evaluate(() => {
+  const H = window.__HAEMU__;
+  const old = H.snapshotSave();
+  delete old.helpOpen;
+  H.setHelpOpen(true);
+  H.applySave(old);
+  const el = document.getElementById("help");
+  return {
+    on: !!H.state.helpOpen,
+    shown: !!(el && el.classList.contains("show")),
+  };
+});
+
+await page.evaluate(() => {
+  window.__HAEMU__.rebuildWorld();
+});
+await page.waitForTimeout(300);
+await page.screenshot({ path: "/workspace/screenshots/help-save-clear.png" });
+await browser.close();
+
+const open = (r) => r.on && r.shown;
+const shut = (r) => !r.on && !r.shown;
+const fail = [];
+if (info.map[0] !== 96 || info.map[1] !== 96) fail.push(`map ${info.map}`);
+if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push(`roles ${info.roles}`);
+for (const t of info.phases) {
+  if (Math.abs(t.wl - t.expect) > 1e-12) fail.push(`tide ${t.p} ${t.wl}`);
+}
+if (!info.hasSet) fail.push("setHelpOpen 없음");
+if (info.snapOn !== true) fail.push(`snap ${info.snapOn}`);
+if (!open(info.afterSet)) fail.push(`set ${JSON.stringify(info.afterSet)}`);
+if (!shut(info.afterRebuild)) fail.push(`rebuild ${JSON.stringify(info.afterRebuild)}`);
+if (!open(info.afterApply)) fail.push(`apply ${JSON.stringify(info.afterApply)}`);
+if (!open(info.afterContinue)) fail.push(`continue ${JSON.stringify(info.afterContinue)}`);
+if (!shut(oldInfo)) fail.push(`old ${JSON.stringify(oldInfo)}`);
+if (errors.length) fail.push(`console ${errors.length}: ${errors.join(" | ")}`);
+
+const out = { ok: fail.length === 0, fail, errors, info, oldInfo };
+console.log(JSON.stringify(out, null, 2));
+if (fail.length) process.exit(1);

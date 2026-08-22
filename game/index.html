@@ -4100,6 +4100,7 @@ function newState() {
     sluiceOpen: false, escaped: false, cameraLock: false,
     reinforcements: false, reinforceCount: 0, waypointMode: false, showSoundFx: true,
     boxMode: false, squad: ['haeju'], difficulty: chosenDiff,
+    helpOpen: false,
     stats: { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] }
   };
 }
@@ -6135,7 +6136,7 @@ function onKeyDown(e) {
     e.preventDefault();
     state.targetMode = null;
     const help = $('#help');
-    if (help && help.classList.contains('show')) { help.classList.remove('show'); return; }
+    if (help && help.classList.contains('show')) { setHelpOpen(false); return; }
     const ts = $('#titleScreen');
     if (ts && !ts.classList.contains('hide')) return;
     if ($('#result') && $('#result').classList.contains('show')) return;
@@ -6174,7 +6175,7 @@ function onKeyDown(e) {
   else if (k === 'm') { audio.setMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
-  else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
+  else if (e.key === 'F1') { e.preventDefault(); setHelpOpen(!($('#help') && $('#help').classList.contains('show'))); }
   else if (e.key === 'F9') { state.debug = !state.debug; }
 }
 function onKeyUp(e) {
@@ -6209,6 +6210,12 @@ function cycleAgent() {
 function centerOnSelected() {
   const a = selectedAgent(); if (!a) return;
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
+}
+
+function setHelpOpen(open) {
+  if (state) state.helpOpen = !!open;
+  const help = document.getElementById('help');
+  if (help) help.classList.toggle('show', !!open);
 }
 
 const SAVE_KEY = 'haemu-save-v2';
@@ -6287,6 +6294,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    helpOpen: !!(document.getElementById('help') && document.getElementById('help').classList.contains('show')),
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6511,6 +6519,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  setHelpOpen(!!s.helpOpen);
   centerOnSelected();
   updateHUD();
   return true;
@@ -6579,6 +6588,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setHelpOpen(false);
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6722,8 +6732,8 @@ function boot() {
     $('#objectives').dataset.userOpen = '';
     sheetMask.classList.remove('show');
   };
-  $('#helpBtn').onclick = () => $('#help').classList.add('show');
-  $('#helpClose').onclick = () => $('#help').classList.remove('show');
+  $('#helpBtn').onclick = () => setHelpOpen(true);
+  $('#helpClose').onclick = () => setHelpOpen(false);
   $('#restartTop').onclick = () => restart();
   $('#restartBtn').onclick = () => restart();
   const QMODES = [
@@ -6852,6 +6862,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setHelpOpen,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
