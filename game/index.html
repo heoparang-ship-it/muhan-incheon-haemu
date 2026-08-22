@@ -6171,7 +6171,7 @@ function onKeyDown(e) {
   else if (k === 'c') { const a = selectedAgent(); if (a) { a.crouch = !a.crouch; toast(a.crouch ? '웅크려 이동한다' : '일어섰다'); updateHUD(); } }
   else if (k === 'f') { const a = selectedAgent(); if (a) { state.followSel = !state.followSel; toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); } }
   else if (k === 'v') { state.showLabels = !state.showLabels; }
-  else if (k === 'm') { audio.setMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
+  else if (k === 'm') { applyMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
   else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
@@ -6209,6 +6209,14 @@ function cycleAgent() {
 function centerOnSelected() {
   const a = selectedAgent(); if (!a) return;
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
+}
+
+function applyMuted(on) {
+  audio.setMuted(!!on);
+  const mb = document.getElementById('muteBtn');
+  const mp = document.getElementById('mutePauseBtn');
+  if (mb) mb.textContent = audio.muted ? '🔇' : '🔊';
+  if (mp) mp.textContent = audio.muted ? '소리 켜기' : '소리 끄기';
 }
 
 const SAVE_KEY = 'haemu-save-v2';
@@ -6287,6 +6295,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    muted: !!audio.muted,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6421,6 +6430,7 @@ function applySave(s) {
   state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
   state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
   state.showSoundFx = s.showSoundFx !== false;
+  applyMuted(!!s.muted);
   for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
   state.queued = 0;
   if (s.secretPathOpen) {
@@ -6741,7 +6751,7 @@ function boot() {
     $('#qualityBtn').classList.toggle('active', !m.auto);
     toast('그래픽 품질 · ' + m.name + (m.auto ? ' (프레임에 맞춰 조절)' : ''), 'plan');
   };
-  $('#muteBtn').onclick = () => { audio.setMuted(!audio.muted); $('#muteBtn').textContent = audio.muted ? '🔇' : '🔊'; };
+  $('#muteBtn').onclick = () => { applyMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); };
   const setFollow = (on) => {
     state.followSel = on;
     $('#followBtn')?.classList.toggle('active', on);
@@ -6757,9 +6767,7 @@ function boot() {
   if (fm) fm.onclick = () => { setFollow(!state.followSel); toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); };
   const mutePause = $('#mutePauseBtn');
   if (mutePause) mutePause.onclick = () => {
-    audio.setMuted(!audio.muted);
-    $('#muteBtn').textContent = audio.muted ? '🔇' : '🔊';
-    mutePause.textContent = audio.muted ? '소리 켜기' : '소리 끄기';
+    applyMuted(!audio.muted);
     toast(audio.muted ? '음소거' : '소리 켜짐');
   };
   const vol = $('#volSlider');
@@ -6767,10 +6775,7 @@ function boot() {
     vol.value = String(Math.round((audio.vol || 0.55) * 100));
     vol.oninput = () => {
       audio.setVolume((+vol.value) / 100);
-      if (audio.muted && +vol.value > 0) {
-        audio.setMuted(false);
-        $('#muteBtn').textContent = '🔊';
-      }
+      if (audio.muted && +vol.value > 0) applyMuted(false);
     };
   }
   $$('#diffRow button').forEach(btn => {
@@ -6852,6 +6857,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    applyMuted, get audio() { return audio; },
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
