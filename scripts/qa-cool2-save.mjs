@@ -40,8 +40,9 @@ const info = await page.evaluate(() => {
   H.applySave(snap);
   const afterM = H.agents.find((a) => a.id === "mujin");
   const afterW = H.agents.find((a) => a.id === "wolsim");
-  const rem2 = Math.max(0, (afterM.coolUntil2 || 0) - H.state.now);
-  const remInc = Math.max(0, (afterW.incenseUntil || 0) - H.state.now);
+  const clock = performance.now();
+  const rem2 = Math.max(0, (afterM.coolUntil2 || 0) - clock);
+  const remInc = Math.max(0, (afterW.incenseUntil || 0) - clock);
 
   H.state.selected = "mujin";
   const blocked = rem2 > 0;
@@ -89,7 +90,7 @@ const cam = await page.evaluate(() => {
   H.state.selected = "mujin";
   if (H.centerOnSelected) H.centerOnSelected();
   const after = H.agents.find((a) => a.id === "mujin");
-  return { rem2: Math.max(0, (after.coolUntil2 || 0) - H.state.now) };
+  return { rem2: Math.max(0, (after.coolUntil2 || 0) - performance.now()) };
 });
 await page.waitForTimeout(400);
 await page.screenshot({ path: "/workspace/screenshots/cool2-save-qa.png" });
@@ -99,10 +100,10 @@ const fail = [];
 if (info.map[0] !== 96 || info.map[1] !== 96) fail.push("map " + info.map);
 if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + info.roles);
 if (info.before2) fail.push("already cooling " + info.before2);
-if (!(info.snapCool2 > 0)) fail.push("snap cool2 " + info.snapCool2);
-if (!(info.snapInc > 0)) fail.push("snap incense " + info.snapInc);
-if (!(info.rem2 > 14000 && info.rem2 <= 16000)) fail.push("rem2 " + info.rem2);
-if (!(info.remInc > 0 && info.remInc <= 6000)) fail.push("remInc " + info.remInc);
+if (!(info.snapCool2 > 15900 && info.snapCool2 <= 16000)) fail.push("snap cool2 " + info.snapCool2);
+if (!(info.snapInc > 5900 && info.snapInc <= 6000)) fail.push("snap incense " + info.snapInc);
+if (!(info.rem2 > 15000 && info.rem2 <= 16000)) fail.push("rem2 " + info.rem2);
+if (!(info.remInc > 5000 && info.remInc <= 6000)) fail.push("remInc " + info.remInc);
 if (!info.blocked) fail.push("not blocked");
 if (info.oldRem !== 0) fail.push("old rem " + info.oldRem);
 if (!info.tideOk) fail.push("tide " + JSON.stringify(info.phases));
