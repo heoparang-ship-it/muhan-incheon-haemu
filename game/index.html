@@ -6211,6 +6211,15 @@ function centerOnSelected() {
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
 }
 
+function setShowSoundFx(on, opts) {
+  if (state) state.showSoundFx = on !== false;
+  const btn = document.getElementById('soundFxBtn');
+  if (btn) btn.textContent = state && state.showSoundFx === false ? '파동 켜기' : '소리 파동';
+  if (!(opts && opts.quiet)) {
+    toast(state && state.showSoundFx === false ? '소리 파동을 숨겼다' : '소리 파동을 보여 준다', 'plan');
+  }
+}
+
 const SAVE_KEY = 'haemu-save-v2';
 const BEST_KEY = 'haemu-best-v1';
 const SAVE_VERSION = 3;
@@ -6511,6 +6520,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  setShowSoundFx(s.showSoundFx !== false, { quiet: true });
   centerOnSelected();
   updateHUD();
   return true;
@@ -6579,6 +6589,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setShowSoundFx(true, { quiet: true });
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6800,11 +6811,7 @@ function boot() {
   const loadBtn = $('#loadBtn');
   if (loadBtn) loadBtn.onclick = () => { setMenuPause(false); quickLoad('latest'); };
   const soundFxBtn = $('#soundFxBtn');
-  if (soundFxBtn) soundFxBtn.onclick = () => {
-    state.showSoundFx = state.showSoundFx === false;
-    soundFxBtn.textContent = state.showSoundFx === false ? '파동 켜기' : '소리 파동';
-    toast(state.showSoundFx === false ? '소리 파동을 숨겼다' : '소리 파동을 보여 준다', 'plan');
-  };
+  if (soundFxBtn) soundFxBtn.onclick = () => setShowSoundFx(state.showSoundFx === false);
   $$('#saveSlots button').forEach(btn => {
     btn.onclick = () => {
       const sl = btn.getAttribute('data-slot');
@@ -6852,6 +6859,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setShowSoundFx,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
