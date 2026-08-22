@@ -6170,7 +6170,7 @@ function onKeyDown(e) {
   else if (k === 'e') interact();
   else if (k === 'c') { const a = selectedAgent(); if (a) { a.crouch = !a.crouch; toast(a.crouch ? '웅크려 이동한다' : '일어섰다'); updateHUD(); } }
   else if (k === 'f') { const a = selectedAgent(); if (a) { state.followSel = !state.followSel; toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); } }
-  else if (k === 'v') { state.showLabels = !state.showLabels; }
+  else if (k === 'v') { state.showLabels = !state.showLabels; toast(state.showLabels ? '이름표를 켰다' : '이름표를 껐다', 'plan'); }
   else if (k === 'm') { audio.setMuted(!audio.muted); toast(audio.muted ? '음소거' : '소리 켜짐'); }
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
