@@ -6307,7 +6307,7 @@ function snapshotSave() {
       patrol: g.patrol, pi: g.pi || 0
     })),
     civilians: civilians.map(c => ({
-      id: c.id, type: c.type, tx: c.tx, ty: c.ty,
+      id: c.id, type: c.type, tx: c.tx, ty: c.ty, angle: +c.angle || 0,
       freed: !!c.freed, rescued: !!c.rescued, following: !!c.following,
       dead: !!c.dead, panic: c.panic || 0
     })),
@@ -6472,6 +6472,7 @@ function applySave(s) {
     const u = cc.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.freed = rec.freed; u.rescued = rec.rescued;
     u.following = rec.following; u.dead = rec.dead; u.panic = rec.panic; u.path = [];
+    if (rec.angle != null && Number.isFinite(+rec.angle)) u.angle = +rec.angle;
   }
   const ii = byId(interactables);
   for (const rec of s.interactables || []) {
