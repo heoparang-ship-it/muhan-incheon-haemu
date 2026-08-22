@@ -4988,10 +4988,18 @@ function renderAgentCards() {
     b.onclick = (ev) => selectAgent(a.id, !!(ev.shiftKey || ev.ctrlKey || ev.metaKey || state.boxMode));
     box.appendChild(b);
   }
-  selectAgent(state.selected);
+  selectAgent(state.selected, false, true);
 }
 
-function selectAgent(id, add) {
+function paintSquadCards() {
+  $$('.agentCard').forEach(e => {
+    const on = !!(state.squad && state.squad.includes(e.dataset.id));
+    e.classList.toggle('selected', e.dataset.id === state.selected);
+    e.classList.toggle('squad', on && e.dataset.id !== state.selected);
+  });
+}
+
+function selectAgent(id, add, keepSquad) {
   const a = agents.find(x => x.id === id);
   if (!a || !a.alive) { const n = aliveAgents()[0]; if (!n) return; id = n.id; }
   state.selected = id;
@@ -5000,14 +5008,12 @@ function selectAgent(id, add) {
     if (state.squad.includes(id)) {
       if (state.squad.length > 1) state.squad = state.squad.filter(x => x !== id);
     } else state.squad.push(id);
-  } else {
+  } else if (!keepSquad) {
     state.squad = [id];
+  } else if (!state.squad.includes(id)) {
+    state.squad = [id].concat(state.squad);
   }
-  $$('.agentCard').forEach(e => {
-    const on = state.squad.includes(e.dataset.id);
-    e.classList.toggle('selected', e.dataset.id === state.selected);
-    e.classList.toggle('squad', on && e.dataset.id !== state.selected);
-  });
+  paintSquadCards();
   const d = AGENT_DEFS[id];
   $('#infoPortrait').src = PORTRAITS[id];
   $('#infoName').textContent = d.name;
@@ -6011,12 +6017,7 @@ function selectAgentsInBox(box) {
   if (!hit.length) { toast('그 칸에 대원이 없다', 'warn'); return; }
   state.squad = hit;
   state.selected = hit[0];
-  selectAgent(hit[0], false);
-  state.squad = hit;
-  $$('.agentCard').forEach(e => {
-    e.classList.toggle('selected', e.dataset.id === state.selected);
-    e.classList.toggle('squad', state.squad.includes(e.dataset.id) && e.dataset.id !== state.selected);
-  });
+  selectAgent(hit[0], false, true);
   toast(hit.length + '명 선택', 'plan');
 }
 
@@ -6853,7 +6854,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, paintSquadCards,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
