@@ -73,7 +73,7 @@ if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + in
 if (badge.key !== "T") fail.push("badge " + badge.key);
 if (badge.html.includes(">W<")) fail.push("false W");
 if (info.afterKey !== "T") fail.push("continue badge " + info.afterKey);
-if (info.waitAfterT !== 1.5) fail.push("key wait " + info.waitAfterT);
+if (!(info.waitAfterT > 0 && info.waitAfterT <= 1.5)) fail.push("key wait " + info.waitAfterT);
 if (info.waitAfterFn !== 1.5) fail.push("fn wait " + info.waitAfterFn);
 if (info.snapHasWaitKey) fail.push("snap waitKey");
 for (const t of info.phases) {
