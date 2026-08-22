@@ -6175,7 +6175,7 @@ function onKeyDown(e) {
   else if (k === 'r') restart();
   else if (e.key >= '1' && e.key <= '4') { const ids = ['haeju', 'mujin', 'dochi', 'wolsim']; selectAgent(ids[+e.key - 1]); centerOnSelected(); }
   else if (e.key === 'F1') { e.preventDefault(); $('#help').classList.toggle('show'); }
-  else if (e.key === 'F9') { state.debug = !state.debug; }
+  else if (e.key === 'F9') { setDebug(!state.debug); }
 }
 function onKeyUp(e) {
   keys.delete(e.code);
@@ -6209,6 +6209,10 @@ function cycleAgent() {
 function centerOnSelected() {
   const a = selectedAgent(); if (!a) return;
   cam.x = isoX(a.tx + .5, a.ty + .5); cam.y = isoY(a.tx + .5, a.ty + .5, groundZ(a.tx, a.ty)); camClamp();
+}
+
+function setDebug(on) {
+  if (state) state.debug = !!on;
 }
 
 const SAVE_KEY = 'haemu-save-v2';
@@ -6287,6 +6291,7 @@ function snapshotSave() {
     difficulty: state.difficulty || 'normal',
     stats: state.stats ? Object.assign({}, state.stats, { evTimes: (state.stats.evTimes || []).slice() }) : { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] },
     showSoundFx: state.showSoundFx !== false,
+    debug: !!state.debug,
     reinforcements: !!state.reinforcements,
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
@@ -6421,6 +6426,7 @@ function applySave(s) {
   state.squad = (s.squad && s.squad.length) ? s.squad.slice() : [s.selected || 'haeju'];
   state.stats = s.stats || { knockouts: 0, detections: 0, lures: 0, dist: 0, evTimes: [] };
   state.showSoundFx = s.showSoundFx !== false;
+  state.debug = !!s.debug;
   for (const a of agents) { a.queue = []; a.path = []; a.action = null; }
   state.queued = 0;
   if (s.secretPathOpen) {
@@ -6852,6 +6858,7 @@ function boot() {
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
+    setDebug,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
     beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
