@@ -4156,7 +4156,11 @@ function buildInteractables() {
   add({ kind: 'crone', id: 'crone', name: '당집 노파', tx: 13, ty: 61, glyph: '媼', time: 1.4 });
   add({ kind: 'cloth', id: 'whiteCloth', name: '바위에 덮인 흰 천', tx: 30, ty: 9, glyph: '布', time: 1.8 });
   add({ kind: 'bell', id: 'bellTower', name: '종탑 밧줄', tx: 75, ty: 70, glyph: '鐘', time: 2.0 });
-  add({ kind: 'cellDoor', id: 'cellDoor', name: '감금실 자물쇠', tx: 73, ty: 85, glyph: '鎖', time: 2.4 });
+  /* 자물쇠는 실제 문 앞. (73,85)는 남쪽 바깥이라 문을 안 연 채 목표만 끝난다 */
+  const cellB = map.buildings.find(b => b.id === 'cell');
+  const lockTx = cellB && cellB.door ? cellB.door.tx : 73;
+  const lockTy = cellB && cellB.door ? cellB.door.ty - 1 : 80;
+  add({ kind: 'cellDoor', id: 'cellDoor', name: '감금실 자물쇠', tx: lockTx, ty: lockTy, glyph: '鎖', time: 2.4 });
   add({ kind: 'sluice', id: 'sluice', name: '동굴 수문', tx: 88, ty: 82, glyph: '閘', time: 2.8 });
   add({ kind: 'sail', id: 'sail', name: '어선 돛', tx: 75, ty: 36, glyph: '帆', time: 1.6 });
   add({ kind: 'fixBoat', id: 'fixBoat', name: '형제의 어선', tx: 67, ty: 75, glyph: '舟', time: 2.6 });
@@ -4365,6 +4369,8 @@ function interact(a, fromQueue) {
       }
       startAction(a, o.time, () => {
         o.done = true;
+        const gate = map.doors.find(d => d.id === 'cellDoor');
+        if (gate) { gate.open = true; gate.locked = false; }
         let n = 0;
         for (const c of civilians) if (c.type === 'prisoner' && !c.freed) { c.freed = true; c.speed = 1.5; n++; }
         state.prisonersFreed = n;
