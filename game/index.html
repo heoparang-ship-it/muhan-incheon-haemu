@@ -6530,7 +6530,12 @@ function refreshTitleMeta() {
   const cont = $('#continueBtn');
   if (cont) {
     cont.hidden = !s;
-    if (s) cont.textContent = '이어하기 · ' + fmtTime(s.timeLeft);
+    if (s) {
+      const d = DIFFICULTY[s.difficulty];
+      cont.textContent = d
+        ? ('이어하기 · ' + fmtTime(s.timeLeft) + ' · ' + d.name)
+        : ('이어하기 · ' + fmtTime(s.timeLeft));
+    }
   }
   const best = readBest();
   const el = $('#bestHint');
@@ -6853,7 +6858,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, refreshTitleMeta, goTitle,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
