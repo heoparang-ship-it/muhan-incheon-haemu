@@ -6722,7 +6722,7 @@ function boot() {
     $('#objectives').dataset.userOpen = '';
     sheetMask.classList.remove('show');
   };
-  $('#helpBtn').onclick = () => $('#help').classList.add('show');
+  $('#helpBtn').onclick = () => { $('#help').classList.add('show'); toast('도움말을 열었다'); };
   $('#helpClose').onclick = () => $('#help').classList.remove('show');
   $('#restartTop').onclick = () => restart();
   $('#restartBtn').onclick = () => restart();
