@@ -30,6 +30,8 @@ const info = await page.evaluate(() => {
   const box = document.getElementById("toast");
   const lines = box ? Array.from(box.querySelectorAll(".toastLine")).map((el) => el.textContent) : [];
   const pause = document.getElementById("pauseMenu");
+  const shown = !!(pause && pause.classList.contains("show"));
+  const menuPause = !!H.state.menuPause;
   const snap = H.snapshotSave();
   H.writeSave(true);
   H.continueMission();
@@ -43,8 +45,8 @@ const info = await page.evaluate(() => {
     map: [H.MAP_W, H.MAP_H],
     roles: H.agents.map((x) => x.id),
     lines,
-    shown: !!(pause && pause.classList.contains("show")),
-    menuPause: !!H.state.menuPause,
+    shown,
+    menuPause,
     snapHasPause: Object.prototype.hasOwnProperty.call(snap, "menuPause"),
     phases,
   };
