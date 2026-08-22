@@ -6293,6 +6293,7 @@ function snapshotSave() {
     nets: (state.nets || []).map(n => ({ tx: n.tx, ty: n.ty, life: n.life, armed: n.armed })),
     agents: agents.map(a => ({
       id: a.id, tx: a.tx, ty: a.ty, angle: a.angle, alive: a.alive,
+      level: a.level || 0,
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
       disguiseTier: a.disguiseTier || 0, unconscious: !!a.unconscious,
       carrying: a.carrying && a.carrying.id, coolUntil: a.coolUntil || 0,
@@ -6300,6 +6301,7 @@ function snapshotSave() {
     })),
     guards: guards.map(g => ({
       id: g.id, type: g.type, tx: g.tx, ty: g.ty, angle: g.angle,
+      level: g.level || 0,
       unconscious: !!g.unconscious, hidden: !!g.hidden, ai: g.ai,
       suspicion: g.suspicion || 0, boss: !!g.boss, caught: !!g.caught,
       tied: !!g.tied, wakeAt: g.wakeAt || 0, hidingAwake: !!g.hidingAwake,
@@ -6438,6 +6440,7 @@ function applySave(s) {
   for (const rec of s.agents || []) {
     const u = ag.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle; u.alive = rec.alive;
+    u.level = rec.level || 0;
     u.crouch = rec.crouch; u.exposure = rec.exposure; u.disguise = rec.disguise;
     u.disguiseTier = rec.disguiseTier; u.unconscious = rec.unconscious; u.path = [];
     u.queue = []; u.action = null;
@@ -6461,6 +6464,7 @@ function applySave(s) {
       gg.set(rec.id, u);
     }
     u.tx = rec.tx; u.ty = rec.ty; u.angle = rec.angle;
+    u.level = rec.level || 0;
     u.unconscious = rec.unconscious; u.hidden = rec.hidden;
     u.ai = rec.ai || u.ai; u.suspicion = rec.suspicion; u.path = [];
     u.tied = !!rec.tied; u.wakeAt = rec.wakeAt || 0; u.hidingAwake = !!rec.hidingAwake;
