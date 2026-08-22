@@ -514,7 +514,7 @@ button:active:not(:disabled),.agentCard:active{transform:translateY(1px) scale(.
       <button class="action" id="abilityBtn"><div class="ico" id="abilityIcon">偽</div><span id="abilityLabel">변장</span><b>Q</b><em class="cd" id="abilityCd"></em></button>
       <button class="action" id="secondBtn"><div class="ico" id="secondIcon">談</div><span id="secondLabel">대화 유인</span><b>X</b><em class="cd" id="secondCd"></em></button>
       <button class="action" id="interactBtn"><div class="ico">手</div><span>상호작용</span><b>E</b></button>
-      <button class="action" id="waitBtn"><div class="ico">◷</div><span>대기</span><b>W</b></button>
+      <button class="action" id="waitBtn"><div class="ico">◷</div><span>대기</span><b>T</b></button>
     </div>
     <div id="planBox">
       <button class="plan" id="planBtn"><strong>계책</strong><small>SPACE</small><em class="qc" id="queueCount"></em></button>
@@ -4213,6 +4213,14 @@ function nearestInteract(a, maxD) {
   return best;
 }
 
+/* ---------- 대기 ---------- */
+function doWait() {
+  const a = selectedAgent();
+  if (!a) return;
+  if (state.planning) queueCmd(a, { type: 'wait', time: 1.5 }, '1.5초 대기 예약');
+  else { a.wait = 1.5; toast('잠시 멈춘다'); }
+}
+
 /* ---------- 상호작용 ---------- */
 function interact(a, fromQueue) {
   a = a || selectedAgent();
@@ -6168,6 +6176,7 @@ function onKeyDown(e) {
   if (k === 'q') useAbility();
   else if (k === 'x') useSecond();
   else if (k === 'e') interact();
+  else if (k === 't') doWait();
   else if (k === 'c') { const a = selectedAgent(); if (a) { a.crouch = !a.crouch; toast(a.crouch ? '웅크려 이동한다' : '일어섰다'); updateHUD(); } }
   else if (k === 'f') { const a = selectedAgent(); if (a) { state.followSel = !state.followSel; toast(state.followSel ? '선택 대원을 따라간다' : '자유 시점'); } }
   else if (k === 'v') { state.showLabels = !state.showLabels; }
@@ -6685,7 +6694,7 @@ function boot() {
   $('#abilityBtn').onclick = () => useAbility();
   $('#secondBtn').onclick = () => useSecond();
   $('#interactBtn').onclick = () => interact();
-  $('#waitBtn').onclick = () => { const a = selectedAgent(); if (!a) return; if (state.planning) queueCmd(a, { type: 'wait', time: 1.5 }, '1.5초 대기 예약'); else { a.wait = 1.5; toast('잠시 멈춘다'); } };
+  $('#waitBtn').onclick = () => doWait();
   $('#planBtn').onclick = () => togglePlan();
   const wayBtn = $('#wayBtn');
   if (wayBtn) wayBtn.onclick = () => {
@@ -6847,7 +6856,7 @@ function boot() {
     get civilians() { return civilians; }, get map() { return map; }, get vale() { return vale; },
     get interactables() { return interactables; },
     cam, findPath, passable, walkableAt, waterLevel, tideStage, hasSight, selectAgent, useAbility, useSecond,
-    interact, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
+    interact, doWait, setPath, togglePlan, executePlan, emitNoise, doLure, takeEvidence, completeObjective,
     tryEscape, restart, missionComplete, gradeMission, folkStep, spawnVale, startProcession,
     nearestInteract, screenToTile, centerOnSelected, groundZ, idx, idx3, MAP_W, MAP_H, STORY_H,
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
