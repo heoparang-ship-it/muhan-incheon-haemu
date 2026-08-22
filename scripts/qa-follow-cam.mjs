@@ -131,6 +131,7 @@ if (info.map[0] !== 96 || info.map[1] !== 96) fail.push("map " + info.map);
 if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + info.roles);
 if (info.snapOn !== true) fail.push("snapOn " + info.snapOn);
 if (info.wiped !== false) fail.push("wiped " + info.wiped);
+if (info.btnWiped !== false) fail.push("btnWiped " + info.btnWiped);
 if (info.afterOn !== true) fail.push("afterOn " + info.afterOn);
 if (info.btnAfter !== true) fail.push("btnAfter " + info.btnAfter);
 if (info.afterOff !== false) fail.push("afterOff " + info.afterOff);

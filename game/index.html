@@ -6591,6 +6591,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  setFollow(false);
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
