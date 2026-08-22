@@ -4320,7 +4320,7 @@ function interact(a, fromQueue) {
     }
     case 'jeong': {
       const hatch = interactables.find(x => x.id === 'cellar');
-      if (hatch && hatch.locked) { toast('지하 입구가 아직 잠겨 있다', 'warn'); return; }
+      if (hatch && hatch.locked && !hatch.done) { toast('지하 입구가 아직 잠겨 있다', 'warn'); return; }
       startAction(a, o.time, () => {
         o.done = true;
         awardEvidence('testimony');
@@ -6311,7 +6311,7 @@ function snapshotSave() {
       freed: !!c.freed, rescued: !!c.rescued, following: !!c.following,
       dead: !!c.dead, panic: c.panic || 0
     })),
-    interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
+    interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done, locked: !!o.locked })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
     lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
     vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
@@ -6477,6 +6477,8 @@ function applySave(s) {
   for (const rec of s.interactables || []) {
     const o = ii.get(rec.id); if (!o) continue;
     o.taken = rec.taken; o.done = rec.done;
+    if (rec.locked != null) o.locked = rec.locked;
+    if (o.kind === 'hatch' && o.done) o.locked = false;
   }
   const di = new Map();
   for (const rec of s.doors || []) di.set(rec.i, rec);
