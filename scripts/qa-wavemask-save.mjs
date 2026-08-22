@@ -136,12 +136,12 @@ if (info.roles.join(",") !== "haeju,mujin,dochi,wolsim") fail.push("roles " + in
 if (info.snapT !== 5.5) fail.push("snapT " + info.snapT);
 if (info.snapCycle !== 82) fail.push("snapCycle " + info.snapCycle);
 if (!info.snapUnlocked) fail.push("snap unlocked");
-if (info.maskedR !== 3.4) fail.push("maskedR " + info.maskedR);
+if (Math.abs(info.maskedR - 10 * 0.34) >= 1e-12) fail.push("maskedR " + info.maskedR);
 if (info.wiped.t !== 0) fail.push("rebuild t " + info.wiped.t);
 if (info.after.t !== 5.5) fail.push("after t " + info.after.t);
 if (info.after.cycle !== 82) fail.push("after cycle " + info.after.cycle);
 if (!info.after.unlocked) fail.push("after unlocked");
-if (info.afterR !== 3.4) fail.push("afterR " + info.afterR);
+if (Math.abs(info.afterR - 10 * 0.34) >= 1e-12) fail.push("afterR " + info.afterR);
 if (info.oldT !== 0) fail.push("old t " + info.oldT);
 if (info.oldR !== 10) fail.push("oldR " + info.oldR);
 if (info.cont.t !== 5.5) fail.push("continue t " + info.cont.t);
