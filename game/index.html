@@ -6252,6 +6252,21 @@ function serializeFolklore() {
   return out;
 }
 
+function copyCivilPath(p) {
+  if (!Array.isArray(p)) return [];
+  const out = [];
+  for (let i = 0; i < p.length && out.length < 400; i++) {
+    const n = p[i];
+    if (!n) continue;
+    const tx = +n.tx, ty = +n.ty;
+    if (!Number.isFinite(tx) || !Number.isFinite(ty)) continue;
+    const node = { tx, ty };
+    if (n.lv === 0 || n.lv === 1) node.lv = n.lv;
+    out.push(node);
+  }
+  return out;
+}
+
 function snapshotSave() {
   return {
     version: SAVE_VERSION,
@@ -6309,7 +6324,8 @@ function snapshotSave() {
     civilians: civilians.map(c => ({
       id: c.id, type: c.type, tx: c.tx, ty: c.ty,
       freed: !!c.freed, rescued: !!c.rescued, following: !!c.following,
-      dead: !!c.dead, panic: c.panic || 0
+      dead: !!c.dead, panic: c.panic || 0,
+      path: copyCivilPath(c.path)
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
@@ -6471,7 +6487,8 @@ function applySave(s) {
   for (const rec of s.civilians || []) {
     const u = cc.get(rec.id); if (!u) continue;
     u.tx = rec.tx; u.ty = rec.ty; u.freed = rec.freed; u.rescued = rec.rescued;
-    u.following = rec.following; u.dead = rec.dead; u.panic = rec.panic; u.path = [];
+    u.following = rec.following; u.dead = rec.dead; u.panic = rec.panic;
+    u.path = copyCivilPath(rec.path);
   }
   const ii = byId(interactables);
   for (const rec of s.interactables || []) {
@@ -6853,7 +6870,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, copyCivilPath, moveUnit,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
