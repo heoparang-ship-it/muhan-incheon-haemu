@@ -6789,7 +6789,7 @@ function boot() {
     }
   } catch (err) { /* ignore */ }
 
-  const tut = $('#tutorial'); if (tut) $('#tutClose').onclick = () => tut.remove();
+  const tut = $('#tutorial'); if (tut) $('#tutClose').onclick = () => { toast('첫 동선을 접었다'); tut.remove(); };
 
   const pauseBtn = $('#pauseBtn');
   if (pauseBtn) pauseBtn.onclick = () => setMenuPause(!state.menuPause);
