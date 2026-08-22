@@ -6313,7 +6313,10 @@ function snapshotSave() {
     })),
     interactables: interactables.map(o => ({ id: o.id, taken: !!o.taken, done: !!o.done })),
     doors: map.doors.map(d => ({ i: d.i, open: !!d.open, broken: !!d.broken, locked: !!d.locked })),
-    lamps: (map.lamps || []).map(l => ({ tx: l.tx, ty: l.ty, on: !!l.on })),
+    lamps: (map.lamps || []).map(l => ({
+      tx: l.tx, ty: l.ty, on: !!l.on,
+      offFor: (!l.on && l.offAt) ? Math.max(0, (state.now || 0) - l.offAt) : 0
+    })),
     vale: vale ? { tx: vale.tx, ty: vale.ty, caught: !!vale.caught, hidden: !!vale.hidden } : null
   };
 }
@@ -6486,7 +6489,13 @@ function applySave(s) {
   }
   for (const rec of s.lamps || []) {
     const l = map.lamps.find(x => x.tx === rec.tx && x.ty === rec.ty);
-    if (l) { l.on = rec.on; l.noticed = false; }
+    if (!l) continue;
+    l.on = rec.on; l.noticed = false;
+    if (l.on) { l.offAt = 0; l.relighter = null; }
+    else {
+      const clock = typeof performance !== 'undefined' ? performance.now() : (state.now || 0);
+      l.offAt = clock - (rec.offFor || 0);
+    }
   }
   state.ropes = new Set(s.ropes || []);
   for (const i of state.ropes) { if (i >= 0 && i < map.solid.length) map.solid[i] = 0; }
