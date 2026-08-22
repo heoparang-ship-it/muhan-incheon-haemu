@@ -6234,6 +6234,15 @@ function slotKey(slot) {
   return SAVE_KEY + ':' + slot;
 }
 
+function markSaveSlot(slot) {
+  const sl = slot == null ? lsGet(SAVE_KEY + ':last') : String(slot);
+  const buttons = document.querySelectorAll('#saveSlots button');
+  for (const b of buttons) {
+    const ds = b.getAttribute('data-slot');
+    b.classList.toggle('on', sl != null && sl !== 'auto' && String(ds) === String(sl));
+  }
+}
+
 function uiBlocked() {
   const ts = $('#titleScreen');
   if (ts && !ts.classList.contains('hide')) return true;
@@ -6326,7 +6335,9 @@ function writeSave(silent, slot) {
     const prev = lsGet(key);
     if (prev) lsSet(key + ':bak', prev);
     const ok = lsSet(key, json);
-    lsSet(SAVE_KEY + ':last', String(slot == null ? 0 : slot));
+    const sl = slot == null ? 0 : slot;
+    lsSet(SAVE_KEY + ':last', String(sl));
+    if (sl !== 'auto') markSaveSlot(sl);
     lastSaveAt = Date.now();
     if (!silent) toast(ok ? (slot === 'auto' ? '자동 저장' : '밀명을 적었다 (F5)') : '이 기기에만 잠시 남겼다', 'plan');
     refreshTitleMeta();
@@ -6511,6 +6522,7 @@ function applySave(s) {
   state.lightPhase = state.tidePhase;
   units = [].concat(agents, guards, civilians);
   initUI();
+  markSaveSlot();
   centerOnSelected();
   updateHUD();
   return true;
@@ -6579,6 +6591,7 @@ function rebuildWorld() {
   vale = null;
   state.tideStage = tideStage();
   initUI();
+  markSaveSlot();
   centerOnSelected();
   cam.targetZoom = cam.zoom = isPhone() ? 0.46 : 0.58;
   const res = $('#result'); if (res) res.classList.remove('show');
@@ -6809,9 +6822,9 @@ function boot() {
     btn.onclick = () => {
       const sl = btn.getAttribute('data-slot');
       writeSave(false, sl);
-      $$('#saveSlots button').forEach(b => b.classList.toggle('on', b === btn));
     };
   });
+  markSaveSlot();
   const toTitleBtn = $('#toTitleBtn');
   if (toTitleBtn) toTitleBtn.onclick = () => goTitle();
 
@@ -6853,7 +6866,7 @@ function boot() {
     PROF, chunkInfo: () => ({ size: chunkCache.size, cap: CHUNK_CAP }), resize,
     beginMission, continueMission, writeSave, readSave, applySave, rebuildWorld, setMenuPause, ART, GUARD_TYPES, ptrXY,
     VISION, WAKE_MS, wakeMs, DIFFICULTY, diff, quickLoad, footstepRadius, pulseSound, updateWakes, tieGuard, spawnReinforcements,
-    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey,
+    beginSearch, hoverPath, updateHoverPath, snapshotSave, slotKey, markSaveSlot,
     startStewardCheck, failStewardCheck, passStewardCheck, updateChecks, updateLamps,
     selectAgentsInBox, moveSquad, selectedSquad, chosenDiff: () => chosenDiff, setDiff: (d) => { chosenDiff = d; }
   };
