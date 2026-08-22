@@ -2138,16 +2138,15 @@ function wallFaceImage() {
 
 function paintWallGeometry(g, x, y, z0, h, tone, kind, mask, win) {
   const fence = kind === 'wall';
-  const cap = fence ? 0.08 : 0;
   const zt = z0 + h;
-  const ztCap = zt + (fence ? 0.07 : 0);
-  const A = { x: isoX(x - cap, y - cap), y: isoY(x - cap, y - cap, ztCap) };
-  const B = { x: isoX(x + 1 + cap, y - cap), y: isoY(x + 1 + cap, y - cap, ztCap) };
-  const C = { x: isoX(x + 1 + cap, y + 1 + cap), y: isoY(x + 1 + cap, y + 1 + cap, ztCap) };
-  const D = { x: isoX(x - cap, y + 1 + cap), y: isoY(x - cap, y + 1 + cap, ztCap) };
-  const Bf = { x: isoX(x + 1, y), y: isoY(x + 1, y, zt) };
-  const Cf = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, zt) };
-  const Df = { x: isoX(x, y + 1), y: isoY(x, y + 1, zt) };
+  const faceTop = fence ? zt + 0.16 : zt;
+  const A = { x: isoX(x, y), y: isoY(x, y, zt) };
+  const B = { x: isoX(x + 1, y), y: isoY(x + 1, y, zt) };
+  const C = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, zt) };
+  const D = { x: isoX(x, y + 1), y: isoY(x, y + 1, zt) };
+  const Bf = { x: isoX(x + 1, y), y: isoY(x + 1, y, faceTop) };
+  const Cf = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, faceTop) };
+  const Df = { x: isoX(x, y + 1), y: isoY(x, y + 1, faceTop) };
   const Bb = { x: isoX(x + 1, y), y: isoY(x + 1, y, z0) };
   const Cb = { x: isoX(x + 1, y + 1), y: isoY(x + 1, y + 1, z0) };
   const Db = { x: isoX(x, y + 1), y: isoY(x, y + 1, z0) };
@@ -2159,10 +2158,10 @@ function paintWallGeometry(g, x, y, z0, h, tone, kind, mask, win) {
   const face = (p0, p1, p2, p3, shadeF, uvFlip) => {
     if (texOk) {
       drawTexQuad(g, wallIm, [p0.x, p0.y], [p1.x, p1.y], [p2.x, p2.y], [p3.x, p3.y],
-        uvFlip ? [1, 0.02] : [0, 0.02], uvFlip ? [0, 0.02] : [1, 0.02],
+        uvFlip ? [1, 0] : [0, 0], uvFlip ? [0, 0] : [1, 0],
         uvFlip ? [0, 1] : [1, 1], uvFlip ? [1, 1] : [0, 1]);
       g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
-      g.fillStyle = 'rgba(0,0,0,' + (1 - shadeF) * 0.40 + ')'; g.fill();
+      g.fillStyle = 'rgba(0,0,0,' + (1 - shadeF) * 0.22 + ')'; g.fill();
     } else {
       g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.closePath();
       g.fillStyle = shade(tone, shadeF); g.fill();
@@ -2195,25 +2194,34 @@ function paintWallGeometry(g, x, y, z0, h, tone, kind, mask, win) {
   } else {
     if (showE) face(Bf, Cf, Cb, Bb, 0.60);
     if (showS) face(Df, Cf, Cb, Db, 0.86);
+    if (fence && !showE && !showS) {
+      const stub = 0.28;
+      const Es = { x: isoX(x + 1, y + 1 - stub), y: isoY(x + 1, y + 1 - stub, faceTop) };
+      const Ebs = { x: isoX(x + 1, y + 1 - stub), y: isoY(x + 1, y + 1 - stub, z0) };
+      const Ss = { x: isoX(x + 1 - stub, y + 1), y: isoY(x + 1 - stub, y + 1, faceTop) };
+      const Sbs = { x: isoX(x + 1 - stub, y + 1), y: isoY(x + 1 - stub, y + 1, z0) };
+      face(Es, Cf, Cb, Ebs, 0.60);
+      face(Ss, Cf, Cb, Sbs, 0.86);
+    }
   }
 
+  const ins = fence ? 0.16 : 0;
+  const At = { x: isoX(x + ins, y + ins), y: isoY(x + ins, y + ins, zt) };
+  const Bt = { x: isoX(x + 1 - ins, y + ins), y: isoY(x + 1 - ins, y + ins, zt) };
+  const Ct = { x: isoX(x + 1 - ins, y + 1 - ins), y: isoY(x + 1 - ins, y + 1 - ins, zt) };
+  const Dt = { x: isoX(x + ins, y + 1 - ins), y: isoY(x + ins, y + 1 - ins, zt) };
   if (texOk && fence) {
-    drawTexQuad(g, wallIm, [A.x, A.y], [B.x, B.y], [C.x, C.y], [D.x, D.y],
-      [0, 0], [1, 0], [1, 0.20], [0, 0.20]);
-    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(D.x, D.y); g.closePath();
-    g.fillStyle = 'rgba(18,16,14,.22)'; g.fill();
+    drawTexQuad(g, wallIm, [At.x, At.y], [Bt.x, Bt.y], [Ct.x, Ct.y], [Dt.x, Dt.y],
+      [0, 0], [1, 0], [1, 0.18], [0, 0.18]);
   } else {
     g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(C.x, C.y); g.lineTo(D.x, D.y); g.closePath();
     g.fillStyle = shade(tone, fence ? 1.30 : 1.10); g.fill();
   }
-  g.strokeStyle = 'rgba(0,0,0,.26)'; g.lineWidth = 0.9;
+  g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = 0.8;
   g.beginPath();
-  g.moveTo(D.x, D.y); g.lineTo(C.x, C.y); g.lineTo(B.x, B.y);
-  if (fence && !win) {
-    const t = 0.5;
-    if (showS) { g.moveTo(Df.x, lerp(Df.y, Db.y, t)); g.lineTo(Cf.x, lerp(Cf.y, Cb.y, t)); }
-    if (showE) { g.moveTo(Cf.x, lerp(Cf.y, Cb.y, t)); g.lineTo(Bf.x, lerp(Bf.y, Bb.y, t)); }
-  }
+  g.moveTo((fence ? Dt : D).x, (fence ? Dt : D).y);
+  g.lineTo((fence ? Ct : C).x, (fence ? Ct : C).y);
+  g.lineTo((fence ? Bt : B).x, (fence ? Bt : B).y);
   g.stroke();
 }
 
@@ -2226,7 +2234,7 @@ function bakeWallSprite(mask, win, h, tone, kind) {
   const capPx = 8;
   const minX = -TW / 2 - pad - capPx;
   const maxX = TW / 2 + pad + capPx;
-  const minY = -h * ZH - pad - 8;
+  const minY = -h * ZH - pad - 14;
   const maxY = TH + pad;
   const c = document.createElement('canvas');
   c.width = Math.ceil(maxX - minX);

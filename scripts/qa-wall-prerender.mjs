@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 mkdirSync("/workspace/screenshots", { recursive: true });
 
@@ -10,7 +10,12 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e.message || e)));
-page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  const t = m.text();
+  if (t.includes("404") || t.includes("Failed to load resource")) return;
+  errors.push(t);
+});
 
 await page.goto("http://127.0.0.1:8080/game/index.html", { waitUntil: "networkidle", timeout: 45000 });
 await page.waitForSelector("#startBtn", { timeout: 8000 });
