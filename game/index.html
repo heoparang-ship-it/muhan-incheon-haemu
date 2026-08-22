@@ -6291,6 +6291,9 @@ function snapshotSave() {
     reinforceCount: state.reinforceCount || 0,
     ropes: Array.from(state.ropes || []),
     nets: (state.nets || []).map(n => ({ tx: n.tx, ty: n.ty, life: n.life, armed: n.armed })),
+    smoke: (state.smoke || []).filter(s => s && s.life > 0).map(s => ({
+      tx: s.tx, ty: s.ty, r: s.r, life: s.life, max: s.max
+    })),
     agents: agents.map(a => ({
       id: a.id, tx: a.tx, ty: a.ty, angle: a.angle, alive: a.alive,
       crouch: !!a.crouch, exposure: a.exposure || 0, disguise: a.disguise || 0,
@@ -6491,6 +6494,12 @@ function applySave(s) {
   state.ropes = new Set(s.ropes || []);
   for (const i of state.ropes) { if (i >= 0 && i < map.solid.length) map.solid[i] = 0; }
   state.nets = (s.nets || []).map(n => Object.assign({ max: 120, armed: true }, n));
+  state.smoke = (s.smoke || []).filter(sm => sm && sm.life > 0).map(sm => ({
+    tx: sm.tx, ty: sm.ty,
+    r: sm.r != null ? sm.r : 3.6,
+    life: sm.life,
+    max: sm.max != null ? sm.max : 14
+  }));
   const gBy = byId(guards);
   for (const rec of s.agents || []) {
     if (!rec.carrying) continue;
