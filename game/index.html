@@ -2981,10 +2981,19 @@ function spawnAll() {
       inProcession: false
     }));
   });
-  // 감금된 주민 6명 (백석섬 감금실)
+  // 감금된 주민 6명 — 실내 칸에만. 3×2 식은 동쪽 벽(74,82)에서 바깥으로 밀린다
+  const cell = map.buildings.find(b => b.id === 'cell');
+  const cellI = cell ? map.buildings.indexOf(cell) : -1;
+  const beds = [];
+  if (cell) {
+    for (const i of cell.interiorTiles || []) {
+      const x = i % MAP_W, y = (i / MAP_W) | 0;
+      if (!map.solid[i] && map.inside[i] === cellI) beds.push([x, y]);
+    }
+  }
   for (let k = 0; k < 6; k++) {
-    const p = nearestOpen(72 + (k % 3), 82 + Math.floor(k / 3), null, 4);
-    if (!p) continue;
+    if (!beds.length) break;
+    const p = beds[k % beds.length];
     civilians.push(baseUnit({
       kind: 'civil', id: 'p' + k, type: 'prisoner', tx: p[0], ty: p[1], speed: 1.6,
       panic: 0, home: [p[0], p[1]], idleT: 0, rescued: false, freed: false, drowning: false
