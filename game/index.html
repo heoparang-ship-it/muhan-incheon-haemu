@@ -4151,7 +4151,8 @@ function buildInteractables() {
 
   add({ kind: 'well', id: 'oldWell', name: '폐우물', tx: 61, ty: 26, glyph: '井', time: 2.2 });
   add({ kind: 'hatch', id: 'cellar', name: '지하 취조실 입구', tx: 46, ty: 47, glyph: '扉', time: 1.8, locked: true });
-  add({ kind: 'jeong', id: 'jeong', name: '정필재', tx: 47, ty: 46, glyph: '人', time: 2.0 });
+  /* (47,46)은 숙소 남동쪽 벽 — nearestOpen이 숙소 안으로 밀어 넣는다. 입구 옆 마당에 둔다 */
+  add({ kind: 'jeong', id: 'jeong', name: '정필재', tx: 47, ty: 47, glyph: '人', time: 2.0 });
   add({ kind: 'hairpin', id: 'hairpin', name: '은비녀', tx: 39, ty: 32, glyph: '簪', time: 1.2 });
   add({ kind: 'crone', id: 'crone', name: '당집 노파', tx: 13, ty: 61, glyph: '媼', time: 1.4 });
   add({ kind: 'cloth', id: 'whiteCloth', name: '바위에 덮인 흰 천', tx: 30, ty: 9, glyph: '布', time: 1.8 });
