@@ -1,6 +1,162 @@
 <!doctype html>
+<html lang="ko">
+<head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="0;url=game/index.html">
-<title>무한인천: 해무의 성가</title>
-<link rel="canonical" href="game/index.html">
-<p><a href="game/index.html">밀명으로</a></p>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#03070a">
+<title>무한인천: 해무의 성가 — 대원 영상</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg:#03070a; --ink:#eee6cf; --muted:#93a7ae; --gold:#e3c072; --gold2:#f2dca6;
+  --line:rgba(220,186,108,.28); --panel:rgba(6,15,21,.88);
+  --safeT:max(12px,env(safe-area-inset-top));
+  --safeB:max(16px,env(safe-area-inset-bottom));
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Pretendard","Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif}
+a,button{font:inherit;color:inherit}
+a{color:var(--gold2)}
+.hero{position:relative;min-height:100dvh;display:flex;align-items:flex-end;overflow:hidden}
+.hero video,.hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,7,10,.2),rgba(3,7,10,.78) 62%,#03070a)}
+.hero .card{position:relative;z-index:1;padding:0 22px calc(28px + var(--safeB));max-width:720px}
+.series{display:block;font-size:12px;letter-spacing:.28em;color:var(--gold);margin-bottom:10px}
+.hero h1{margin:0;font-family:"Nanum Myeongjo",Georgia,serif;font-size:clamp(32px,8vw,54px);font-weight:600;color:#f3dda3;text-shadow:0 4px 24px #000}
+.ch{margin-top:8px;font-size:13px;color:var(--muted);letter-spacing:.08em}
+.lead{margin:16px 0 0;font-size:14px;line-height:1.8;color:#c9d6da}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border:1px solid var(--gold);border-radius:10px;background:rgba(226,192,114,.14);color:var(--gold2);text-decoration:none}
+.btn.ghost{background:transparent;border-color:rgba(226,192,114,.4);color:#c9d6da}
+main{max-width:1100px;margin:0 auto;padding:8px 18px 48px}
+h2{font-family:"Nanum Myeongjo",Georgia,serif;font-size:22px;color:var(--gold2);font-weight:600;margin:36px 0 14px}
+.cast{display:grid;gap:28px}
+.member{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.member video{display:block;width:100%;aspect-ratio:16/9;background:#000;object-fit:cover}
+.meta{padding:16px 18px 18px}
+.meta h3{margin:0;font-family:"Nanum Myeongjo",Georgia,serif;font-size:26px;color:#f3dda3}
+.meta .role{margin:4px 0 0;color:var(--gold);font-size:13px}
+.meta p{margin:10px 0 0;color:#c9d6da;font-size:14px;line-height:1.7}
+.meta .weak{color:#c9a38a}
+.stills{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.stills img{width:100%;height:auto;display:block;border-radius:8px;background:#000}
+.shorts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.shorts figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.shorts video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:#000}
+.shorts figcaption{padding:8px 10px 10px;font-size:13px}
+.wide{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.wide video,.wide img{display:block;width:100%;height:auto;background:#000}
+footer{max-width:1100px;margin:0 auto;padding:0 18px calc(32px + var(--safeB));color:var(--muted);font-size:12px}
+@media (max-width:720px){
+  .shorts{grid-template-columns:repeat(2,1fr)}
+  .stills{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+  <header class="hero">
+    <video autoplay muted loop playsinline poster="videos/stills/squad-cinematic-16x9.png" src="videos/clips/squad.mp4"></video>
+    <div class="veil"></div>
+    <div class="card">
+      <span class="series">무한인천</span>
+      <h1>해무의 성가</h1>
+      <div class="ch">조사패 네 사람 · 대원 영상</div>
+      <p class="lead">조선 말기 인천 해안. 가짜 선교단에 잠입하는 네 명의 시네마틱. 기존 초상과 스프라이트를 레퍼런스로 Grok 이미지 생성을 썼다.</p>
+      <div class="acts">
+        <a class="btn" href="#haeju">대원 보기</a>
+        <a class="btn ghost" href="videos/clips/reel.mp4">전체 릴</a>
+        <a class="btn ghost" href="game/index.html">밀명으로</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <h2>조사패 릴</h2>
+    <figure class="wide">
+      <video controls playsinline preload="metadata" poster="videos/stills/squad-cinematic-16x9.png" src="videos/clips/reel.mp4"></video>
+    </figure>
+
+    <h2>대원</h2>
+    <div class="cast">
+      <article class="member" id="haeju">
+        <video controls playsinline preload="metadata" poster="videos/stills/haeju-cinematic-16x9.png" src="videos/clips/haeju.mp4"></video>
+        <div class="meta">
+          <h3>윤해주</h3>
+          <div class="role">역관 겸 의술 보조 · 변장 · 대화 유인</div>
+          <p>위조 문답과 복식으로 검문을 통과하고, 문서를 읽고 병자를 치료한다.</p>
+          <p class="weak">근접 제압을 못 한다. 정체가 드러나면 도망칠 방법이 없다.</p>
+          <div class="stills">
+            <img src="videos/stills/haeju-cinematic-16x9.png" alt="윤해주 와이드">
+            <img src="videos/stills/haeju-closeup-16x9.png" alt="윤해주 클로즈업">
+          </div>
+        </div>
+      </article>
+
+      <article class="member" id="mujin">
+        <video controls playsinline preload="metadata" poster="videos/stills/mujin-cinematic-16x9.png" src="videos/clips/mujin.mp4"></video>
+        <div class="meta">
+          <h3>강무진</h3>
+          <div class="role">파직된 영종진 수군 · 배후 제압 · 밧줄</div>
+          <p>뒤에서 소리 없이 제압하고, 사람을 업어 옮기고, 담장을 넘고, 문을 부순다.</p>
+          <p class="weak">발소리가 크고 신분 잠입이 안 된다.</p>
+          <div class="stills">
+            <img src="videos/stills/mujin-cinematic-16x9.png" alt="강무진 와이드">
+            <img src="videos/stills/mujin-closeup-16x9.png" alt="강무진 클로즈업">
+          </div>
+        </div>
+      </article>
+
+      <article class="member" id="dochi">
+        <video controls playsinline preload="metadata" poster="videos/stills/dochi-cinematic-16x9.png" src="videos/clips/dochi.mp4"></video>
+        <div class="meta">
+          <h3>백도치</h3>
+          <div class="role">감나루 뱃사공 · 물길 · 어망 함정</div>
+          <p>갯골과 물속을 지름길로 쓰고, 어망 함정을 놓고, 조수를 미리 읽는다.</p>
+          <p class="weak">마른 땅과 실내에서는 특기가 없다.</p>
+          <div class="stills">
+            <img src="videos/stills/dochi-cinematic-16x9.png" alt="백도치 와이드">
+            <img src="videos/stills/dochi-closeup-16x9.png" alt="백도치 클로즈업">
+          </div>
+        </div>
+      </article>
+
+      <article class="member" id="wolsim">
+        <video controls playsinline preload="metadata" poster="videos/stills/wolsim-cinematic-16x9.png" src="videos/clips/wolsim.mp4"></video>
+        <div class="meta">
+          <h3>월심</h3>
+          <div class="role">당집을 떠난 무녀의 제자 · 방울 · 향 연기</div>
+          <p>방울로 경비를 부르고, 향 연기로 시야를 끊고, 겁먹은 주민을 진정시킨다.</p>
+          <p class="weak">외국인 선원에게는 유인이 통하지 않는다.</p>
+          <div class="stills">
+            <img src="videos/stills/wolsim-cinematic-16x9.png" alt="월심 와이드">
+            <img src="videos/stills/wolsim-closeup-16x9.png" alt="월심 클로즈업">
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <h2>세로 숏</h2>
+    <div class="shorts">
+      <figure>
+        <video controls playsinline preload="metadata" poster="videos/stills/haeju-vertical-9x16.png" src="videos/clips/haeju-vertical.mp4"></video>
+        <figcaption>윤해주</figcaption>
+      </figure>
+      <figure>
+        <video controls playsinline preload="metadata" poster="videos/stills/mujin-vertical-9x16.png" src="videos/clips/mujin-vertical.mp4"></video>
+        <figcaption>강무진</figcaption>
+      </figure>
+      <figure>
+        <video controls playsinline preload="metadata" poster="videos/stills/dochi-vertical-9x16.png" src="videos/clips/dochi-vertical.mp4"></video>
+        <figcaption>백도치</figcaption>
+      </figure>
+      <figure>
+        <video controls playsinline preload="metadata" poster="videos/stills/wolsim-vertical-9x16.png" src="videos/clips/wolsim-vertical.mp4"></video>
+        <figcaption>월심</figcaption>
+      </figure>
+    </div>
+  </main>
+
+  <footer>게임은 <a href="game/index.html">game/index.html</a>. 다시 만들 때 <code>bash scripts/build-character-videos.sh</code></footer>
+</body>
+</html>
