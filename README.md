@@ -35,6 +35,8 @@ assets/refs/          초상 레퍼런스
 
 ## 실행
 
+저장소 루트에서 열면 대원 영상 HTML이 먼저 나온다. 게임은 `/game/`.
+
 ```bash
-python3 -m http.server 8080 --directory game
+python3 -m http.server 8080
 ```
