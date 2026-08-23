@@ -7,6 +7,7 @@ https://github.com/heoparang-ship-it/muhan-incheon-haemu
 ## 바로 보기
 
 - 게임: [`game/index.html`](game/index.html)
+- 대원 영상: [`videos/index.html`](videos/index.html)
 - 인수인계: [`HANDOFF.md`](HANDOFF.md)
 - 현황: [`STATUS.md`](STATUS.md)
 - 설계: [`docs/DESIGN.md`](docs/DESIGN.md)

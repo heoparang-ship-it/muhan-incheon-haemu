@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무한인천: 해무의 성가 — 대원 영상</title>
+<style>
+  :root {
+    --bg: #03070a;
+    --ink: #d7e6ee;
+    --muted: #8aa0ad;
+    --gold: #f2d075;
+    --line: rgba(190, 214, 224, .14);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  body { min-height: 100vh; background: radial-gradient(1200px 700px at 20% -10%, #143044 0%, transparent 55%), var(--bg); }
+  header { padding: 28px 22px 8px; max-width: 1180px; margin: 0 auto; }
+  header p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+  h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: .02em; }
+  h1 em { color: var(--gold); font-style: normal; }
+  nav { margin-top: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
+  nav a { color: #bfe0ef; font-size: 13px; }
+  section { max-width: 1180px; margin: 0 auto; padding: 18px 22px 8px; }
+  h2 { margin: 0 0 12px; font-size: 15px; color: var(--gold); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { border: 1px solid var(--line); background: rgba(8, 16, 20, .72); border-radius: 12px; overflow: hidden; }
+  .card video, .card img { display: block; width: 100%; height: auto; background: #000; }
+  .card figcaption { padding: 10px 12px 12px; }
+  .card strong { display: block; }
+  .card small { color: var(--muted); }
+  .wide { max-width: 960px; }
+  .verticals { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .verticals video { aspect-ratio: 9 / 16; object-fit: cover; }
+  footer { max-width: 1180px; margin: 0 auto; padding: 28px 22px 40px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>무한인천: <em>해무의 성가</em> — 대원 영상</h1>
+    <p>기존 초상·스프라이트를 레퍼런스로 Grok 이미지 생성을 쓴 시네마틱 스틸과, 그 스틸을 이은 짧은 클립.</p>
+    <nav>
+      <a href="../game/index.html">게임으로</a>
+      <a href="#reel">전체 릴</a>
+      <a href="#vertical">세로 숏</a>
+    </nav>
+  </header>
+
+  <section id="reel">
+    <h2>조사패 릴</h2>
+    <figure class="card wide">
+      <video controls playsinline preload="metadata" poster="stills/squad-cinematic-16x9.png" src="clips/reel.mp4"></video>
+      <figcaption><strong>분대 + 대원 4인</strong><small>가로 시네마틱을 이은 한 편</small></figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>대원 가로 클립</h2>
+    <div class="grid">
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/haeju-cinematic-16x9.png" src="clips/haeju.mp4"></video>
+        <figcaption><strong>윤해주</strong><small>역관 겸 의술 보조 · 변장 · 대화 유인</small></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/mujin-cinematic-16x9.png" src="clips/mujin.mp4"></video>
+        <figcaption><strong>강무진</strong><small>파직된 영종진 수군 · 배후 제압 · 밧줄</small></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/dochi-cinematic-16x9.png" src="clips/dochi.mp4"></video>
+        <figcaption><strong>백도치</strong><small>감나루 뱃사공 · 물길 · 어망 함정</small></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/wolsim-cinematic-16x9.png" src="clips/wolsim.mp4"></video>
+        <figcaption><strong>월심</strong><small>당집을 떠난 무녀의 제자 · 방울 · 향 연기</small></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>분대 컷</h2>
+    <figure class="card wide">
+      <video controls playsinline preload="metadata" poster="stills/squad-cinematic-16x9.png" src="clips/squad.mp4"></video>
+      <figcaption><strong>갯벌 갈대 속 네 사람</strong><small>안개 너머 절벽 불빛</small></figcaption>
+    </figure>
+  </section>
+
+  <section id="vertical">
+    <h2>세로 숏</h2>
+    <div class="verticals">
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/haeju-vertical-9x16.png" src="clips/haeju-vertical.mp4"></video>
+        <figcaption><strong>윤해주</strong></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/mujin-vertical-9x16.png" src="clips/mujin-vertical.mp4"></video>
+        <figcaption><strong>강무진</strong></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/dochi-vertical-9x16.png" src="clips/dochi-vertical.mp4"></video>
+        <figcaption><strong>백도치</strong></figcaption>
+      </figure>
+      <figure class="card">
+        <video controls playsinline preload="metadata" poster="stills/wolsim-vertical-9x16.png" src="clips/wolsim-vertical.mp4"></video>
+        <figcaption><strong>월심</strong></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>스틸</h2>
+    <div class="grid">
+      <figure class="card"><img src="stills/haeju-cinematic-16x9.png" alt="윤해주 와이드"><figcaption>윤해주 · 와이드</figcaption></figure>
+      <figure class="card"><img src="stills/haeju-closeup-16x9.png" alt="윤해주 클로즈업"><figcaption>윤해주 · 클로즈업</figcaption></figure>
+      <figure class="card"><img src="stills/mujin-cinematic-16x9.png" alt="강무진 와이드"><figcaption>강무진 · 와이드</figcaption></figure>
+      <figure class="card"><img src="stills/mujin-closeup-16x9.png" alt="강무진 클로즈업"><figcaption>강무진 · 클로즈업</figcaption></figure>
+      <figure class="card"><img src="stills/dochi-cinematic-16x9.png" alt="백도치 와이드"><figcaption>백도치 · 와이드</figcaption></figure>
+      <figure class="card"><img src="stills/dochi-closeup-16x9.png" alt="백도치 클로즈업"><figcaption>백도치 · 클로즈업</figcaption></figure>
+      <figure class="card"><img src="stills/wolsim-cinematic-16x9.png" alt="월심 와이드"><figcaption>월심 · 와이드</figcaption></figure>
+      <figure class="card"><img src="stills/wolsim-closeup-16x9.png" alt="월심 클로즈업"><figcaption>월심 · 클로즈업</figcaption></figure>
+      <figure class="card"><img src="stills/squad-cinematic-16x9.png" alt="분대"><figcaption>분대</figcaption></figure>
+    </div>
+  </section>
+
+  <footer>
+    다시 만들 때: <code>bash scripts/build-character-videos.sh</code>
+  </footer>
+</body>
+</html>
